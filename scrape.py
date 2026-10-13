@@ -68,7 +68,9 @@ def scrape_stage(season, stage, href):
         if len(parts) != 3:  # unplayed fixtures show a time, not a date
             continue
         d, m, y = parts
-        y = y or ("2026" if season == "current" else "")  # current season omits the year
+        if not y:  # recent games omit the year: Jul-Dec = season start year, Jan-Jun = end year
+            start = 2026 if season == "current" else int(season[:4])
+            y = str(start if int(m) >= 7 else start + 1)
         rows.append({
             "season": "2026-2027" if season == "current" else season,
             "stage": stage, "round": rnd, "date": f"{y}-{m}-{d}",

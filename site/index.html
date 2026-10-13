@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIBA Europe Cup Head to Head</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1424; --panel:#131d33; --line:#26334f; --text:#f1ead9; --muted:#9aa4ba;
+  --gold:#d4af37; --win:#6fcf97; --loss:#eb7a6c;
+  --serif:'Playfair Display',Georgia,serif; --body:'Source Serif 4',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.5 var(--body)}
+.wrap{max-width:980px;margin:0 auto;padding:40px 16px 80px}
+h1{font:700 clamp(30px,5vw,46px)/1.1 var(--serif);margin:0 0 6px}
+h1 span{color:var(--gold)}
+.sub{font:400 13px var(--mono);color:var(--muted);letter-spacing:.04em;margin-bottom:32px}
+.controls{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:12px;align-items:end;margin-bottom:28px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;grid-column:1/-1;width:max-content}
+.seg button{background:none;border:0;color:var(--muted);font:500 13px var(--mono);padding:9px 18px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
+.seg button.on{background:var(--gold);color:#0c1424}
+label{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px}
+input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font:400 17px var(--body);padding:10px 12px}
+input:focus{outline:2px solid var(--gold);outline-offset:0}
+.swap{background:none;border:1px solid var(--line);color:var(--gold);border-radius:6px;font:500 18px var(--mono);height:46px;width:46px;cursor:pointer}
+.vs{font:600 22px var(--serif);color:var(--gold);padding-bottom:9px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:24px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;text-align:center;align-items:center}
+.score .name{font:600 clamp(18px,3vw,26px) var(--serif)}
+.score .ctry{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.score .big{font:500 clamp(40px,8vw,68px) var(--mono);color:var(--gold);line-height:1}
+.score .lbl{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:18px 0 14px;background:var(--line)}
+.bar i{display:block;background:var(--gold)} .bar i+i{background:#5b7bd5}
+.facts{display:flex;flex-wrap:wrap;gap:8px 28px;font:400 13px var(--mono);color:var(--muted);justify-content:center}
+.facts b{color:var(--text);font-weight:500}
+h2{font:600 22px var(--serif);margin:34px 0 12px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:14px;white-space:nowrap}
+tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
+.w{color:var(--win)} .l{color:var(--loss)}
+.tag{font:400 11px var(--mono);color:var(--muted)}
+.empty{color:var(--muted);padding:30px 0;text-align:center}
+.scroll{overflow-x:auto}
+@media(max-width:640px){
+  .controls{grid-template-columns:1fr auto 1fr}
+  .vs{display:none} .swap{grid-column:2;grid-row:2}
+  .controls>div:nth-of-type(1){grid-column:1/-1;grid-row:2}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FIBA Europe Cup <span>Head to Head</span></h1>
+  <div class="sub" id="sub"></div>
+
+  <div class="controls">
+    <div class="seg" id="seg">
+      <button data-mode="team" class="on">Teams</button>
+      <button data-mode="country">Countries</button>
+    </div>
+    <div><label for="a" id="la">Team</label><input id="a" list="opts" autocomplete="off" placeholder="Start typing"></div>
+    <div class="vs">vs</div>
+    <div><label for="b" id="lb">Opponent (optional)</label><input id="b" list="opts" autocomplete="off" placeholder="Start typing"></div>
+  </div>
+  <datalist id="opts"></datalist>
+  <div id="out"></div>
+</div>
+<script src="data.js"></script>
+<script>
+const {matches, teams} = window.DATA;
+let mode = 'team';
+const $ = id => document.getElementById(id);
+const ent = t => mode === 'team' ? t : teams[t];
+const fmtDate = d => d.split('-').reverse().join('.');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('sub').textContent = `${matches.length} games · seasons ${matches[0][0].slice(0,4)}–${matches[matches.length-1][0].slice(-4)} · ${Object.keys(teams).length} teams · ${new Set(Object.values(teams)).size} countries`;
+
+function names(){ return mode === 'team' ? Object.keys(teams).sort() : [...new Set(Object.values(teams))].sort(); }
+function fillOptions(){ $('opts').innerHTML = names().map(n => `<option value="${esc(n)}">`).join(''); }
+
+// Re-orient every game so that `x` is first. Returns {opp, own, oppPts, ownPts, ...}
+function gamesFor(x){
+  const out = [];
+  for (const m of matches){
+    const [season, stage, round, date, h, a, hp, ap, status] = m;
+    const eh = ent(h), ea = ent(a);
+    if (eh === ea) continue;
+    if (eh === x) out.push({m, own:h, opp:a, oppE:ea, ownPts:hp, oppPts:ap, home:true});
+    else if (ea === x) out.push({m, own:a, opp:h, oppE:eh, ownPts:ap, oppPts:hp, home:false});
+  }
+  return out;
+}
+function record(gs){
+  let w=0,l=0,pf=0,pa=0,pg=0;
+  for (const g of gs){
+    g.ownPts > g.oppPts ? w++ : l++;
+    if (g.m[8] !== 'AWA.'){ pf += g.ownPts; pa += g.oppPts; pg++; }
+  }
+  return {w,l,pf,pa,pg,n:gs.length};
+}
+const gameRow = g => {
+  const [season, stage, round, date,,,,, status] = g.m;
+  const win = g.ownPts > g.oppPts;
+  const score = status === 'AWA.' ? 'awarded' : `${g.home ? g.ownPts : g.oppPts}–${g.home ? g.oppPts : g.ownPts}${status === 'AET' ? ' <span class="tag">OT</span>' : ''}`;
+  const venue = g.home ? `<b>${esc(g.own)}</b> – ${esc(g.opp)}` : `${esc(g.opp)} – <b>${esc(g.own)}</b>`;
+  return `<tr><td class="n">${fmtDate(date)}</td><td>${venue}</td><td class="n ${win?'w':'l'}">${score}</td><td class="tag">${esc(season)} · ${esc(stage)} · ${esc(round.replace(/ - /,' · '))}</td></tr>`;
+};
+
+function render(){
+  const out = $('out');
+  const A = $('a').value.trim(), B = $('b').value.trim();
+  const ok = n => names().includes(n);
+  if (!A){ out.innerHTML = `<div class="empty">Pick a ${mode} to see its record against everyone, or two to see their head to head.</div>`; return; }
+  if (!ok(A)){ out.innerHTML = `<div class="empty">No ${mode} called “${esc(A)}”. Choose from the suggestions.</div>`; return; }
+  const gs = gamesFor(A);
+
+  if (B && ok(B)){
+    if (A === B){ out.innerHTML = `<div class="empty">Pick two different ${mode === 'team' ? 'teams' : 'countries'}.</div>`; return; }
+    const h = gs.filter(g => g.oppE === B).sort((x,y) => y.m[3].localeCompare(x.m[3]));
+    if (!h.length){ out.innerHTML = `<div class="empty">${esc(A)} and ${esc(B)} have not met in this competition.</div>`; return; }
+    const r = record(h);
+    const sub = x => mode === 'team' ? teams[x] : '';
+    let html = `<div class="card"><div class="score">
+      <div><div class="name">${esc(A)}</div><div class="ctry">${esc(sub(A))}</div></div>
+      <div><div class="big">${r.w}–${r.l}</div><div class="lbl">${r.n} game${r.n>1?'s':''}</div></div>
+      <div><div class="name">${esc(B)}</div><div class="ctry">${esc(sub(B))}</div></div></div>
+      <div class="bar"><i style="width:${r.w/r.n*100}%"></i><i style="width:${r.l/r.n*100}%"></i></div>
+      <div class="facts"><span>Points <b>${r.pf}–${r.pa}</b></span><span>Avg margin <b>${r.pg?((r.pf-r.pa)/r.pg>0?'+':'')+((r.pf-r.pa)/r.pg).toFixed(1):'–'}</b> for ${esc(A)}</span><span>First meeting <b>${fmtDate(h[h.length-1].m[3])}</b></span></div></div>`;
+    if (mode === 'country'){
+      const by = {};
+      for (const g of h){ const k = g.own+'|'+g.opp; (by[k] ||= []).push(g); }
+      const rows = Object.entries(by).map(([k,v]) => ({k, r:record(v)})).sort((x,y)=>y.r.n-x.r.n);
+      html += `<h2>By club</h2><div class="scroll"><table><tr><th>${esc(A)} club</th><th>${esc(B)} club</th><th class="n">P</th><th class="n">W–L</th></tr>` +
+        rows.map(({k,r}) => { const [o,p] = k.split('|'); return `<tr><td>${esc(o)}</td><td>${esc(p)}</td><td class="n">${r.n}</td><td class="n">${r.w}–${r.l}</td></tr>`; }).join('') + `</table></div>`;
+    }
+    html += `<h2>Games</h2><div class="scroll"><table><tr><th class="n">Date</th><th>Match</th><th class="n">Score</th><th>Competition</th></tr>${h.map(gameRow).join('')}</table></div>`;
+    out.innerHTML = html;
+    return;
+  }
+
+  // Single selection: record vs every opponent
+  if (!gs.length){ out.innerHTML = `<div class="empty">No games found for ${esc(A)}.</div>`; return; }
+  const by = {};
+  for (const g of gs) (by[g.oppE] ||= []).push(g);
+  const rows = Object.entries(by).map(([o,v]) => ({o, r:record(v), last:v.reduce((a,g)=>g.m[3]>a?g.m[3]:a,'')}))
+    .sort((x,y) => y.r.n - x.r.n || x.o.localeCompare(y.o));
+  const tot = record(gs);
+  out.innerHTML = `<div class="card"><div class="score"><div></div><div><div class="name">${esc(A)}</div><div class="ctry">${mode==='team'?esc(teams[A]):''}</div><div class="big" style="margin-top:12px">${tot.w}–${tot.l}</div><div class="lbl">${tot.n} games · ${rows.length} opponents</div></div><div></div></div></div>
+    <div class="tag" style="margin-bottom:8px">Click an opponent for the full head to head.</div>
+    <div class="scroll"><table><tr><th>Opponent</th><th class="n">P</th><th class="n">W</th><th class="n">L</th><th class="n">Pts</th><th class="n">Last</th></tr>` +
+    rows.map(({o,r,last}) => `<tr class="click" data-o="${esc(o)}"><td>${esc(o)}${mode==='team'?` <span class="tag">${esc(teams[o])}</span>`:''}</td><td class="n">${r.n}</td><td class="n w">${r.w}</td><td class="n l">${r.l}</td><td class="n">${r.pf}–${r.pa}</td><td class="n">${fmtDate(last)}</td></tr>`).join('') + `</table></div>`;
+  out.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => { $('b').value = tr.dataset.o; sync(); render(); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+
+function sync(){
+  const q = new URLSearchParams({mode, a:$('a').value, b:$('b').value});
+  history.replaceState(null, '', '#' + q.toString());
+}
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+  $('la').textContent = m === 'team' ? 'Team' : 'Country';
+  $('lb').textContent = 'Opponent (optional)';
+  fillOptions();
+}
+document.querySelectorAll('#seg button').forEach(b => b.onclick = () => { setMode(b.dataset.mode); $('a').value = $('b').value = ''; sync(); render(); });
+['a','b'].forEach(id => $(id).addEventListener('input', () => { sync(); render(); }));
+$('a').addEventListener('change', render); $('b').addEventListener('change', render);
+
+// restore from URL hash
+const p = new URLSearchParams(location.hash.slice(1));
+setMode(p.get('mode') === 'country' ? 'country' : 'team');
+$('a').value = p.get('a') || ''; $('b').value = p.get('b') || '';
+render();
+</script>
+</body>
+</html>
