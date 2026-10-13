@@ -1,0 +1,503 @@
+team_a,team_b,played,a_wins,b_wins,a_points,b_points
+Bilbao,PAOK,6,4,2,499,462
+Anorthosis,Basket Zaragoza,4,0,4,281,376
+Anwil Wloclawek,Karhu Basket,4,3,1,338,310
+Anwil Wloclawek,Sporting CP,4,3,1,376,320
+BC Kalev/Cramo,Brindisi,4,2,2,304,312
+BC Prievidza,Bilbao,4,0,4,224,347
+Bahcesehir Kol.,Leiden,4,4,0,330,283
+Bahcesehir Kol.,Mornar Bar,4,4,0,351,293
+Bahcesehir Kol.,Sporting CP,4,4,0,320,278
+Balkan,Bilbao,4,0,4,242,372
+Bilbao,Kutaisi,4,4,0,409,236
+CSM Oradea,Legia,4,1,3,306,315
+Dijon,Ludwigsburg,4,2,2,329,320
+FC Porto,Szolnoki Olaj,4,3,1,305,288
+Sassari,Sporting CP,4,3,1,336,292
+Antwerp Giants,Sporting CP,3,1,2,218,250
+FC Porto,Korfez Basket,3,1,2,220,222
+AEK Larnaca,Basketball Braunschweig,2,0,2,122,161
+AEK Larnaca,CSM Oradea,2,0,2,161,178
+AEK Larnaca,Corona Brasov,2,2,0,183,151
+AEK Larnaca,Jonava,2,1,1,171,175
+AEK Larnaca,Karhu Basket,2,1,1,151,155
+AEK Larnaca,Keravnos,2,2,0,174,164
+AEK Larnaca,Petkim Spor,2,1,1,142,179
+AEK Larnaca,Rostock,2,1,1,151,162
+AEK Larnaca,Tofas,2,0,2,130,189
+Absheron Lions,Anorthosis,2,1,1,149,150
+Absheron Lions,BC Kalev/Cramo,2,1,1,186,164
+Absheron Lions,Neftchi IK,2,1,1,181,190
+Absheron Lions,Trefl Sopot,2,0,2,174,197
+Alba Fehervar,BC Kalev/Cramo,2,1,1,182,185
+Alba Fehervar,BC Prievidza,2,1,1,189,186
+Alba Fehervar,Balkan,2,0,2,157,173
+Alba Fehervar,Le Portel,2,0,2,153,208
+Alba Fehervar,Rilski Sportist,2,2,0,193,171
+Alba Fehervar,Sporting CP,2,1,1,185,185
+Anorthosis,Bakken Bears,2,1,1,163,194
+Anorthosis,Bursaspor,2,0,2,145,167
+Anorthosis,Levice,2,0,2,140,183
+Anorthosis,Starlites,2,2,0,168,149
+Anorthosis,Szombathely,2,0,2,135,185
+Antwerp Giants,Belfius Mons,2,1,1,159,149
+Antwerp Giants,CSM Constanta,2,2,0,172,151
+Antwerp Giants,Cholet,2,0,2,158,184
+Antwerp Giants,Crailsheim Merlins,2,0,2,155,170
+Antwerp Giants,FC Porto,2,1,1,160,152
+Antwerp Giants,Fribourg Olympic,2,0,2,151,191
+Antwerp Giants,Gaziantep,2,1,1,150,157
+Antwerp Giants,Hapoel Haifa,2,0,2,119,131
+Antwerp Giants,Ionikos,2,1,1,179,171
+Antwerp Giants,Kyiv Basket,2,1,1,165,160
+Antwerp Giants,Reggiana,2,1,1,173,145
+Antwerp Giants,Rostock,2,0,2,143,170
+Antwerp Giants,Swans Gmunden,2,1,1,179,178
+Antwerp Giants,Tartu Ulikool,2,2,0,201,154
+Anwil Wloclawek,BC Dnipro,2,2,0,214,134
+Anwil Wloclawek,Bamberg,2,0,2,155,163
+Anwil Wloclawek,Bashkimi,2,1,1,168,151
+Anwil Wloclawek,Basketball Braunschweig,2,1,1,181,163
+Anwil Wloclawek,Bilbao,2,0,2,150,159
+Anwil Wloclawek,CSM Oradea,2,2,0,165,139
+Anwil Wloclawek,CSU Sibiu,2,2,0,163,112
+Anwil Wloclawek,Caledonia Gladiators,2,1,1,156,138
+Anwil Wloclawek,Cholet,2,2,0,161,155
+Anwil Wloclawek,Fribourg Olympic,2,1,1,179,179
+Anwil Wloclawek,Gaziantep,2,1,1,175,160
+Anwil Wloclawek,Keravnos,2,2,0,170,128
+Anwil Wloclawek,Kormend,2,2,0,182,125
+Anwil Wloclawek,Ludwigsburg,2,0,2,165,178
+Anwil Wloclawek,PAOK,2,0,2,189,198
+Anwil Wloclawek,Sassari,2,0,2,149,155
+Anwil Wloclawek,Spirou Charleroi,2,0,2,165,178
+Anwil Wloclawek,Trepca,2,2,0,193,165
+Arges Pitesti,CSM Oradea,2,1,1,154,156
+Arges Pitesti,Parnu,2,1,1,137,138
+Arges Pitesti,Spojnia Stargard,2,1,1,139,128
+BC Dnipro,CSM Constanta,2,1,1,142,153
+BC Dnipro,Corona Brasov,2,0,2,133,178
+BC Dnipro,Sassari,2,0,2,117,192
+BC Dnipro,Sporting CP,2,1,1,135,138
+BC Kalev/Cramo,Bamberg,2,2,0,165,144
+BC Kalev/Cramo,Basket Zaragoza,2,1,1,150,149
+BC Kalev/Cramo,Budivelnyk,2,2,0,158,140
+BC Kalev/Cramo,CSM Oradea,2,1,1,149,170
+BC Kalev/Cramo,Cholet,2,1,1,139,154
+BC Kalev/Cramo,Crailsheim Merlins,2,2,0,169,154
+BC Kalev/Cramo,Den Bosch,2,1,1,145,149
+BC Kalev/Cramo,Dijon,2,0,2,163,172
+BC Kalev/Cramo,Donar Groningen,2,2,0,169,106
+BC Kalev/Cramo,Gaziantep,2,0,2,132,169
+BC Kalev/Cramo,Le Portel,2,2,0,143,117
+BC Kalev/Cramo,Neftchi IK,2,1,1,172,177
+BC Kalev/Cramo,PAOK,2,0,2,156,166
+BC Kalev/Cramo,Rilski Sportist,2,2,0,175,137
+BC Kalev/Cramo,Trefl Sopot,2,1,1,159,176
+BC Prievidza,Balkan,2,2,0,172,129
+BC Prievidza,Cibona,2,1,1,184,185
+BC Prievidza,Keravnos,2,2,0,191,127
+BC Prievidza,Kutaisi,2,2,0,185,173
+BC Prievidza,PAOK,2,0,2,137,188
+BC Prievidza,Pelister,2,1,1,180,172
+BC Prievidza,Samobor,2,2,0,201,148
+BC Prievidza,Sporting CP,2,1,1,167,174
+BC Prievidza,Virtus Zagreb,2,1,1,168,152
+Bahcesehir Kol.,Bakken Bears,2,2,0,176,161
+Bahcesehir Kol.,Chemnitz,2,1,1,179,180
+Bahcesehir Kol.,FC Porto,2,1,1,168,142
+Bahcesehir Kol.,Iraklis,2,2,0,150,129
+Bahcesehir Kol.,Jonava,2,2,0,210,146
+Bahcesehir Kol.,Legia,2,2,0,177,156
+Bahcesehir Kol.,London Lions,2,2,0,183,143
+Bahcesehir Kol.,Nymburk,2,1,1,184,180
+Bahcesehir Kol.,Reggiana,2,2,0,162,143
+Bahcesehir Kol.,Sabah Baku,2,2,0,182,145
+Bahcesehir Kol.,Saratov,2,1,1,167,170
+Bahcesehir Kol.,Varese,2,1,1,161,154
+Bakken Bears,Basket Zaragoza,2,1,1,165,183
+Bakken Bears,CSM Oradea,2,2,0,154,143
+Bakken Bears,Crailsheim Merlins,2,1,1,164,168
+Bakken Bears,FC Porto,2,1,1,191,188
+Bakken Bears,Korfez Basket,2,0,2,156,167
+Bakken Bears,London Lions,2,1,1,170,162
+Bakken Bears,Minsk,2,2,0,194,173
+Bakken Bears,Norrkoping,2,1,1,158,157
+Bakken Bears,Peristeri,2,1,1,166,160
+Bakken Bears,Reggiana,2,1,1,146,164
+Bakken Bears,Saratov,2,0,2,174,198
+Bakken Bears,Szombathely,2,0,2,155,173
+Balkan,FC Porto,2,0,2,143,180
+Balkan,Gottingen,2,0,2,145,177
+Balkan,Keravnos,2,1,1,146,158
+Balkan,Kutaisi,2,0,2,170,179
+Balkan,Levice,2,1,1,153,156
+Balkan,Opava,2,1,1,148,147
+Balkan,Sporting CP,2,1,1,153,160
+Balkan,Vechta,2,0,2,142,165
+Bamberg,CSM Oradea,2,0,2,164,177
+Bamberg,Chemnitz,2,1,1,157,169
+Bamberg,Galil Elyon,2,2,0,193,164
+Bamberg,Golden Eagle Ylli,2,1,1,154,141
+Bamberg,Keravnos,2,2,0,179,145
+Bashkimi,Cibona,2,1,1,168,162
+Bashkimi,Dijon,2,1,1,167,167
+Bashkimi,Reggiana,2,1,1,142,176
+Basket Zaragoza,Brindisi,2,2,0,182,159
+Basket Zaragoza,Bursaspor,2,2,0,195,171
+Basket Zaragoza,Chemnitz,2,0,2,150,200
+Basket Zaragoza,Cholet,2,0,2,154,173
+Basket Zaragoza,FC Porto,2,1,1,161,156
+Basket Zaragoza,Gravelines-Dunkerque,2,1,1,170,160
+Basket Zaragoza,Hapoel HaEmek,2,1,1,169,170
+Basket Zaragoza,Korfez Basket,2,2,0,156,136
+Basket Zaragoza,Levice,2,1,1,172,167
+Basket Zaragoza,Maroussi,2,1,1,175,172
+Basket Zaragoza,Nymburk,2,1,1,146,149
+Basket Zaragoza,Peristeri,2,0,2,150,178
+Basket Zaragoza,Petkim Spor,2,1,1,151,169
+Basket Zaragoza,Reggiana,2,1,1,149,153
+Basket Zaragoza,Saratov,2,0,2,166,192
+Basket Zaragoza,Sassari,2,1,1,162,144
+Basket Zaragoza,Szombathely,2,2,0,187,156
+Basket Zaragoza,Tofas,2,1,1,176,163
+Basketball Braunschweig,Keravnos,2,1,1,172,166
+Basketball Braunschweig,PAOK,2,1,1,175,167
+Basketball Braunschweig,Tofas,2,0,2,182,199
+Basketball Braunschweig,Trepca,2,2,0,164,140
+Bayreuth,Donar Groningen,2,2,0,155,125
+Bayreuth,Kapfenberg Bulls,2,2,0,183,149
+Bayreuth,Legia,2,0,2,143,175
+Bayreuth,Leiden,2,0,2,177,187
+Bayreuth,London Lions,2,1,1,178,169
+Bayreuth,Parma Perm,2,0,2,163,183
+Belfius Mons,Ionikos,2,1,1,152,152
+Belfius Mons,Sporting CP,2,0,2,133,150
+Benfica,CSM Oradea,2,1,1,150,125
+Benfica,Den Bosch,2,1,1,151,154
+Benfica,Opava,2,2,0,185,173
+Benfica,Parma Perm,2,2,0,175,158
+Benfica,Sporting CP,2,0,2,136,161
+Benfica,Trefl Sopot,2,1,1,143,146
+Bilbao,Brno,2,2,0,220,151
+Bilbao,CSU Sibiu,2,2,0,162,132
+Bilbao,Caledonia Gladiators,2,2,0,184,117
+Bilbao,Chemnitz,2,1,1,155,171
+Bilbao,Cholet,2,1,1,170,170
+Bilbao,Dijon,2,1,1,155,145
+Bilbao,FC Porto,2,2,0,165,158
+Bilbao,Gottingen,2,1,1,155,155
+Bilbao,Le Portel,2,2,0,152,139
+Bilbao,Legia,2,1,1,145,136
+Bilbao,Neptunas,2,2,0,169,125
+Bilbao,Peristeri,2,1,1,167,148
+Bilbao,Petkim Spor,2,2,0,162,129
+Bilbao,Sassari,2,2,0,168,149
+Bilbao,Sporting CP,2,2,0,184,151
+Bilbao,Szombathely,2,2,0,193,169
+Bilbao,Tofas,2,1,1,177,174
+Brindisi,Budivelnyk,2,0,2,153,167
+Brindisi,Donar Groningen,2,2,0,168,122
+Brno,Kutaisi,2,1,1,157,146
+Brno,Parnu,2,2,0,164,144
+Brno,Peristeri,2,0,2,148,174
+Budivelnyk,Cholet,2,1,1,152,155
+Budivelnyk,Donar Groningen,2,2,0,160,142
+Budivelnyk,Hapoel Haifa,2,1,1,152,160
+Budivelnyk,Karhu Basket,2,1,1,130,134
+Budivelnyk,Levice,2,1,1,149,158
+Bursaspor,Levice,2,1,1,175,164
+CSM Constanta,Cholet,2,0,2,131,210
+CSM Constanta,Fribourg Olympic,2,0,2,153,207
+CSM Oradea,Chemnitz,2,0,2,177,196
+CSM Oradea,Cholet,2,1,1,158,168
+CSM Oradea,Corona Brasov,2,2,0,177,150
+CSM Oradea,Dijon,2,1,1,184,164
+CSM Oradea,FC Porto,2,1,1,130,133
+CSM Oradea,KK Bosna,2,0,2,142,160
+CSM Oradea,Kataja,2,2,0,192,165
+CSM Oradea,Keravnos,2,1,1,168,149
+CSM Oradea,Leiden,2,2,0,172,154
+CSM Oradea,Levice,2,1,1,173,158
+CSM Oradea,Mechelen,2,2,0,184,148
+CSM Oradea,PAOK,2,1,1,151,147
+CSM Oradea,Parnu,2,2,0,169,139
+CSM Oradea,Petkim Spor,2,1,1,150,155
+CSM Oradea,Reggiana,2,1,1,140,167
+CSM Oradea,Rilski Sportist,2,2,0,189,125
+CSM Oradea,Spojnia Stargard,2,2,0,154,140
+CSM Oradea,Sporting CP,2,2,0,155,132
+CSM Oradea,Szolnoki Olaj,2,2,0,153,128
+CSM Oradea,Trefl Sopot,2,2,0,163,138
+CSM Oradea,Varese,2,0,2,177,203
+CSM Oradea,Virtus Zagreb,2,2,0,210,179
+CSU Sibiu,Caledonia Gladiators,2,0,2,135,176
+Caledonia Gladiators,Dijon,2,0,2,116,192
+Caledonia Gladiators,Ludwigsburg,2,1,1,135,157
+Caledonia Gladiators,Trepca,2,2,0,80,76
+Chemnitz,Cholet,2,0,2,148,160
+Chemnitz,Den Bosch,2,2,0,165,127
+Chemnitz,FC Porto,2,1,1,173,168
+Chemnitz,Galil Elyon,2,1,1,184,157
+Chemnitz,Golden Eagle Ylli,2,2,0,191,132
+Chemnitz,Leiden,2,2,0,166,115
+Chemnitz,Peja,2,2,0,197,135
+Chemnitz,SCM Craiova,2,2,0,178,141
+Chemnitz,Spojnia Stargard,2,2,0,181,141
+Chemnitz,Varese,2,1,1,187,175
+Cholet,FC Porto,2,1,1,173,182
+Cholet,Fribourg Olympic,2,2,0,175,156
+Cholet,Le Portel,2,2,0,177,142
+Cholet,Mechelen,2,1,1,174,157
+Cholet,PAOK,2,1,1,177,178
+Cholet,Rilski Sportist,2,2,0,183,140
+Cholet,SCM Craiova,2,2,0,146,120
+Cholet,Sassari,2,2,0,160,145
+Cibona,Dijon,2,1,1,161,167
+Cibona,Reggiana,2,1,1,140,146
+Corona Brasov,Petkim Spor,2,0,2,147,182
+Crailsheim Merlins,Den Bosch,2,2,0,191,181
+Crailsheim Merlins,Gaziantep,2,0,2,182,202
+Crailsheim Merlins,Kyiv Basket,2,1,1,153,135
+Crailsheim Merlins,Leiden,2,1,1,148,153
+Crailsheim Merlins,Minsk,2,1,1,172,153
+Crailsheim Merlins,Norrkoping,2,1,1,182,157
+Crailsheim Merlins,Peristeri,2,2,0,154,121
+Crailsheim Merlins,Reggiana,2,0,2,150,163
+Crailsheim Merlins,SCM Craiova,2,1,1,162,154
+Crailsheim Merlins,Voluntari,2,2,0,169,140
+Den Bosch,FC Porto,2,2,0,153,132
+Den Bosch,Fribourg Olympic,2,1,1,155,148
+Den Bosch,Gaziantep,2,0,2,135,175
+Den Bosch,Opava,2,1,1,159,170
+Den Bosch,Parma Perm,2,0,2,127,159
+Den Bosch,Parnu,2,1,1,154,130
+Den Bosch,Peja,2,1,1,193,190
+Den Bosch,Spojnia Stargard,2,0,2,154,165
+Dijon,Dinamo Zagreb,2,2,0,200,141
+Dijon,PAOK,2,1,1,178,188
+Dijon,Reggiana,2,1,1,167,172
+Dijon,Trepca,2,2,0,207,157
+Dinamo Bucharest,Peja,2,2,0,201,141
+Donar Groningen,Kapfenberg Bulls,2,2,0,174,144
+Donar Groningen,London Lions,2,0,2,127,164
+FC Porto,Fribourg Olympic,2,2,0,163,148
+FC Porto,Gottingen,2,2,0,169,145
+FC Porto,Karhu Basket,2,0,2,145,156
+FC Porto,Legia,2,0,2,142,153
+FC Porto,Limburg,2,2,0,163,137
+FC Porto,Maroussi,2,1,1,161,158
+FC Porto,Norrkoping,2,2,0,163,135
+FC Porto,PAOK,2,1,1,169,153
+FC Porto,Parnu,2,1,1,170,159
+FC Porto,Rostock,2,1,1,155,171
+FC Porto,SCM Craiova,2,2,0,173,137
+FC Porto,Tartu Ulikool,2,0,2,149,184
+FC Porto,Tofas,2,1,1,177,177
+Fribourg Olympic,Ludwigsburg,2,0,2,131,160
+Fribourg Olympic,PAOK,2,0,2,138,144
+Fribourg Olympic,Parnu,2,2,0,181,158
+Fribourg Olympic,Spirou Charleroi,2,2,0,187,149
+Galil Elyon,Golden Eagle Ylli,2,2,0,178,149
+Gaziantep,Hapoel Haifa,2,1,1,148,142
+Gaziantep,Swans Gmunden,2,1,1,159,154
+Gottingen,Keravnos,2,2,0,192,140
+Gottingen,TSU,2,2,0,172,166
+Gottingen,Varese,2,1,1,195,188
+Gravelines-Dunkerque,Korfez Basket,2,1,1,151,147
+Gravelines-Dunkerque,Leiden,2,1,1,143,123
+Gravelines-Dunkerque,Nymburk,2,1,1,131,143
+Gravelines-Dunkerque,Trepca,2,1,1,151,125
+Hapoel HaEmek,Reggiana,2,0,2,140,180
+Hapoel HaEmek,Saratov,2,0,2,133,202
+Hapoel Haifa,Karhu Basket,2,0,2,135,151
+Hapoel Haifa,Levice,2,1,1,157,165
+Hapoel Haifa,Swans Gmunden,2,2,0,142,130
+Ionikos,Sporting CP,2,1,1,147,166
+Iraklis,Leiden,2,0,2,146,163
+Iraklis,Mornar Bar,2,1,1,148,170
+Ironi Eilat,Kyiv Basket,2,1,1,149,148
+Ironi Eilat,Rilski Sportist,2,1,1,177,172
+Ironi Eilat,Trefl Sopot,2,1,1,171,174
+Jonava,Karhu Basket,2,2,0,202,182
+Jonava,Legia,2,0,2,149,212
+Jonava,Rostock,2,1,1,165,151
+Jonava,Sporting CP,2,0,2,169,194
+KK Bosna,Lublin,2,1,1,159,160
+KK Bosna,Mechelen,2,2,0,164,139
+KK Bosna,Murcia,2,1,1,150,159
+KK Bosna,Reggiana,2,1,1,152,164
+KK Bosna,Rilski Sportist,2,2,0,156,120
+KK Bosna,Szombathely,2,1,1,144,151
+KK Bosna,Virtus Zagreb,2,2,0,171,161
+Kapfenberg Bulls,London Lions,2,0,2,139,168
+Karhu Basket,Kormend,2,2,0,167,151
+Karhu Basket,Levice,2,2,0,191,126
+Karhu Basket,Rostock,2,0,2,157,191
+Karhu Basket,Sporting CP,2,2,0,197,169
+Kataja,Legia,2,0,2,147,174
+Kataja,Levice,2,1,1,147,151
+Keravnos,Levice,2,1,1,157,154
+Keravnos,Opava,2,1,1,163,156
+Keravnos,Pelister,2,2,0,191,160
+Keravnos,TSU,2,1,1,144,142
+Keravnos,Tofas,2,0,2,177,198
+Keravnos,Varese,2,0,2,170,192
+Keravnos,Virtus Zagreb,2,0,2,150,190
+Korfez Basket,Norrkoping,2,2,0,169,129
+Korfez Basket,Nymburk,2,0,2,117,153
+Kormend,Sporting CP,2,0,2,182,188
+Kutaisi,Peristeri,2,0,2,120,203
+Kyiv Basket,Reggiana,2,0,2,79,80
+Kyiv Basket,Rilski Sportist,2,1,1,164,158
+Kyiv Basket,Trefl Sopot,2,2,0,135,133
+Le Portel,Rilski Sportist,2,2,0,154,120
+Le Portel,Sassari,2,1,1,153,164
+Legia,Leiden,2,1,1,149,155
+Legia,Levice,2,2,0,160,140
+Legia,Parma Perm,2,1,1,148,139
+Legia,Reggiana,2,0,2,143,151
+Legia,Sporting CP,2,2,0,192,170
+Legia,Szolnoki Olaj,2,2,0,158,134
+Leiden,Mornar Bar,2,1,1,152,160
+Leiden,Parma Perm,2,2,0,170,163
+Leiden,Trepca,2,2,0,164,130
+Leiden,Varese,2,2,0,163,156
+Levice,Opava,2,1,1,164,160
+Limburg,PAOK,2,0,2,146,168
+Limburg,Szolnoki Olaj,2,2,0,177,169
+London Lions,Saratov,2,0,2,158,188
+Lublin,Murcia,2,0,2,150,182
+Lublin,Rilski Sportist,2,1,1,168,168
+Ludwigsburg,Spirou Charleroi,2,2,0,173,124
+Ludwigsburg,Trepca,2,2,0,157,111
+Maroussi,Norrkoping,2,1,1,170,154
+Maroussi,Peja,2,2,0,204,156
+Maroussi,Sabah Baku,2,2,0,164,141
+Maroussi,Spirou Charleroi,2,1,1,156,149
+Maroussi,Tofas,2,0,2,157,173
+Mechelen,Rilski Sportist,2,2,0,205,140
+Minsk,Peristeri,2,1,1,157,165
+Mornar Bar,Nymburk,2,0,2,138,175
+Mornar Bar,Sabah Baku,2,1,1,154,156
+Murcia,PAOK,2,1,1,162,164
+Murcia,Reggiana,2,2,0,162,147
+Murcia,Rilski Sportist,2,2,0,166,124
+Murcia,Rostock,2,2,0,174,159
+Murcia,Szombathely,2,2,0,177,142
+Murcia,Trefl Sopot,2,2,0,185,143
+Neftchi IK,Parnu,2,1,1,141,140
+Neftchi IK,Trefl Sopot,2,1,1,155,179
+Norrkoping,SCM Craiova,2,0,2,142,167
+Norrkoping,Sabah Baku,2,1,1,149,153
+Norrkoping,Spirou Charleroi,2,0,2,171,190
+Norrkoping,Voluntari,2,0,2,130,152
+Nymburk,Sabah Baku,2,2,0,192,150
+Nymburk,Varese,2,0,2,141,171
+Opava,Parma Perm,2,0,2,147,188
+PAOK,Peristeri,2,1,1,181,165
+PAOK,Sporting CP,2,2,0,171,129
+PAOK,Szolnoki Olaj,2,2,0,174,135
+PAOK,Trepca,2,2,0,162,149
+Parnu,Spojnia Stargard,2,0,2,131,172
+Peja,Spojnia Stargard,2,1,1,170,170
+Pelister,Virtus Zagreb,2,0,2,150,189
+Peristeri,Petkim Spor,2,1,1,148,167
+Peristeri,Sassari,2,2,0,179,160
+Petkim Spor,Sassari,2,2,0,158,142
+Reggiana,Saratov,2,1,1,164,168
+Reggiana,Virtus Zagreb,2,2,0,177,150
+Rilski Sportist,Trefl Sopot,2,0,2,145,174
+Rostock,Szombathely,2,1,1,159,155
+Rostock,Tartu Ulikool,2,2,0,194,159
+Rostock,Trefl Sopot,2,1,1,171,155
+SCM Craiova,Voluntari,2,2,0,144,121
+Sabah Baku,Spirou Charleroi,2,0,2,149,160
+Sassari,Valcea,2,2,0,191,138
+Sassari,Vechta,2,1,1,178,171
+Spirou Charleroi,Sporting CP,2,0,2,141,148
+Sporting CP,Trefl Sopot,2,2,0,159,135
+Sporting CP,Valcea,2,2,0,223,128
+Sporting CP,Vechta,2,1,1,160,173
+Szombathely,Trefl Sopot,2,2,0,169,153
+TSU,Varese,2,0,2,164,203
+Valcea,Vechta,2,1,1,162,179
+AEK Larnaca,Antwerp Giants,1,0,1,60,76
+AEK Larnaca,Thorl,1,1,0,77,68
+AEK Larnaca,Wurzburg,1,1,0,73,65
+Absheron Lions,Geneva Lions,1,0,1,83,105
+Anorthosis,Bnei Herzliya,1,0,1,63,87
+Anorthosis,Kormend,1,0,1,87,91
+Aris,BC Wolves,1,0,1,72,83
+BC Dnipro,Trefl Sopot,1,0,1,82,88
+BC Kalev/Cramo,Korfez Basket,1,1,0,84,78
+BC Kalev/Cramo,SCM Craiova,1,1,0,84,79
+BC Kalev/Cramo,Sigal Prishtina,1,1,0,98,61
+BC Kalev/Cramo,Virtus Zagreb,1,1,0,93,73
+BC Prievidza,Denizli Basket,1,0,1,69,83
+BC Wolves,Rilski Sportist,1,0,1,76,91
+Bakken Bears,Benfica,1,0,1,81,91
+Bashkimi,Valmiera Glass Via,1,1,0,79,77
+Basket Zaragoza,Jamtland,1,1,0,81,65
+Basket Zaragoza,Pardubice,1,1,0,94,88
+Basquet Girona,Dinamo Bucharest,1,1,0,87,75
+Batumi,Trier,1,0,1,59,92
+Bayreuth,Hapoel Haifa,1,1,0,80,75
+Bayreuth,Szedeak,1,1,0,84,77
+Benfica,Donar Groningen,1,1,0,81,73
+Benfica,Voluntari,1,1,0,83,77
+Besiktas,Cholet,1,0,1,62,93
+Bnei Herzliya,Kormend,1,1,0,97,88
+Boras,Chernomorets,1,0,1,105,109
+Boras,Kataja,1,1,0,78,71
+Botev Academic,Iraklis,1,0,1,75,95
+CSM Oradea,Fribourg Olympic,1,1,0,93,67
+Chalon/Saone,Manchester Basketball,1,1,0,79,72
+Chernomorets,Kataja,1,0,1,85,96
+Cholet,Leiden,1,1,0,71,59
+Czarni Slupsk,Jamtland,1,1,0,83,73
+Czarni Slupsk,Leiden,1,0,1,74,78
+Donar Groningen,Rabotnicki,1,1,0,65,62
+Donar Groningen,Rapid Bucuresti,1,0,1,65,69
+Donar Groningen,Sabah Baku,1,0,1,72,75
+Donar Groningen,Swans Gmunden,1,1,0,80,53
+Dziki Warszawa,Tartu Ulikool,1,1,0,103,76
+Enisey,Hapoel Haifa,1,0,1,80,85
+Esenler Erokspor,Gence,1,1,0,92,63
+FC Porto,Keravnos,1,1,0,70,58
+FC Porto,Nes Ziona,1,1,0,79,70
+FC Porto,Nevezis,1,1,0,100,84
+Feniks 2010,Keravnos,1,0,1,60,107
+Feniks 2010,Rostock,1,0,1,72,101
+Gottingen,Sporting CP,1,0,1,83,84
+Gottingen,Trepca,1,1,0,76,62
+Hapoel Haifa,Kataja,1,1,0,75,64
+Hapoel Haifa,Rilski Sportist,1,1,0,68,61
+Iraklis,MZT Skopje,1,1,0,64,59
+Iraklis,Trefl Sopot,1,1,0,74,72
+Jamtland,Pardubice,1,1,0,77,76
+Jonava,SCM Craiova,1,0,1,59,65
+Kapfenberg Bulls,SCM Craiova,1,0,1,55,71
+Keravnos,Parnu,1,1,0,88,70
+Keravnos,Rostock,1,0,1,74,93
+Kolossos Rhodes,SCM Craiova,1,1,0,77,65
+Korfez Basket,Nevezis,1,1,0,98,88
+Kumanovo,Swans Gmunden,1,0,1,60,83
+Levice,Oostende,1,0,1,69,76
+Lok. Plovdiv,VEF Riga,1,0,1,83,106
+Mykonos,Neftchi IK,1,1,0,78,58
+Nancy,Vienna Basket,1,1,0,66,65
+Nes Ziona,Parnu,1,1,0,86,82
+Nitra Blue Wings,Szczecin,1,0,1,81,88
+Opava,Split,1,0,1,68,74
+Parnu,Tindastoll,1,0,1,62,69
+Parnu,Trepca,1,0,1,67,77
+Parnu,Vienna Basket,1,1,0,72,67
+Promitheas,Trepca,1,1,0,91,77
+Rabotnicki,Rapid Bucuresti,1,0,1,57,87
+Rabotnicki,Sabah Baku,1,0,1,81,83
+Rapid Bucuresti,Sabah Baku,1,0,1,71,90
+Rilski Sportist,Sporting CP,1,0,1,75,79
+Szedeak,TFT Skopje,1,1,0,92,76
+Szolnoki Olaj,Zielona Gora,1,0,1,80,90
+Tindastoll,Trepca,1,0,1,69,77
