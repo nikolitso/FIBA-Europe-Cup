@@ -351,27 +351,29 @@ const ODDS = {};
 for (const r of (window.ODDS && window.ODDS.list) || []) ODDS[r.h + '|' + r.a] = r;
 const MIN_GAMES = 8;
 const fmtLine = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
-// the bookmaker's implied scores, worked out the same way as the projection (home minus away = minus the spread)
-function bookScores(o){ return {hp: (o.tot - o.sp) / 2, ap: (o.tot + o.sp) / 2}; }
+const pct = x => Math.round(x * 100) + '%';
+// the bookmaker's win chances: money line odds with the bookmaker's margin taken out
+function bookWin(o){ return o && o.mlH && o.mlA ? (1 / o.mlH) / (1 / o.mlH + 1 / o.mlA) : null; }
 function bookCells(o){
   if (!o) return '<td class="n tag" colspan="3">–</td><td class="n tag gap">–</td>';
-  const {hp, ap} = bookScores(o);
+  const pb = bookWin(o);
   const ml = o.mlH && o.mlA ? `${o.mlH.toFixed(2)} / ${o.mlA.toFixed(2)}` : '–';
-  return `<td class="n" title="Home points implied by the bookmaker line"><b>${hp.toFixed(1)}</b></td><td class="n" title="Away points implied by the bookmaker line"><b>${ap.toFixed(1)}</b></td>
-    <td class="n hcp" title="Bookmaker handicap, home minus away (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)">${sgn(-o.sp)}</td>
+  return (pb === null ? '<td class="n tag" colspan="2" title="No money line">–</td>'
+      : `<td class="n" title="Home win chance from the money line, margin removed"><b>${pct(pb)}</b></td><td class="n" title="Away win chance from the money line, margin removed"><b>${pct(1 - pb)}</b></td>`) +
+    `<td class="n hcp" title="Bookmaker handicap, home minus away (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)">${sgn(-o.sp)}</td>
     <td class="n gap${ml === '–' ? ' tag' : ''}" title="Money line odds, home / away">${ml}</td>`;
 }
 // who each side favours: 1 home, -1 away, 0 level
 const favourite = h => h > 0 ? 1 : h < 0 ? -1 : 0;
 const sideName = v => v > 0 ? 'Home' : v < 0 ? 'Away' : 'Level';
 // model against bookmaker, only when the sample is big enough: handicap difference and whether they pick the same winner
-function edgeCells(p, o, hp, ap){
+function edgeCells(p, o, mh){
   const none = t => `<td class="n tag" colspan="2" title="${t}">${t}</td>`;   // say why there is no comparison
   if (!o) return none('No bookmaker line yet');
   if (!p) return none('No comparable games');
   if (p.n < MIN_GAMES) return none(`Only ${p.n} game${p.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`);
-  const dh = (hp - ap) + o.sp;                           // book handicap (home minus away) is minus the spread
-  const fm = favourite(hp - ap), fb = favourite(-o.sp);
+  const dh = mh + o.sp;                                  // book handicap (home minus away) is minus the spread
+  const fm = favourite(mh), fb = favourite(-o.sp);
   const same = fm === fb;
   return `<td class="n gap hcp" title="Model handicap minus bookmaker handicap: above zero means the model likes the home side more than the bookmaker does"><b>${sgn(dh)}</b></td>
     <td class="n ${same ? 'tag' : 'hcp'}" title="Model favours ${sideName(fm)}, bookmaker favours ${sideName(fb)}">${same ? 'Agree' : '<b>Differs</b>'}</td>`;
@@ -384,20 +386,51 @@ function peers(c, n){
   if (i < 0) return null;
   return {set: new Set(RANK.slice(Math.max(0, i - n), i + n + 1).map(r => r.c)), rank: i + 1};
 }
-// past games in which a club of the home group played at home against a club of the away group playing away
+// The model ("mix", chosen by backtest.py on 2018-19 to 2026-27 games): the handicap is the average of
+//  1. the group handicap - past games between the home group and the away group in either direction, home advantage
+//     taken out of every score and put back for this game, recent games counting more (half-life 18 months), and
+//  2. the Elo gap - country ratings from the power rankings plus home advantage, turned into points.
+// The win chance is the handicap on a normal curve with the spread of the backtest's misses.
+const HALF_LIFE_DAYS = 548, ELO_POINTS = 0.060, ELO_HOME = 75, SPREAD = 14.8;
+function phi(x){                                                   // standard normal distribution
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const q = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return x > 0 ? 1 - q : q;
+}
+const eloOf = c => { RANK ||= computeRankings(); const r = RANK.find(x => x.c === c); return r ? r.elo : 1500; };
+// past games between the two groups, in either direction
 function pjGames(home, away, nh, na){
   const gh = peers(teams[home], nh), ga = peers(teams[away], na);
   if (!gh || !ga) return null;
   const inSample = pjSample();
-  const games = matches.filter(m => m[8] !== 'AWA.' && inSample(m) && teams[m[4]] !== teams[m[5]] && gh.set.has(teams[m[4]]) && ga.set.has(teams[m[5]]));
+  const games = matches.filter(m => m[8] !== 'AWA.' && inSample(m) && teams[m[4]] !== teams[m[5]] &&
+    ((gh.set.has(teams[m[4]]) && ga.set.has(teams[m[5]])) || (gh.set.has(teams[m[5]]) && ga.set.has(teams[m[4]]))));
   return {gh, ga, games};
+}
+function sampleHomeAdv(){                                          // average home margin in the sample
+  const inSample = pjSample();
+  const g = matches.filter(m => m[8] !== 'AWA.' && inSample(m) && teams[m[4]] !== teams[m[5]]);
+  return g.length ? g.reduce((t, m) => t + m[6] - m[7], 0) / g.length : 0;
 }
 function project(home, away, nh, na){
   const g = pjGames(home, away, nh, na);
-  if (!g || !g.games.length) return null;
-  const n = g.games.length;
-  const w = g.games.filter(m => m[6] > m[7]).length;
-  return {hp: g.games.reduce((t, m) => t + m[6], 0) / n, ap: g.games.reduce((t, m) => t + m[7], 0) / n, n, w, l: n - w};
+  if (!g) return null;
+  const half = sampleHomeAdv() / 2, now = Date.now();
+  let sh = 0, sa = 0, w = 0, n = 0, wins = 0;
+  for (const m of g.games){
+    const wt = 0.5 ** ((now - Date.parse(m[3])) / 864e5 / HALF_LIFE_DAYS);
+    if (g.gh.set.has(teams[m[4]]) && g.ga.set.has(teams[m[5]])){   // home group at home
+      sh += wt * (m[6] - half); sa += wt * (m[7] + half); w += wt; n++; if (m[6] > m[7]) wins++;
+    }
+    if (g.gh.set.has(teams[m[5]]) && g.ga.set.has(teams[m[4]])){   // home group away
+      sh += wt * (m[7] + half); sa += wt * (m[6] - half); w += wt; n++; if (m[7] > m[6]) wins++;
+    }
+  }
+  const elo = ELO_POINTS * (eloOf(teams[home]) - eloOf(teams[away]) + ELO_HOME);
+  const group = w ? (sh / w + half) - (sa / w - half) : null;
+  const hcp = Math.round((group === null ? elo : (group + elo) / 2) * 10) / 10;
+  return {hcp, group, elo, pHome: phi(hcp / SPREAD), n, w: wins, l: n - wins};
 }
 const peerSelect = (i, side, v) => `<select class="peer" data-i="${i}" data-side="${side}" aria-label="${side === 'h' ? 'Home' : 'Away'} places">` +
   [0, 1, 2, 3].map(k => `<option value="${k}"${k === v ? ' selected' : ''}>±${k}</option>`).join('') + '</select>';
@@ -406,19 +439,16 @@ function projectionRow(f, i){
   const ch = teams[home] || '', ca = teams[away] || '';
   const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
   const p = project(home, away, nh, na);
-  let cells = '<td class="n tag gap" colspan="5">No comparable games</td>';
-  let hr = 0, ar = 0;
+  let cells = '<td class="n tag gap" colspan="5">No ranking for one of the countries yet</td>';
   const o = ODDS[home + '|' + away];
   if (p){
-    const hp = Math.round(p.hp * 10) / 10, ap = Math.round(p.ap * 10) / 10;   // round first so the row adds up
-    hr = hp; ar = ap;
-    cells = `<td class="n"><b>${hp.toFixed(1)}</b></td><td class="n"><b>${ap.toFixed(1)}</b></td>
-      <td class="n hcp">${sgn(hp - ap)}</td><td class="n" title="Home group record in those games"><span class="w">${p.w}</span>–<span class="l">${p.l}</span></td><td class="n tag gap" title="Games used: home-group clubs at home against away-group clubs away">${p.n}</td>`;
+    cells = `<td class="n"><b>${pct(p.pHome)}</b></td><td class="n"><b>${pct(1 - p.pHome)}</b></td>
+      <td class="n hcp">${sgn(p.hcp)}</td><td class="n" title="Home group record in those games">${p.n ? `<span class="w">${p.w}</span>–<span class="l">${p.l}</span>` : '–'}</td><td class="n tag gap" title="Games between the two groups in the sample, either direction">${p.n}</td>`;
   }
   const rk = rankOf;
   return `<tr class="click" data-i="${i}"><td class="n">${when.slice(11)}</td>
     <td><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))}${rk(ch)})</span> – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))}${rk(ca)})</span></td>
-    <td class="n">${peerSelect(i, 'h', nh)}</td><td class="n gap">${peerSelect(i, 'a', na)}</td>${cells}${bookCells(o)}${edgeCells(p, o, hr, ar)}</tr>`;
+    <td class="n">${peerSelect(i, 'h', nh)}</td><td class="n gap">${peerSelect(i, 'a', na)}</td>${cells}${bookCells(o)}${edgeCells(p, o, p && p.hcp)}</tr>`;
 }
 function renderProjectionDetail(i){
   const box = $('pjView');
@@ -433,19 +463,18 @@ function renderProjectionDetail(i){
     ${filterBar()}
     <div class="pjbar"><span class="tag">Places either side in the power rankings:</span>
       <label>Home side ${peerSelect(i, 'h', nh)}</label><label>Away side ${peerSelect(i, 'a', na)}</label></div>`;
-  if (!g || !g.games.length){
-    html += `<div class="empty">No comparable games for these windows and this sample.</div>`;
+  if (!g){
+    html += `<div class="empty">No ranking for one of the countries yet.</div>`;
   } else {
-    const n = g.games.length, hp = g.games.reduce((t, m) => t + m[6], 0) / n, ap = g.games.reduce((t, m) => t + m[7], 0) / n;
-    const hr = Math.round(hp * 10) / 10, ar = Math.round(ap * 10) / 10, w = g.games.filter(m => m[6] > m[7]).length;
+    const p = project(home, away, nh, na), n = p.n;
     const list = g.games.slice().sort((x, y) => y[3].localeCompare(x[3]));
-    const o = ODDS[home + '|' + away];
+    const o = ODDS[home + '|' + away], pb = bookWin(o);
     html += `<div class="card"><div class="score">
         <div><div class="name">${esc(home)}</div><div class="ctry">Home</div></div>
-        <div><div class="big">${hr.toFixed(1)}–${ar.toFixed(1)}</div><div class="lbl">${n} games (W–L ${w}–${n - w}) · hcp ${sgn(hr - ar)}</div></div>
+        <div><div class="big">${pct(p.pHome)}–${pct(1 - p.pHome)}</div><div class="lbl">hcp ${sgn(p.hcp)} · group ${p.group === null ? '–' : sgn(Math.round(p.group * 10) / 10)} · Elo gap ${sgn(Math.round(p.elo * 10) / 10)} · ${n} games (W–L ${p.w}–${p.l})</div></div>
         <div><div class="name">${esc(away)}</div><div class="ctry">Away</div></div></div></div>
-      ${o ? `<div class="note" style="margin-bottom:14px"><b>Bookmaker:</b> Hcp ${sgn(-o.sp)} (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)${o.mlH && o.mlA ? ' · money line ' + o.mlH.toFixed(2) + ' / ' + o.mlA.toFixed(2) : ''}.
-        ${n >= MIN_GAMES ? `<b>Model vs book:</b> handicap ${sgn((hr - ar) + o.sp)} (model minus bookmaker; above zero = the model likes the home side more). The model favours <b>${sideName(favourite(hr - ar))}</b>, the bookmaker <b>${sideName(favourite(-o.sp))}</b>.` : `<b>No comparison:</b> the sample has ${n} games, fewer than ${MIN_GAMES}.`}</div>` : ''}
+      ${o ? `<div class="note" style="margin-bottom:14px"><b>Bookmaker:</b> ${pb === null ? '' : pct(pb) + '–' + pct(1 - pb) + ' · '}Hcp ${sgn(-o.sp)} (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)${o.mlH && o.mlA ? ' · money line ' + o.mlH.toFixed(2) + ' / ' + o.mlA.toFixed(2) : ''}.
+        ${n >= MIN_GAMES ? `<b>Model vs book:</b> handicap ${sgn(Math.round((p.hcp + o.sp) * 10) / 10)} (model minus bookmaker; above zero = the model likes the home side more). The model favours <b>${sideName(favourite(p.hcp))}</b>, the bookmaker <b>${sideName(favourite(-o.sp))}</b>.` : `<b>No comparison:</b> the sample has ${n} games, fewer than ${MIN_GAMES}.`}</div>` : ''}
       <div class="tag" style="margin-bottom:6px"><b>Home group (±${nh}):</b> ${group(g.gh, ch)}</div>
       <div class="tag" style="margin-bottom:18px"><b>Away group (±${na}):</b> ${group(g.ga, ca)}</div>
       <h2>Games used</h2><div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Match</th><th class="n">Score</th><th>Competition</th></tr>` +
@@ -476,16 +505,18 @@ function renderProjections(){
       <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
       <th colspan="2" class="grp gap" title="How many places either side of each country in the power rankings feed its group">Places</th>
       <th colspan="5" class="grp gap">Projection</th>
-      <th colspan="4" class="grp gap" title="The bookmaker line, shown as projected home and away scores">Bookmaker</th><th colspan="2" class="grp" title="Model against bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
+      <th colspan="4" class="grp gap" title="The bookmaker's win chances, handicap and money line">Bookmaker</th><th colspan="2" class="grp" title="Model against bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
       <tr><th class="n">Home</th><th class="n gap">Away</th>
-      <th class="n" title="Projected home points">Home</th><th class="n" title="Projected away points">Away</th><th class="n" title="Projected handicap: home minus away">Hcp</th><th class="n" title="Home group wins–losses in the games used">W–L</th><th class="n gap" title="Games used: home-group clubs at home against away-group clubs away">Games</th>
-      <th class="n" title="Home points implied by the bookmaker line">Home</th><th class="n" title="Away points implied by the bookmaker line">Away</th><th class="n" title="Bookmaker handicap: home minus away">Hcp</th><th class="n gap" title="Money line odds, home / away">ML</th>
+      <th class="n" title="Home win chance">Home %</th><th class="n" title="Away win chance">Away %</th><th class="n" title="Projected handicap: home minus away">Hcp</th><th class="n" title="Home group wins–losses in the games used">W–L</th><th class="n gap" title="Games between the two groups in the sample, either direction">Games</th>
+      <th class="n" title="Home win chance from the money line">Home %</th><th class="n" title="Away win chance from the money line">Away %</th><th class="n" title="Bookmaker handicap: home minus away">Hcp</th><th class="n gap" title="Money line odds, home / away">ML</th>
       <th class="n gap" title="Model handicap minus bookmaker handicap">Hcp</th><th class="n" title="Do the model and the bookmaker favour the same side?">Pick</th></tr>
       ${rows.map(([f, i]) => projectionRow(f, i)).join('')}</table></div>`).join('') +
-    `<div class="tag" style="margin-top:14px">How it works: each side is stood in for by the countries ranked within the chosen number of places of its own country in the power rankings
-     (the country itself included; at the top or bottom of the table the window is cut short). Only games in the chosen sample (see the filters at the top) in which a club from the home group played at home
-     against a club from the away group playing away are counted; the projection is the average score of each side in those games, and Games is how many there were.
-     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's handicap (home minus away) and money line, with the home and away scores that line implies. <b>Model vs book</b>: the first number is the model's handicap minus the bookmaker's (positive = the model likes the home side more); <b>Pick</b> says whether the two favour the same side or differ. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
+    `<div class="tag" style="margin-top:14px">How it works: the handicap (home minus away) is the average of two estimates.
+     The <b>group</b> estimate stands each side in for by the countries ranked within the chosen number of places of its own country in the power rankings,
+     and averages every game in the chosen sample between the two groups, in either direction, with home advantage taken out of each score and recent games counting more (Games is how many there were).
+     The <b>Elo</b> estimate is the gap between the two countries' power-ranking ratings plus home advantage, in points. The win % is that handicap turned into a chance of winning.
+     This mix picked the winner in 67.8% of 466 recent games in a backtest, against 65.7% for the earlier home-at-home group average.
+     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's win chances (from the money line, margin removed), handicap and money line. <b>Model vs book</b>: the first number is the model's handicap minus the bookmaker's (positive = the model likes the home side more); <b>Pick</b> says whether the two favour the same side or differ. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
   box.querySelectorAll('tr.click').forEach(tr => tr.onclick = e => {
     if (e.target.closest('select')) return;
     pjDetail = +tr.dataset.i; sync(); renderProjections(); window.scrollTo({top: 0, behavior: 'smooth'});
@@ -510,9 +541,8 @@ window.makeSnapshot = function(date){
     if (!o) return;
     const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
     const p = project(f[2], f[3], nh, na);
-    const hp = p ? Math.round(p.hp * 10) / 10 : null, ap = p ? Math.round(p.ap * 10) / 10 : null;
-    games.push({when: f[0].slice(11), h: f[2], a: f[3], nh, na,
-      mh: p ? Math.round((hp - ap) * 10) / 10 : null, n: p ? p.n : 0,
+    games.push({when: f[0].slice(11), h: f[2], a: f[3], nh, na, model: 'mix',
+      mh: p ? p.hcp : null, pH: p ? Math.round(p.pHome * 1000) / 1000 : null, n: p ? p.n : 0,
       bh: -o.sp, mlH: o.mlH, mlA: o.mlA});
   });
   return JSON.stringify({date, round: FX.find(f => f[0].slice(0, 10) === date)?.[1] || '', taken: new Date().toLocaleDateString('en-CA'),
