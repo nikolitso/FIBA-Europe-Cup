@@ -24,3 +24,7 @@ Results source: BetExplorer.
 ## Site
 
 `site/` mirrors the live front end (https://antonisnikolitsopoulos.com/fibaeuropecup/), which is served from the `fibaeuropecup/` folder of the website repo. `site/data.js` there covers 2015-16 onwards, so it is no longer produced by `build_site.py` alone. `site/odds.js` holds the bookmaker lines used by the Projections comparison.
+
+### Archive
+
+`site/archive.js` holds one frozen entry per round (model and bookmaker total / handicap, written before the games). To add a round: update `odds.js`, open the Projections tab with the settings to freeze, run `makeSnapshot('YYYY-MM-DD')` in the browser console and add the returned JSON to `archive.js`. Results appear on the Archive tab by themselves once the games are in `data.js`.

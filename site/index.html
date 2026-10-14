@@ -71,6 +71,10 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .chip{background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:500 12px var(--mono);padding:5px 12px;cursor:pointer}
 .chip:hover{color:var(--text)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:#0c1424}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 8px}
+.metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.metric .lbl{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.metric .big2{font:500 24px var(--mono);color:var(--gold)}
 .pjbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin:0 0 8px}
 .pjbar label{font:400 13px var(--mono);color:var(--muted);text-transform:none;letter-spacing:0;margin:0;display:flex;align-items:center;gap:8px}
 select.peer{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font:500 14px var(--mono);padding:4px 6px;cursor:pointer}
@@ -91,6 +95,7 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div class="tabs" id="tabs">
     <a href="#view=fixtures" data-view="fixtures" class="on">Fixtures</a>
     <a href="#view=projections" data-view="projections">Projections</a>
+    <a href="#view=archive" data-view="archive">Archive</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
   </div>
@@ -98,6 +103,7 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div id="fxView"></div>
   <div id="rkView" hidden></div>
   <div id="pjView" hidden></div>
+  <div id="arView" hidden></div>
 
   <div id="h2hView" hidden>
   <div class="controls">
@@ -123,6 +129,7 @@ select.peer:focus{outline:2px solid var(--gold)}
 <script src="data.js"></script>
 <script src="fixtures.js"></script>
 <script src="odds.js"></script>
+<script src="archive.js"></script>
 <script>
 const {matches, teams} = window.DATA;
 let mode = 'country';
@@ -487,6 +494,93 @@ function renderProjections(){
   });
 }
 
+// ---------- Archive: frozen projections and bookmaker lines per round, with the results once they are in
+// archive.js is written from window.makeSnapshot('YYYY-MM-DD') (run in the browser console on the Projections tab,
+// with the settings to freeze selected). Model and book numbers are stored, so later data never changes them.
+window.makeSnapshot = function(date){
+  const games = [];
+  FX.forEach((f, i) => {
+    if (f[0].slice(0, 10) !== date) return;
+    const o = ODDS[f[2] + '|' + f[3]];
+    if (!o) return;
+    const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
+    const p = project(f[2], f[3], nh, na);
+    const hp = p ? Math.round(p.hp * 10) / 10 : null, ap = p ? Math.round(p.ap * 10) / 10 : null;
+    games.push({when: f[0].slice(11), h: f[2], a: f[3], nh, na,
+      mt: p ? Math.round((hp + ap) * 10) / 10 : null, mh: p ? Math.round((hp - ap) * 10) / 10 : null, n: p ? p.n : 0,
+      bt: o.tot, bh: -o.sp, mlH: o.mlH, mlA: o.mlA});
+  });
+  return JSON.stringify({date, round: FX.find(f => f[0].slice(0, 10) === date)?.[1] || '', taken: new Date().toLocaleDateString('en-CA'),
+    sample: sampleText(), games});
+};
+function arResult(date, h, a){
+  const t = Date.parse(date + 'T12:00:00Z');
+  return matches.find(m => m[4] === h && m[5] === a && m[8] !== 'AWA.' && Math.abs(Date.parse(m[3] + 'T12:00:00Z') - t) <= 36 * 3600e3);
+}
+function renderArchive(){
+  const box = $('arView');
+  const snaps = ((window.ARCHIVE && window.ARCHIVE.list) || []).slice().sort((x, y) => y.date.localeCompare(x.date));
+  if (!snaps.length){ box.innerHTML = '<div class="empty">Nothing archived yet.</div>'; return; }
+  const S = {total: 0, res: 0, cmp: 0, eh: [0, 0], et: [0, 0], ch: [0, 0, 0], ct: [0, 0, 0], sh: [0, 0], st: [0, 0]};   // [model, book(, tie)]
+  const closer = (m, b) => m < b ? 'Model' : m > b ? 'Book' : 'Tie';
+  const sections = snaps.map(sn => {
+    const rows = sn.games.map(g => {
+      S.total++;
+      const cmp = g.n >= MIN_GAMES && g.mt !== null;
+      const r = arResult(sn.date, g.h, g.a);
+      const mv = cmp ? `<td class="n gap hcp"><b>${sgn(g.mh - g.bh)}</b></td><td class="n hcp"><b>${sgn(g.mt - g.bt)}</b></td>`
+                     : `<td class="n tag gap" title="Fewer than ${MIN_GAMES} games in the sample: no comparison">–</td><td class="n tag">–</td>`;
+      let res = '<td class="n tag gap" colspan="3">pending</td><td class="n tag gap" colspan="2"></td>';
+      if (r){
+        S.res++;
+        const ah = r[6] - r[7], at = r[6] + r[7];
+        let cl = '<td class="n tag gap">–</td><td class="n tag">–</td>';
+        if (cmp){
+          S.cmp++;
+          const eh = [Math.abs(ah - g.mh), Math.abs(ah - g.bh)], et = [Math.abs(at - g.mt), Math.abs(at - g.bt)];
+          S.eh[0] += eh[0]; S.eh[1] += eh[1]; S.et[0] += et[0]; S.et[1] += et[1];
+          const c1 = closer(eh[0], eh[1]), c2 = closer(et[0], et[1]);
+          S.ch[c1 === 'Model' ? 0 : c1 === 'Book' ? 1 : 2]++; S.ct[c2 === 'Model' ? 0 : c2 === 'Book' ? 1 : 2]++;
+          // the side of the line the model leaned to: handicap (home / away covers), total (over / under)
+          if (g.mh !== g.bh && ah !== g.bh){ S.sh[1]++; if ((g.mh > g.bh) === (ah > g.bh)) S.sh[0]++; }
+          if (g.mt !== g.bt && at !== g.bt){ S.st[1]++; if ((g.mt > g.bt) === (at > g.bt)) S.st[0]++; }
+          const cls = c => c === 'Model' ? 'w' : c === 'Book' ? 'l' : 'tag';
+          cl = `<td class="n gap ${cls(c1)}">${c1}</td><td class="n ${cls(c2)}">${c2}</td>`;
+        }
+        res = `<td class="n gap"><b>${r[6]}–${r[7]}</b>${r[8] === 'AET' ? ' <span class="tag">OT</span>' : ''}</td><td class="n">${at}</td><td class="n">${sgn(ah)}</td>${cl}`;
+      }
+      const ch = teams[g.h] || '', ca = teams[g.a] || '';
+      return `<tr><td class="n">${esc(g.when)}</td>
+        <td><b>${esc(g.h)}</b> <span class="tag">(${esc(code(ch))})</span> – <b>${esc(g.a)}</b> <span class="tag">(${esc(code(ca))})</span></td>
+        <td class="n gap">${g.mt === null ? '–' : g.mt.toFixed(1)}</td><td class="n hcp">${g.mh === null ? '–' : sgn(g.mh)}</td>
+        <td class="n gap">${g.bt.toFixed(1)}</td><td class="n hcp">${sgn(g.bh)}</td>${mv}${res.replace('gap', 'gap')}</tr>`;
+    }).join('');
+    return `<h2>${dayName(sn.date)} <span class="tag">${esc(sn.round)}</span></h2>
+      <div class="tag" style="margin-bottom:8px">Frozen ${esc(sn.taken)} · sample: ${esc(sn.sample)}</div>
+      <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
+        <th colspan="2" class="grp gap">Projection</th><th colspan="2" class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model minus bookmaker, only where the sample had 8 or more games">Model vs book</th>
+        <th colspan="3" class="grp gap">Result</th><th colspan="2" class="grp" title="Which line was nearer the actual result, only where there was a comparison">Closer</th></tr>
+        <tr><th class="n gap">Total</th><th class="n">Hcp</th><th class="n gap">Total</th><th class="n">Hcp</th><th class="n gap">Hcp</th><th class="n">Total</th>
+        <th class="n gap">Score</th><th class="n">Total</th><th class="n">Hcp</th><th class="n gap">Hcp</th><th class="n">Total</th></tr>${rows}</table></div>`;
+  }).join('');
+  const avg = (v, n) => n ? (v / n).toFixed(1) : '–';
+  const pc = (a, b) => b ? `${a} of ${b}` : '–';
+  const card = (t, v, sub) => `<div class="metric"><div class="lbl">${t}</div><div class="big2">${v}</div><div class="tag">${sub}</div></div>`;
+  const summary = `<div class="metrics">
+    ${card('Results in', `${S.res} of ${S.total}`, `${S.cmp} with a comparison (Games ${MIN_GAMES}+)`)}
+    ${card('Handicap error (avg points)', S.cmp ? `${avg(S.eh[0], S.cmp)} <span class="tag">vs</span> ${avg(S.eh[1], S.cmp)}` : '–', 'model vs book, lower is better')}
+    ${card('Total error (avg points)', S.cmp ? `${avg(S.et[0], S.cmp)} <span class="tag">vs</span> ${avg(S.et[1], S.cmp)}` : '–', 'model vs book, lower is better')}
+    ${card('Closer on handicap', S.cmp ? `${S.ch[0]} <span class="tag">vs</span> ${S.ch[1]}` : '–', `model vs book${S.ch[2] ? ', ' + S.ch[2] + ' tie' : ''}`)}
+    ${card('Closer on total', S.cmp ? `${S.ct[0]} <span class="tag">vs</span> ${S.ct[1]}` : '–', `model vs book${S.ct[2] ? ', ' + S.ct[2] + ' tie' : ''}`)}
+    ${card("Model's side of the handicap", pc(S.sh[0], S.sh[1]), 'covered (pushes and equal lines left out)')}
+    ${card("Model's side of the total", pc(S.st[0], S.st[1]), 'over / under was right (pushes and equal lines left out)')}
+  </div>`;
+  box.innerHTML = summary + sections +
+    `<div class="tag" style="margin-top:14px">Each round is frozen from the Projections tab before the games, with the sample shown above, so later results never change it. Hcp is home minus away; Model vs book is the model minus the bookmaker.
+     The result fills in by itself once the match is in the data. Closer = whichever of the model and the bookmaker was nearer the actual handicap / total. The model's side is the side of the bookmaker line it leaned to (above the line = home covers / over).
+     Only matches with ${MIN_GAMES} or more games in the sample are compared.</div>`;
+}
+
 // ---------- Power rankings: country Elo over all games in date order
 // Start 1500; K 20; home advantage 75 Elo points; margin-of-victory multiplier as in
 // FiveThirtyEight's NBA Elo. Same-country games are skipped; awarded games count without margin.
@@ -586,16 +680,18 @@ function renderRankings(){
   });
 }
 function setView(v){
-  view = ['fixtures', 'projections', 'h2h', 'rankings'].includes(v) ? v : 'fixtures';
+  view = ['fixtures', 'projections', 'archive', 'h2h', 'rankings'].includes(v) ? v : 'fixtures';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
-  document.body.classList.toggle('wide', view === 'projections');
+  document.body.classList.toggle('wide', view === 'projections' || view === 'archive');
   $('fxView').hidden = view !== 'fixtures';
   $('rkView').hidden = view !== 'rankings';
+  $('arView').hidden = view !== 'archive';
   $('pjView').hidden = view !== 'projections';
   $('h2hView').hidden = view !== 'h2h';
   if (view === 'fixtures') renderFixtures();
   if (view === 'rankings') renderRankings();
   if (view === 'projections') renderProjections();
+  if (view === 'archive') renderArchive();
 }
 document.querySelectorAll('#tabs a').forEach(b => b.onclick = e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); if (b.dataset.view === 'projections') pjDetail = null; setView(b.dataset.view); sync(); });
 // Home: back to the start (countries, all venues, nothing selected, head to head tab)
