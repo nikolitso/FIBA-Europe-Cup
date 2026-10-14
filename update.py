@@ -1,17 +1,17 @@
 """One-step updater for the FIBA Europe Cup site.
 
-    python update.py             # results + odds + fixtures from BetExplorer, then publish
+    python update.py             # results (Flashscore) + odds and fixtures (BetExplorer), then publish
     python update.py --no-push   # update the files only, do not commit or push
 
 Steps
-  1. results  - 2026-27 games on BetExplorer's results pages  -> fibaeuropecup/data.js          (update_site.py)
+  1. results  - new 2026-27 games from Flashscore (headless browser) -> fibaeuropecup/data.js  (flashscore_results.py)
   2. odds     - handicap / total / money line, next round     -> fibaeuropecup/odds.js          (update_site.py;
                 Stake.com, else bwin, else Betsson)
   3. fixtures - upcoming games and kick-off times (Athens)    -> fibaeuropecup/fixtures.js
   4. publish  - commit and push the three files in the website repo, mirror them into this repo's site/ and push
 
-Nothing is written or published if BetExplorer blocks the request (it is unavailable in some countries): run it
-again later. The Archive tab (frozen projections) is not touched here; its results fill in by themselves.
+Results never depend on BetExplorer. If BetExplorer blocks or limits the odds / fixtures requests (it is unavailable
+in some countries), those two files are left as they were and the new results are still published. The Archive tab (frozen projections) is not touched here; its results fill in by themselves.
 """
 import json
 import re
@@ -26,6 +26,7 @@ from zoneinfo import ZoneInfo
 import requests
 from bs4 import BeautifulSoup
 
+import flashscore_results
 import update_site
 
 HERE = Path(__file__).parent
@@ -130,13 +131,16 @@ def mirror_and_publish(label, subfolder, message):
 def main():
     push = "--no-push" not in sys.argv
     try:
-        update_site.update_results()
-        update_site.update_odds()
-        update_fixtures()
-    except (SystemExit, requests.RequestException) as e:   # blocked, rate-limited or offline: stop cleanly
+        flashscore_results.update()
+    except SystemExit as e:                               # e.g. a new club without a country: nothing written
         print(e)
-        print("Nothing was published. BetExplorer may be blocking or limiting requests: try again in a few minutes.")
+        print("Nothing was published.")
         sys.exit(1)
+    for step in (update_site.update_odds, update_fixtures):
+        try:
+            step()
+        except (SystemExit, requests.RequestException) as e:   # BetExplorer blocked or limiting: keep the old file
+            print(f"{step.__name__}: skipped ({e})")
     if push:
         mirror_and_publish("FIBA Europe Cup", "fibaeuropecup", f"FIBA Europe Cup: update results, odds and fixtures ({time.strftime('%Y-%m-%d %H:%M')})")
     print("done")

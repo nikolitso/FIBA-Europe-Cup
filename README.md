@@ -42,8 +42,8 @@ Reads BetExplorer: results for the current season replace the 2026-27 rows in th
 ## One-step update
 
 ```
-python update.py            # results + odds + fixtures from BetExplorer, then publish
+python update.py            # results from Flashscore, odds + fixtures from BetExplorer, then publish
 python update.py --no-push  # update the files only
 ```
 
-Or double-click `Update FIBA Europe Cup.bat` on the Desktop. It runs `update_site.py` (results, odds) and refreshes `fixtures.js`, then commits and pushes the three files in the website repo and mirrors them into `site/` here. It keeps at least 2 s between requests and backs off when BetExplorer answers 429; if it blocks the request nothing is changed.
+Or double-click `Update FIBA Europe Cup.bat` on the Desktop. Results come from Flashscore (`flashscore_results.py`, a headless Chromium via Playwright: `pip install playwright` and `python -m playwright install chromium` once); new games are added, existing rows are never changed. Odds (`update_site.py`) and `fixtures.js` come from BetExplorer and are skipped, keeping the old files, if BetExplorer is blocked. It then commits and pushes the three files in the website repo and mirrors them into `site/` here. It keeps at least 2 s between requests and backs off when BetExplorer answers 429; if it blocks the request nothing is changed.
