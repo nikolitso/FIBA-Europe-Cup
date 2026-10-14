@@ -22,6 +22,7 @@ Germany,Spain,8,4,4,685,634
 Greece,Portugal,8,5,3,629,625
 Hungary,Portugal,8,2,6,655,678
 Poland,Spain,8,1,7,579,671
+Estonia,France,7,3,4,506,527
 Estonia,Romania,7,3,4,510,555
 Hungary,Poland,7,2,5,508,583
 Azerbaijan,Estonia,6,3,3,504,476
@@ -30,7 +31,6 @@ Bulgaria,Spain,6,0,6,366,538
 Croatia,Slovakia,6,2,4,485,553
 Cyprus,Romania,6,3,3,493,497
 Cyprus,Slovakia,6,1,5,424,528
-Estonia,France,6,3,3,445,443
 Estonia,Germany,6,4,2,493,492
 Estonia,Netherlands,6,4,2,444,409
 Finland,Poland,6,1,5,457,512
@@ -55,6 +55,7 @@ Greece,Kosovo,5,5,0,457,382
 Netherlands,Poland,5,2,3,387,388
 Netherlands,Portugal,5,3,2,380,364
 Poland,Ukraine,5,3,2,435,351
+Azerbaijan,Greece,4,0,4,261,322
 Azerbaijan,Poland,4,1,3,329,376
 Belgium,France,4,1,3,315,358
 Belgium,Romania,4,2,2,320,335
@@ -89,7 +90,6 @@ Romania,Sweden,4,4,0,319,272
 Romania,Turkey,4,1,3,297,337
 Romania,Ukraine,4,3,1,331,275
 Austria,Netherlands,3,0,3,197,254
-Azerbaijan,Greece,3,0,3,199,242
 Azerbaijan,Turkey,3,0,3,208,274
 Bulgaria,Israel,3,1,2,233,245
 Cyprus,Hungary,3,0,3,222,276
@@ -104,6 +104,8 @@ Georgia,Germany,3,0,3,225,264
 Germany,Hungary,3,2,1,243,232
 Greece,Poland,3,3,0,272,261
 Greece,Romania,3,2,1,224,216
+Greece,Switzerland,3,3,0,224,203
+Hungary,Romania,3,0,3,204,246
 Israel,Russia,3,1,2,218,282
 Lithuania,Portugal,3,0,3,253,294
 Lithuania,Turkey,3,0,3,234,308
@@ -209,8 +211,6 @@ Greece,Montenegro,2,1,1,148,170
 Greece,Netherlands,2,0,2,146,163
 Greece,Slovakia,2,2,0,188,137
 Greece,Sweden,2,1,1,170,154
-Greece,Switzerland,2,2,0,144,138
-Hungary,Romania,2,0,2,128,153
 Hungary,Slovakia,2,1,1,189,186
 Israel,Italy,2,0,2,140,180
 Israel,Kosovo,2,2,0,178,149
@@ -249,13 +249,16 @@ Turkey,United Kingdom,2,2,0,183,143
 Austria,Estonia,1,0,1,67,72
 Austria,France,1,0,1,65,66
 Austria,North Macedonia,1,1,0,83,60
+Austria,Poland,1,1,0,96,93
 Austria,Romania,1,0,1,55,71
 Azerbaijan,Netherlands,1,1,0,75,72
 Azerbaijan,North Macedonia,1,1,0,83,81
 Azerbaijan,Romania,1,1,0,90,71
+Azerbaijan,Slovakia,1,0,1,84,108
 Azerbaijan,Switzerland,1,0,1,83,105
 Belgium,Cyprus,1,1,0,76,60
 Belgium,Slovakia,1,1,0,76,69
+Belgium,Spain,1,0,1,76,91
 Bulgaria,Finland,1,0,1,85,96
 Bulgaria,Greece,1,0,1,75,95
 Bulgaria,Latvia,1,0,1,83,106
