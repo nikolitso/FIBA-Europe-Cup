@@ -352,25 +352,30 @@ for (const r of (window.ODDS && window.ODDS.list) || []) ODDS[r.h + '|' + r.a] =
 const MIN_GAMES = 8;
 const fmtLine = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
 // the bookmaker's scores, worked out the same way as the projection: total and handicap (home minus away = minus the spread)
+// (the total is only used here to turn the handicap into home and away scores; the site predicts winners, not totals)
 function bookScores(o){ return {hp: (o.tot - o.sp) / 2, ap: (o.tot + o.sp) / 2}; }
 function bookCells(o){
-  if (!o) return '<td class="n tag" colspan="4">–</td><td class="n tag gap">–</td>';
+  if (!o) return '<td class="n tag" colspan="3">–</td><td class="n tag gap">–</td>';
   const {hp, ap} = bookScores(o);
   const ml = o.mlH && o.mlA ? `${o.mlH.toFixed(2)} / ${o.mlA.toFixed(2)}` : '–';
   return `<td class="n" title="Home points implied by the bookmaker's total and handicap"><b>${hp.toFixed(1)}</b></td><td class="n" title="Away points implied by the bookmaker's total and handicap"><b>${ap.toFixed(1)}</b></td>
-    <td class="n tag" title="Bookmaker total, odds ${o.ov.toFixed(2)} over / ${o.un.toFixed(2)} under">${o.tot.toFixed(1)}</td>
     <td class="n hcp" title="Bookmaker handicap, home minus away (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)">${sgn(-o.sp)}</td>
     <td class="n gap${ml === '–' ? ' tag' : ''}" title="Money line odds, home / away">${ml}</td>`;
 }
-// model minus bookmaker, only when the sample is big enough
+// who each side favours: 1 home, -1 away, 0 level
+const favourite = h => h > 0 ? 1 : h < 0 ? -1 : 0;
+const sideName = v => v > 0 ? 'Home' : v < 0 ? 'Away' : 'Level';
+// model against bookmaker, only when the sample is big enough: handicap difference and whether they pick the same winner
 function edgeCells(p, o, hp, ap){
   const none = t => `<td class="n tag" colspan="2" title="${t}">${t}</td>`;   // say why there is no comparison
   if (!o) return none('No bookmaker line yet');
   if (!p) return none('No comparable games');
   if (p.n < MIN_GAMES) return none(`Only ${p.n} game${p.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`);
-  const dh = (hp - ap) + o.sp, dt = (hp + ap) - o.tot;     // book handicap (home minus away) is minus the spread
+  const dh = (hp - ap) + o.sp;                           // book handicap (home minus away) is minus the spread
+  const fm = favourite(hp - ap), fb = favourite(-o.sp);
+  const same = fm === fb;
   return `<td class="n gap hcp" title="Model handicap minus bookmaker handicap: above zero means the model likes the home side more than the bookmaker does"><b>${sgn(dh)}</b></td>
-    <td class="n hcp" title="Model total minus bookmaker total: above zero means the model expects more points"><b>${sgn(dt)}</b></td>`;
+    <td class="n ${same ? 'tag' : 'hcp'}" title="Model favours ${sideName(fm)}, bookmaker favours ${sideName(fb)}">${same ? 'Agree' : '<b>Differs</b>'}</td>`;
 }
 let pjDetail = null;                                             // fixture index whose games are open, or null for the list
 const rankOf = c => { RANK ||= computeRankings(); const r = RANK.findIndex(x => x.c === c); return r < 0 ? '' : ` #${r + 1}`; };
@@ -402,14 +407,14 @@ function projectionRow(f, i){
   const ch = teams[home] || '', ca = teams[away] || '';
   const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
   const p = project(home, away, nh, na);
-  let cells = '<td class="n tag gap" colspan="6">No comparable games</td>';
+  let cells = '<td class="n tag gap" colspan="5">No comparable games</td>';
   let hr = 0, ar = 0;
   const o = ODDS[home + '|' + away];
   if (p){
     const hp = Math.round(p.hp * 10) / 10, ap = Math.round(p.ap * 10) / 10;   // round first so the row adds up
     hr = hp; ar = ap;
     cells = `<td class="n"><b>${hp.toFixed(1)}</b></td><td class="n"><b>${ap.toFixed(1)}</b></td>
-      <td class="n tag">${(hp + ap).toFixed(1)}</td><td class="n hcp">${sgn(hp - ap)}</td><td class="n" title="Home group record in those games"><span class="w">${p.w}</span>–<span class="l">${p.l}</span></td><td class="n tag gap" title="Games used: home-group clubs at home against away-group clubs away">${p.n}</td>`;
+      <td class="n hcp">${sgn(hp - ap)}</td><td class="n" title="Home group record in those games"><span class="w">${p.w}</span>–<span class="l">${p.l}</span></td><td class="n tag gap" title="Games used: home-group clubs at home against away-group clubs away">${p.n}</td>`;
   }
   const rk = rankOf;
   return `<tr class="click" data-i="${i}"><td class="n">${when.slice(11)}</td>
@@ -438,10 +443,10 @@ function renderProjectionDetail(i){
     const o = ODDS[home + '|' + away];
     html += `<div class="card"><div class="score">
         <div><div class="name">${esc(home)}</div><div class="ctry">Home</div></div>
-        <div><div class="big">${hr.toFixed(1)}–${ar.toFixed(1)}</div><div class="lbl">${n} games (W–L ${w}–${n - w}) · total ${(hr + ar).toFixed(1)} · hcp ${sgn(hr - ar)}</div></div>
+        <div><div class="big">${hr.toFixed(1)}–${ar.toFixed(1)}</div><div class="lbl">${n} games (W–L ${w}–${n - w}) · hcp ${sgn(hr - ar)}</div></div>
         <div><div class="name">${esc(away)}</div><div class="ctry">Away</div></div></div></div>
-      ${o ? `<div class="note" style="margin-bottom:14px"><b>Bookmaker:</b> ${bookScores(o).hp.toFixed(1)}–${bookScores(o).ap.toFixed(1)} implied by Hcp ${sgn(-o.sp)} (${o.spH.toFixed(2)} / ${o.spA.toFixed(2)}) and total ${o.tot.toFixed(1)} (${o.ov.toFixed(2)} over / ${o.un.toFixed(2)} under)${o.mlH && o.mlA ? ' · money line ' + o.mlH.toFixed(2) + ' / ' + o.mlA.toFixed(2) : ''}.
-        ${n >= MIN_GAMES ? `<b>Model vs book:</b> handicap ${sgn((hr - ar) + o.sp)}, total ${sgn((hr + ar) - o.tot)} (model minus bookmaker; above zero = the model likes the home side more / expects more points).` : `<b>No comparison:</b> the sample has ${n} games, fewer than ${MIN_GAMES}.`}</div>` : ''}
+      ${o ? `<div class="note" style="margin-bottom:14px"><b>Bookmaker:</b> Hcp ${sgn(-o.sp)} (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)${o.mlH && o.mlA ? ' · money line ' + o.mlH.toFixed(2) + ' / ' + o.mlA.toFixed(2) : ''}.
+        ${n >= MIN_GAMES ? `<b>Model vs book:</b> handicap ${sgn((hr - ar) + o.sp)} (model minus bookmaker; above zero = the model likes the home side more). The model favours <b>${sideName(favourite(hr - ar))}</b>, the bookmaker <b>${sideName(favourite(-o.sp))}</b>.` : `<b>No comparison:</b> the sample has ${n} games, fewer than ${MIN_GAMES}.`}</div>` : ''}
       <div class="tag" style="margin-bottom:6px"><b>Home group (±${nh}):</b> ${group(g.gh, ch)}</div>
       <div class="tag" style="margin-bottom:18px"><b>Away group (±${na}):</b> ${group(g.ga, ca)}</div>
       <h2>Games used</h2><div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Match</th><th class="n">Score</th><th>Competition</th></tr>` +
@@ -471,17 +476,17 @@ function renderProjections(){
   box.innerHTML = head + Object.entries(byDay(list)).map(([d, rows]) => `<h2>${dayName(d)} <span class="tag">${esc(rows[0][0][1])}</span></h2>
       <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
       <th colspan="2" class="grp gap" title="How many places either side of each country in the power rankings feed its group">Places</th>
-      <th colspan="6" class="grp gap">Projection</th>
-      <th colspan="5" class="grp gap" title="The bookmaker line, shown as projected scores: total and handicap turned into home and away points">Bookmaker</th><th colspan="2" class="grp" title="Model minus bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
+      <th colspan="5" class="grp gap">Projection</th>
+      <th colspan="4" class="grp gap" title="The bookmaker line, shown as projected scores: its handicap and total turned into home and away points">Bookmaker</th><th colspan="2" class="grp" title="Model against bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
       <tr><th class="n">Home</th><th class="n gap">Away</th>
-      <th class="n" title="Projected home points">Home</th><th class="n" title="Projected away points">Away</th><th class="n" title="Projected total points">Total</th><th class="n" title="Projected handicap: home minus away">Hcp</th><th class="n" title="Home group wins–losses in the games used">W–L</th><th class="n gap" title="Games used: home-group clubs at home against away-group clubs away">Games</th>
-      <th class="n" title="Home points implied by the bookmaker line">Home</th><th class="n" title="Away points implied by the bookmaker line">Away</th><th class="n" title="Bookmaker total">Total</th><th class="n" title="Bookmaker handicap: home minus away">Hcp</th><th class="n gap" title="Money line odds, home / away">ML</th>
-      <th class="n gap" title="Model handicap minus bookmaker handicap">Hcp</th><th class="n" title="Model total minus bookmaker total">Total</th></tr>
+      <th class="n" title="Projected home points">Home</th><th class="n" title="Projected away points">Away</th><th class="n" title="Projected handicap: home minus away">Hcp</th><th class="n" title="Home group wins–losses in the games used">W–L</th><th class="n gap" title="Games used: home-group clubs at home against away-group clubs away">Games</th>
+      <th class="n" title="Home points implied by the bookmaker line">Home</th><th class="n" title="Away points implied by the bookmaker line">Away</th><th class="n" title="Bookmaker handicap: home minus away">Hcp</th><th class="n gap" title="Money line odds, home / away">ML</th>
+      <th class="n gap" title="Model handicap minus bookmaker handicap">Hcp</th><th class="n" title="Do the model and the bookmaker favour the same side?">Pick</th></tr>
       ${rows.map(([f, i]) => projectionRow(f, i)).join('')}</table></div>`).join('') +
     `<div class="tag" style="margin-top:14px">How it works: each side is stood in for by the countries ranked within the chosen number of places of its own country in the power rankings
      (the country itself included; at the top or bottom of the table the window is cut short). Only games in the chosen sample (see the filters at the top) in which a club from the home group played at home
      against a club from the away group playing away are counted; the projection is the average score of each side in those games, and Games is how many there were.
-     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns turn the bookmaker's total and handicap into home and away points (home = (total + Hcp) / 2, away = (total − Hcp) / 2), alongside the total, handicap and money line. <b>Model vs book</b> is the model minus the bookmaker: for the handicap (home minus away) a positive number means the model likes the home side more than the bookmaker does, for the total a positive number means the model expects more points. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
+     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's handicap (home minus away) and money line, with its home and away scores worked out from handicap and total. <b>Model vs book</b>: the first number is the model's handicap minus the bookmaker's (positive = the model likes the home side more); <b>Pick</b> says whether the two favour the same side or differ. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
   box.querySelectorAll('tr.click').forEach(tr => tr.onclick = e => {
     if (e.target.closest('select')) return;
     pjDetail = +tr.dataset.i; sync(); renderProjections(); window.scrollTo({top: 0, behavior: 'smooth'});
@@ -508,8 +513,8 @@ window.makeSnapshot = function(date){
     const p = project(f[2], f[3], nh, na);
     const hp = p ? Math.round(p.hp * 10) / 10 : null, ap = p ? Math.round(p.ap * 10) / 10 : null;
     games.push({when: f[0].slice(11), h: f[2], a: f[3], nh, na,
-      mt: p ? Math.round((hp + ap) * 10) / 10 : null, mh: p ? Math.round((hp - ap) * 10) / 10 : null, n: p ? p.n : 0,
-      bt: o.tot, bh: -o.sp, mlH: o.mlH, mlA: o.mlA});
+      mh: p ? Math.round((hp - ap) * 10) / 10 : null, n: p ? p.n : 0,
+      bh: -o.sp, mlH: o.mlH, mlA: o.mlA});
   });
   return JSON.stringify({date, round: FX.find(f => f[0].slice(0, 10) === date)?.[1] || '', taken: new Date().toLocaleDateString('en-CA'),
     sample: sampleText(), games});
@@ -522,64 +527,65 @@ function renderArchive(){
   const box = $('arView');
   const snaps = ((window.ARCHIVE && window.ARCHIVE.list) || []).slice().sort((x, y) => y.date.localeCompare(x.date));
   if (!snaps.length){ box.innerHTML = '<div class="empty">Nothing archived yet.</div>'; return; }
-  const S = {total: 0, res: 0, cmp: 0, eh: [0, 0], et: [0, 0], ch: [0, 0, 0], ct: [0, 0, 0], sh: [0, 0], st: [0, 0]};   // [model, book(, tie)]
+  // [model, book(, tie)]; w = winner picked, n = games where both made a pick
+  const S = {total: 0, res: 0, cmp: 0, eh: [0, 0], ch: [0, 0, 0], sh: [0, 0], w: [0, 0], wn: 0};
   const closer = (m, b) => m < b ? 'Model' : m > b ? 'Book' : 'Tie';
+  const pickCell = (fav, homeWon, gap) => !fav ? `<td class="n tag${gap ? ' gap' : ''}">–</td>`
+    : `<td class="n ${(fav > 0) === homeWon ? 'w' : 'l'}${gap ? ' gap' : ''}">${fav > 0 ? 'Home' : 'Away'} ${(fav > 0) === homeWon ? '✓' : '✗'}</td>`;
   const sections = snaps.map(sn => {
     const rows = sn.games.map(g => {
       S.total++;
-      const cmp = g.n >= MIN_GAMES && g.mt !== null;
+      const cmp = g.n >= MIN_GAMES && g.mh !== null;
       const r = arResult(sn.date, g.h, g.a);
-      const mv = cmp ? `<td class="n gap hcp"><b>${sgn(g.mh - g.bh)}</b></td><td class="n hcp"><b>${sgn(g.mt - g.bt)}</b></td>`
-                     : `<td class="n tag" colspan="2">${g.mt === null ? 'No comparable games' : `Only ${g.n} game${g.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`}</td>`;
-      let res = '<td class="n tag gap" colspan="3">pending</td><td class="n tag gap" colspan="2"></td>';
+      const mv = cmp ? `<td class="n gap hcp"><b>${sgn(g.mh - g.bh)}</b></td><td class="n ${favourite(g.mh) === favourite(g.bh) ? 'tag' : 'hcp'}">${favourite(g.mh) === favourite(g.bh) ? 'Agree' : '<b>Differs</b>'}</td>`
+                     : `<td class="n tag" colspan="2">${g.mh === null ? 'No comparable games' : `Only ${g.n} game${g.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`}</td>`;
+      let res = '<td class="n tag gap" colspan="2">pending</td><td class="n tag gap" colspan="3"></td>';
       if (r){
         S.res++;
-        const ah = r[6] - r[7], at = r[6] + r[7];
-        let cl = '<td class="n tag gap">–</td><td class="n tag">–</td>';
+        const ah = r[6] - r[7], homeWon = r[6] > r[7];
+        let cl = '<td class="n tag gap">–</td><td class="n tag gap">–</td><td class="n tag">–</td>';
         if (cmp){
           S.cmp++;
-          const eh = [Math.abs(ah - g.mh), Math.abs(ah - g.bh)], et = [Math.abs(at - g.mt), Math.abs(at - g.bt)];
-          S.eh[0] += eh[0]; S.eh[1] += eh[1]; S.et[0] += et[0]; S.et[1] += et[1];
-          const c1 = closer(eh[0], eh[1]), c2 = closer(et[0], et[1]);
-          S.ch[c1 === 'Model' ? 0 : c1 === 'Book' ? 1 : 2]++; S.ct[c2 === 'Model' ? 0 : c2 === 'Book' ? 1 : 2]++;
-          // the side of the line the model leaned to: handicap (home / away covers), total (over / under)
+          const eh = [Math.abs(ah - g.mh), Math.abs(ah - g.bh)];
+          S.eh[0] += eh[0]; S.eh[1] += eh[1];
+          const c1 = closer(eh[0], eh[1]);
+          S.ch[c1 === 'Model' ? 0 : c1 === 'Book' ? 1 : 2]++;
+          const fm = favourite(g.mh), fb = favourite(g.bh);
+          if (fm && fb){ S.wn++; if ((fm > 0) === homeWon) S.w[0]++; if ((fb > 0) === homeWon) S.w[1]++; }
+          // the side of the handicap line the model leaned to (home or away covers)
           if (g.mh !== g.bh && ah !== g.bh){ S.sh[1]++; if ((g.mh > g.bh) === (ah > g.bh)) S.sh[0]++; }
-          if (g.mt !== g.bt && at !== g.bt){ S.st[1]++; if ((g.mt > g.bt) === (at > g.bt)) S.st[0]++; }
-          const cls = c => c === 'Model' ? 'w' : c === 'Book' ? 'l' : 'tag';
-          cl = `<td class="n gap ${cls(c1)}">${c1}</td><td class="n ${cls(c2)}">${c2}</td>`;
+          const cls = c1 === 'Model' ? 'w' : c1 === 'Book' ? 'l' : 'tag';
+          cl = pickCell(fm, homeWon, true) + pickCell(fb, homeWon, true) + `<td class="n ${cls}">${c1}</td>`;
         }
-        res = `<td class="n gap"><b>${r[6]}–${r[7]}</b>${r[8] === 'AET' ? ' <span class="tag">OT</span>' : ''}</td><td class="n">${at}</td><td class="n">${sgn(ah)}</td>${cl}`;
+        res = `<td class="n gap"><b>${r[6]}–${r[7]}</b>${r[8] === 'AET' ? ' <span class="tag">OT</span>' : ''}</td><td class="n gap">${sgn(ah)}</td>${cl}`;
       }
       const ch = teams[g.h] || '', ca = teams[g.a] || '';
       return `<tr><td class="n">${esc(g.when)}</td>
         <td><b>${esc(g.h)}</b> <span class="tag">(${esc(code(ch))})</span> – <b>${esc(g.a)}</b> <span class="tag">(${esc(code(ca))})</span></td>
-        <td class="n gap">${g.mt === null ? '–' : g.mt.toFixed(1)}</td><td class="n hcp">${g.mh === null ? '–' : sgn(g.mh)}</td>
-        <td class="n gap">${g.bt.toFixed(1)}</td><td class="n hcp">${sgn(g.bh)}</td>${mv}${res.replace('gap', 'gap')}</tr>`;
+        <td class="n gap hcp">${g.mh === null ? '–' : sgn(g.mh)}</td><td class="n gap hcp">${sgn(g.bh)}</td>${mv}${res}</tr>`;
     }).join('');
     return `<h2>${dayName(sn.date)} <span class="tag">${esc(sn.round)}</span></h2>
       <div class="tag" style="margin-bottom:8px">Frozen ${esc(sn.taken)} · sample: ${esc(sn.sample)}</div>
       <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
-        <th colspan="2" class="grp gap">Projection</th><th colspan="2" class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model minus bookmaker, only where the sample had 8 or more games">Model vs book</th>
-        <th colspan="3" class="grp gap">Result</th><th colspan="2" class="grp" title="Which line was nearer the actual result, only where there was a comparison">Closer</th></tr>
-        <tr><th class="n gap">Total</th><th class="n">Hcp</th><th class="n gap">Total</th><th class="n">Hcp</th><th class="n gap">Hcp</th><th class="n">Total</th>
-        <th class="n gap">Score</th><th class="n">Total</th><th class="n">Hcp</th><th class="n gap">Hcp</th><th class="n">Total</th></tr>${rows}</table></div>`;
+        <th class="grp gap" title="The model's handicap, home minus away">Projection</th><th class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model against bookmaker, only where the sample had 8 or more games">Model vs book</th>
+        <th colspan="2" class="grp gap">Result</th><th colspan="3" class="grp" title="Only where there was a comparison">Who was right</th></tr>
+        <tr><th class="n gap">Hcp</th><th class="n gap">Hcp</th><th class="n gap" title="Model handicap minus bookmaker handicap">Hcp</th><th class="n" title="Do the model and the bookmaker favour the same side?">Pick</th>
+        <th class="n gap">Score</th><th class="n gap">Hcp</th><th class="n gap" title="The side the model favoured, and whether it won">Model</th><th class="n gap" title="The side the bookmaker favoured, and whether it won">Book</th><th class="n" title="Whose handicap was nearer the actual one">Closer</th></tr>${rows}</table></div>`;
   }).join('');
   const avg = (v, n) => n ? (v / n).toFixed(1) : '–';
   const pc = (a, b) => b ? `${a} of ${b}` : '–';
   const card = (t, v, sub) => `<div class="metric"><div class="lbl">${t}</div><div class="big2">${v}</div><div class="tag">${sub}</div></div>`;
   const summary = `<div class="metrics">
     ${card('Results in', `${S.res} of ${S.total}`, `${S.cmp} with a comparison (Games ${MIN_GAMES}+)`)}
+    ${card('Winner picked', S.wn ? `${S.w[0]} <span class="tag">vs</span> ${S.w[1]}` : '–', S.wn ? `model vs book, out of ${S.wn} (${Math.round(S.w[0] / S.wn * 100)}% vs ${Math.round(S.w[1] / S.wn * 100)}%)` : 'model vs book')}
     ${card('Handicap error (avg points)', S.cmp ? `${avg(S.eh[0], S.cmp)} <span class="tag">vs</span> ${avg(S.eh[1], S.cmp)}` : '–', 'model vs book, lower is better')}
-    ${card('Total error (avg points)', S.cmp ? `${avg(S.et[0], S.cmp)} <span class="tag">vs</span> ${avg(S.et[1], S.cmp)}` : '–', 'model vs book, lower is better')}
     ${card('Closer on handicap', S.cmp ? `${S.ch[0]} <span class="tag">vs</span> ${S.ch[1]}` : '–', `model vs book${S.ch[2] ? ', ' + S.ch[2] + ' tie' : ''}`)}
-    ${card('Closer on total', S.cmp ? `${S.ct[0]} <span class="tag">vs</span> ${S.ct[1]}` : '–', `model vs book${S.ct[2] ? ', ' + S.ct[2] + ' tie' : ''}`)}
     ${card("Model's side of the handicap", pc(S.sh[0], S.sh[1]), 'covered (pushes and equal lines left out)')}
-    ${card("Model's side of the total", pc(S.st[0], S.st[1]), 'over / under was right (pushes and equal lines left out)')}
   </div>`;
   box.innerHTML = summary + sections +
-    `<div class="tag" style="margin-top:14px">Each round is frozen from the Projections tab before the games, with the sample shown above, so later results never change it. Hcp is home minus away; Model vs book is the model minus the bookmaker.
-     The result fills in by itself once the match is in the data. Closer = whichever of the model and the bookmaker was nearer the actual handicap / total. The model's side is the side of the bookmaker line it leaned to (above the line = home covers / over).
-     Only matches with ${MIN_GAMES} or more games in the sample are compared.</div>`;
+    `<div class="tag" style="margin-top:14px">Each round is frozen from the Projections tab before the games, with the sample shown above, so later results never change it. Hcp is home minus away; Model vs book is the model's handicap minus the bookmaker's.
+     The result fills in by itself once the match is in the data. Pick: the side each one favoured (by its handicap) and whether that side won. Closer: whose handicap was nearer the actual one.
+     The model's side is the side of the bookmaker's line it leaned to (above the line = home covers). Only matches with ${MIN_GAMES} or more games in the sample are compared.</div>`;
 }
 
 // ---------- Power rankings: country Elo over all games in date order
