@@ -5,9 +5,10 @@
     python update_site.py odds       # odds only
 
 Results: every 2026-27 game on BetExplorer's results pages replaces the 2026-27 rows in the site's data.js.
-Odds:    for the next round on the fixtures page, the 10bet handicap (AH), total (O/U) and money line (H/A)
-         are written to odds.js (the line whose two odds are closest to each other; the average of the other
-         bookmakers is used if 10bet has no line for a match).
+Odds:    for the next round on the fixtures page, the handicap (AH), total (O/U) and money line (H/A) are
+         written to odds.js. Bookmaker order: Stake.com, then bwin, then Betsson (the first one that offers the
+         market for that match); if none of them does, the average of the other bookmakers. Where a bookmaker
+         lists several lines, the one whose two odds are closest to each other is used.
 The script stops without writing anything if BetExplorer blocks the request (it is unavailable in some countries).
 After running, copy the files to the site repo's folder as usual and push (the default SITE path is the local checkout).
 """
@@ -26,7 +27,7 @@ import scrape
 SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
 BASE = "https://www.betexplorer.com"
 COMP = "/basketball/europe/fiba-europe-cup/"
-BOOK = "10bet"
+BOOKS = ["Stake.com", "bwin", "Betsson"]          # bookmaker preference, in this order (per market, per match)
 SEASON = "2026-2027"
 H = {"User-Agent": "Mozilla/5.0"}
 
@@ -81,19 +82,19 @@ def odds_rows(match_id, kind):
 
 
 def pick(rows):
-    mine = [(l, o) for n, l, o in rows if n == BOOK]
-    if mine:
-        src = BOOK
-    else:                                       # no 10bet line: average the other bookmakers per line
-        by = {}
-        for _, l, o in rows:
-            by.setdefault(l, []).append(o)
-        mine = [(l, [sum(x[i] for x in v) / len(v) for i in (0, 1)]) for l, v in by.items() if len(v) >= 2]
-        src = "average"
-    if not mine:
+    for book in BOOKS:
+        mine = [(l, o) for n, l, o in rows if n == book]
+        if mine:
+            line, odds = min(mine, key=lambda x: abs(x[1][0] - x[1][1]))
+            return line, odds[0], odds[1], book
+    by = {}                                     # none of the preferred bookmakers: average the others per line
+    for _, l, o in rows:
+        by.setdefault(l, []).append(o)
+    avg = [(l, [sum(x[i] for x in v) / len(v) for i in (0, 1)]) for l, v in by.items() if len(v) >= 2]
+    if not avg:
         return None
-    line, odds = min(mine, key=lambda x: abs(x[1][0] - x[1][1]))
-    return line, odds[0], odds[1], src
+    line, odds = min(avg, key=lambda x: abs(x[1][0] - x[1][1]))
+    return line, odds[0], odds[1], "average"
 
 
 def update_odds():
@@ -119,15 +120,17 @@ def update_odds():
             print("  no handicap / total line yet:", h, "-", a)
             continue
         out.append({"h": h, "a": a, "sp": ah[0], "spH": ah[1], "spA": ah[2], "tot": ou[0], "ov": ou[1], "un": ou[2],
-                    "mlH": ha[1] if ha else None, "mlA": ha[2] if ha else None})
+                    "mlH": ha[1] if ha else None, "mlA": ha[2] if ha else None,
+                    "src": [ah[3], ou[3], ha[3] if ha else None]})
     if not out:
         raise SystemExit("No odds found; odds.js left untouched.")
-    head = ("// Bookmaker lines for upcoming fixtures from BetExplorer (10bet), keyed by the fixture's home and away club.\n"
+    head = ("// Bookmaker lines for upcoming fixtures from BetExplorer (Stake.com, else bwin, else Betsson), keyed by the fixture's home and away club.\n"
+            "// src = bookmaker used for [handicap, total, money line].\n"
             "// sp = handicap on the home side (+ means the home side is the underdog), spH / spA = its odds home / away,\n"
             "// tot = points total, ov / un = odds over / under, mlH / mlA = money line odds (null when not offered).\n")
     body = ",\n".join("  " + json.dumps(o, ensure_ascii=False) for o in out)
     (SITE / "odds.js").write_text(
-        head + 'window.ODDS = {"updated": "' + time.strftime("%Y-%m-%d") + '", "source": "BetExplorer (10bet)", "list": [\n' + body + "\n]};\n",
+        head + 'window.ODDS = {"updated": "' + time.strftime("%Y-%m-%d") + '", "source": "BetExplorer (Stake.com / bwin / Betsson)", "list": [\n' + body + "\n]};\n",
         encoding="utf-8")
     print(f"odds: round {nxt}, {len(out)} matches")
 
