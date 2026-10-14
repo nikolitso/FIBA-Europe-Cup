@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FIBA Europe Cup Head to Head</title>
+<title>FIBA Europe Cup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -17,9 +17,18 @@ body{margin:0;background:var(--bg);color:var(--text);font:17px/1.5 var(--body)}
 .wrap{max-width:980px;margin:0 auto;padding:40px 16px 80px}
 h1{font:700 clamp(30px,5vw,46px)/1.1 var(--serif);margin:0 0 6px}
 h1 span{color:var(--gold)}
+h1 a{color:inherit;text-decoration:none}
+h1 a:hover{color:var(--gold)}
+.home-link{display:inline-block;margin-bottom:14px;font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.home-link:hover{color:var(--gold)}
 .sub{font:400 13px var(--mono);color:var(--muted);letter-spacing:.04em;margin-bottom:32px}
 .controls{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:12px;align-items:end;margin-bottom:28px}
-.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;grid-column:1/-1;width:max-content}
+.tabs{display:flex;flex-wrap:wrap;gap:10px 28px;border-bottom:1px solid var(--line);margin:0 0 26px}
+.tabs a{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 18px var(--serif);padding:0 0 10px;margin-bottom:-1px;cursor:pointer;text-decoration:none}
+.tabs a.on{color:var(--text);border-color:var(--gold)}
+.tabs a:hover{color:var(--text)}
+.segs{display:flex;flex-wrap:wrap;gap:12px;grid-column:1/-1}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:max-content}
 .seg button{background:none;border:0;color:var(--muted);font:500 13px var(--mono);padding:9px 18px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
 .seg button.on{background:var(--gold);color:#0c1424}
 label{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px}
@@ -42,11 +51,29 @@ table{width:100%;border-collapse:collapse;font-size:15px}
 th{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
 td{padding:9px 10px;border-bottom:1px solid var(--line)}
 td.n,th.n{text-align:right;font-family:var(--mono);font-size:14px;white-space:nowrap}
+.fx th.grp{text-align:center;color:var(--gold);border-bottom:1px solid var(--line)}
+.fx .gap{border-right:1px solid var(--line);padding-right:14px}
+.fx td.n{padding-left:6px;padding-right:8px}
+.fx .hcp{color:var(--gold)}
 tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .w{color:var(--win)} .l{color:var(--loss)}
 .tag{font:400 11px var(--mono);color:var(--muted)}
 .empty{color:var(--muted);padding:30px 0;text-align:center}
 .scroll{overflow-x:auto}
+.note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
+.note b{color:var(--text);font-weight:600}
+.back{font:500 13px var(--mono);color:var(--gold);text-decoration:none;letter-spacing:.04em}
+.back:hover{text-decoration:underline}
+.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:0 0 14px}
+.fbar label{font:400 13px var(--mono);color:var(--muted);text-transform:none;letter-spacing:0;margin:0;display:flex;align-items:center;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:500 12px var(--mono);padding:5px 12px;cursor:pointer}
+.chip:hover{color:var(--text)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#0c1424}
+.pjbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin:0 0 8px}
+.pjbar label{font:400 13px var(--mono);color:var(--muted);text-transform:none;letter-spacing:0;margin:0;display:flex;align-items:center;gap:8px}
+select.peer{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font:500 14px var(--mono);padding:4px 6px;cursor:pointer}
+select.peer:focus{outline:2px solid var(--gold)}
 @media(max-width:640px){
   .controls{grid-template-columns:1fr auto 1fr}
   .vs{display:none} .swap{grid-column:2;grid-row:2}
@@ -56,13 +83,33 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 </head>
 <body>
 <div class="wrap">
-  <h1>FIBA Europe Cup <span>Head to Head</span></h1>
+  <a class="home-link" href="/fibaeuropecup/" data-home>&#8962; Home</a>
+  <h1><a href="/fibaeuropecup/" data-home>FIBA Europe Cup</a></h1>
   <div class="sub" id="sub"></div>
 
+  <div class="tabs" id="tabs">
+    <a href="#view=fixtures" data-view="fixtures" class="on">Fixtures</a>
+    <a href="#view=projections" data-view="projections">Projections</a>
+    <a href="#view=h2h" data-view="h2h">Head to Head</a>
+    <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
+  </div>
+
+  <div id="fxView"></div>
+  <div id="rkView" hidden></div>
+  <div id="pjView" hidden></div>
+
+  <div id="h2hView" hidden>
   <div class="controls">
-    <div class="seg" id="seg">
-      <button data-mode="team" class="on">Teams</button>
-      <button data-mode="country">Countries</button>
+    <div class="segs">
+      <div class="seg" id="seg">
+        <button data-mode="country" class="on">Countries</button>
+        <button data-mode="team">Teams</button>
+      </div>
+      <div class="seg" id="venue" aria-label="Venue">
+        <button data-venue="all" class="on">All</button>
+        <button data-venue="home">Home</button>
+        <button data-venue="away">Away</button>
+      </div>
     </div>
     <div><label for="a" id="la">Team</label><input id="a" list="opts" autocomplete="off" placeholder="Start typing"></div>
     <div class="vs">vs</div>
@@ -70,11 +117,15 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
   </div>
   <datalist id="opts"></datalist>
   <div id="out"></div>
+  </div>
 </div>
 <script src="data.js"></script>
+<script src="fixtures.js"></script>
+<script src="odds.js"></script>
 <script>
 const {matches, teams} = window.DATA;
-let mode = 'team';
+let mode = 'country';
+let venue = 'all';   // all | home | away, from the first pick's point of view
 const $ = id => document.getElementById(id);
 const ent = t => mode === 'team' ? t : teams[t];
 const fmtDate = d => d.split('-').reverse().join('.');
@@ -119,20 +170,21 @@ function render(){
   const ok = n => names().includes(n);
   if (!A){ out.innerHTML = `<div class="empty">Pick a ${mode} to see its record against everyone, or two to see their head to head.</div>`; return; }
   if (!ok(A)){ out.innerHTML = `<div class="empty">No ${mode} called “${esc(A)}”. Choose from the suggestions.</div>`; return; }
-  const gs = gamesFor(A);
+  const gs = gamesFor(A).filter(g => venue === 'all' || (venue === 'home') === g.home);
+  const where = venue === 'all' ? '' : (venue === 'home' ? ' at home' : ' away');
 
   if (B && ok(B)){
     if (A === B){ out.innerHTML = `<div class="empty">Pick two different ${mode === 'team' ? 'teams' : 'countries'}.</div>`; return; }
     const h = gs.filter(g => g.oppE === B).sort((x,y) => y.m[3].localeCompare(x.m[3]));
-    if (!h.length){ out.innerHTML = `<div class="empty">${esc(A)} and ${esc(B)} have not met in this competition.</div>`; return; }
+    if (!h.length){ out.innerHTML = `<div class="empty">${esc(A)} and ${esc(B)} have not met${venue === 'all' ? ' in this competition' : ` with ${esc(A)} playing${where}`}.</div>`; return; }
     const r = record(h);
     const sub = x => mode === 'team' ? teams[x] : '';
     let html = `<div class="card"><div class="score">
       <div><div class="name">${esc(A)}</div><div class="ctry">${esc(sub(A))}</div></div>
-      <div><div class="big">${r.w}–${r.l}</div><div class="lbl">${r.n} game${r.n>1?'s':''}</div></div>
+      <div><div class="big">${r.w}–${r.l}</div><div class="lbl">${r.n} game${r.n>1?'s':''}${where ? ` · ${esc(A)}${where}` : ''}</div></div>
       <div><div class="name">${esc(B)}</div><div class="ctry">${esc(sub(B))}</div></div></div>
       <div class="bar"><i style="width:${r.w/r.n*100}%"></i><i style="width:${r.l/r.n*100}%"></i></div>
-      <div class="facts"><span>Points <b>${r.pf}–${r.pa}</b></span><span>Avg margin <b>${r.pg?((r.pf-r.pa)/r.pg>0?'+':'')+((r.pf-r.pa)/r.pg).toFixed(1):'–'}</b> for ${esc(A)}</span><span>First meeting <b>${fmtDate(h[h.length-1].m[3])}</b></span></div></div>`;
+      <div class="facts"><span>Avg points <b>${r.pg ? (r.pf/r.pg).toFixed(1) + '–' + (r.pa/r.pg).toFixed(1) : '–'}</b></span><span>Avg margin <b>${r.pg?((r.pf-r.pa)/r.pg>0?'+':'')+((r.pf-r.pa)/r.pg).toFixed(1):'–'}</b> for ${esc(A)}</span><span>First meeting <b>${fmtDate(h[h.length-1].m[3])}</b></span></div></div>`;
     if (mode === 'country'){
       const by = {};
       for (const g of h){ const k = g.own+'|'+g.opp; (by[k] ||= []).push(g); }
@@ -146,21 +198,429 @@ function render(){
   }
 
   // Single selection: record vs every opponent
-  if (!gs.length){ out.innerHTML = `<div class="empty">No games found for ${esc(A)}.</div>`; return; }
+  if (!gs.length){ out.innerHTML = `<div class="empty">No games found for ${esc(A)}${where}.</div>`; return; }
   const by = {};
   for (const g of gs) (by[g.oppE] ||= []).push(g);
   const rows = Object.entries(by).map(([o,v]) => ({o, r:record(v), last:v.reduce((a,g)=>g.m[3]>a?g.m[3]:a,'')}))
     .sort((x,y) => y.r.n - x.r.n || x.o.localeCompare(y.o));
   const tot = record(gs);
-  out.innerHTML = `<div class="card"><div class="score"><div></div><div><div class="name">${esc(A)}</div><div class="ctry">${mode==='team'?esc(teams[A]):''}</div><div class="big" style="margin-top:12px">${tot.w}–${tot.l}</div><div class="lbl">${tot.n} games · ${rows.length} opponents</div></div><div></div></div></div>
+  out.innerHTML = `<div class="card"><div class="score"><div></div><div><div class="name">${esc(A)}</div><div class="ctry">${mode==='team'?esc(teams[A]):''}</div><div class="big" style="margin-top:12px">${tot.w}–${tot.l}</div><div class="lbl">${tot.n} games${where} · ${rows.length} opponents</div></div><div></div></div></div>
     <div class="tag" style="margin-bottom:8px">Click an opponent for the full head to head.</div>
-    <div class="scroll"><table><tr><th>Opponent</th><th class="n">P</th><th class="n">W</th><th class="n">L</th><th class="n">Pts</th><th class="n">Last</th></tr>` +
-    rows.map(({o,r,last}) => `<tr class="click" data-o="${esc(o)}"><td>${esc(o)}${mode==='team'?` <span class="tag">${esc(teams[o])}</span>`:''}</td><td class="n">${r.n}</td><td class="n w">${r.w}</td><td class="n l">${r.l}</td><td class="n">${r.pf}–${r.pa}</td><td class="n">${fmtDate(last)}</td></tr>`).join('') + `</table></div>`;
+    <div class="scroll"><table><tr><th>Opponent</th><th class="n">P</th><th class="n">W</th><th class="n">L</th><th class="n">Pts</th></tr>` +
+    rows.map(({o,r,last}) => `<tr class="click" data-o="${esc(o)}"><td>${esc(o)}${mode==='team'?` <span class="tag">${esc(teams[o])}</span>`:''}</td><td class="n">${r.n}</td><td class="n w">${r.w}</td><td class="n l">${r.l}</td><td class="n">${r.pf}–${r.pa}</td></tr>`).join('') + `</table></div>`;
   out.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => { $('b').value = tr.dataset.o; sync(); render(); window.scrollTo({top:0,behavior:'smooth'}); });
 }
 
+// ---------- Fixtures
+let view = 'fixtures';
+const FX = (window.FIXTURES && window.FIXTURES.list) || [];
+// head to head between two sides, from the first side's point of view; key: club or country name
+// FIBA / IOC three-letter country codes
+const CODE = {'Austria':'AUT','Azerbaijan':'AZE','Belarus':'BLR','Belgium':'BEL','Bosnia and Herzegovina':'BIH','Bulgaria':'BUL',
+  'Croatia':'CRO','Cyprus':'CYP','Czech Republic':'CZE','Denmark':'DEN','Estonia':'EST','Finland':'FIN','France':'FRA','Georgia':'GEO',
+  'Germany':'GER','Greece':'GRE','Hungary':'HUN','Iceland':'ISL','Israel':'ISR','Italy':'ITA','Kosovo':'KOS','Latvia':'LAT',
+  'Lithuania':'LTU','Malta':'MLT','Montenegro':'MNE','Netherlands':'NED','North Macedonia':'MKD','Poland':'POL','Portugal':'POR',
+  'Romania':'ROU','Russia':'RUS','Slovakia':'SVK','Spain':'ESP','Sweden':'SWE','Switzerland':'SUI','Turkey':'TUR','Ukraine':'UKR',
+  'United Kingdom':'GBR','Slovenia':'SLO','Norway':'NOR','Ireland':'IRL','Kazakhstan':'KAZ'};
+const code = c => CODE[c] || (c || '').slice(0, 3).toUpperCase();
+// head to head from x's point of view; homeOnly: only games where x was at home.
+// pf/pa = points for x / against x, over pg games with a real score (awarded games excluded)
+function h2hRecord(x, y, byCountry, homeOnly){
+  let w = 0, l = 0, pf = 0, pa = 0, pg = 0;
+  for (const [, , , , h, a, hp, ap, status] of matches){
+    const eh = byCountry ? teams[h] : h, ea = byCountry ? teams[a] : a;
+    let own, opp;
+    if (eh === x && ea === y) [own, opp] = [hp, ap];
+    else if (!homeOnly && eh === y && ea === x) [own, opp] = [ap, hp];
+    else continue;
+    own > opp ? w++ : l++;
+    if (status !== 'AWA.'){ pf += own; pa += opp; pg++; }
+  }
+  return {w, l, n: w + l, pf, pa, pg};
+}
+const fmt1 = v => v.toFixed(1);
+const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+// four cells: W–L, home side avg, away side avg, handicap (home avg minus away avg)
+function recCells(r){
+  if (!r.n) return '<td class="n tag">–</td><td class="n tag">–</td><td class="n tag">–</td><td class="n tag gap">–</td>';
+  const avg = r.pg ? [r.pf / r.pg, r.pa / r.pg] : null;
+  return `<td class="n"><b>${r.w}–${r.l}</b></td>` +
+    (avg ? `<td class="n">${fmt1(avg[0])}</td><td class="n">${fmt1(avg[1])}</td><td class="n gap hcp">${sgn(avg[0] - avg[1])}</td>`
+         : '<td class="n tag">–</td><td class="n tag">–</td><td class="n tag gap">–</td>');
+}
+function h2hCells(home, away){
+  const ch = teams[home] || '', ca = teams[away] || '';
+  const same = ch && ch === ca;                       // same country: compare the clubs instead
+  const [x, y, byC] = same ? [home, away, false] : [ch, ca, true];
+  return recCells(h2hRecord(x, y, byC, false)) + recCells(h2hRecord(x, y, byC, true));
+}
+function fixtureRow(f, i){
+  const [when, round, home, away] = f;
+  const ch = teams[home] || '', ca = teams[away] || '';
+  return `<tr class="click" data-i="${i}"><td class="n">${when.slice(11)}</td>
+    <td><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))})</span> – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))})</span></td>
+    ${h2hCells(home, away)}</tr>`;
+}
+// the next round: the round of the earliest game from today on, all of its games, as [fixture, index]
+function nextRoundGames(){
+  const today = new Date().toLocaleDateString('en-CA');      // YYYY-MM-DD in local time
+  const upcoming = FX.map((f, i) => [f, i]).filter(([f]) => f[0].slice(0, 10) >= today)
+                     .sort((x, y) => x[0][0].localeCompare(y[0][0]));
+  if (!upcoming.length) return [];
+  const nextRound = upcoming[0][0][1];
+  return nextRound ? upcoming.filter(([f]) => f[1] === nextRound)
+                   : upcoming.filter(([f]) => f[0].slice(0, 10) === upcoming[0][0][0].slice(0, 10));
+}
+const dayName = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+function byDay(list){
+  const days = {};
+  for (const [f, i] of list) (days[f[0].slice(0, 10)] ||= []).push([f, i]);
+  return days;
+}
+function renderFixtures(){
+  const box = $('fxView');
+  const list = nextRoundGames();
+  if (!list.length){ box.innerHTML = '<div class="empty">No upcoming fixtures.</div>'; return; }
+  const days = {};
+  for (const [f, i] of list) (days[f[0].slice(0, 10)] ||= []).push([f, i]);
+  const dayName = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+  box.innerHTML =
+    `<div class="note"><b>H2H is country against country.</b> Each fixture is compared by the countries of the two clubs, using every game between clubs of those countries since 2015–16, not only games between these two clubs. <b>H2H home</b> counts only games in which a club from the home side's country played at home. W–L is the home side's country; Home and Away are the average points of each country; Hcp is Home minus Away. Fixtures between two clubs of the same country compare the two clubs themselves.</div>` +
+    Object.entries(days).map(([d, rows]) => `<h2>${dayName(d)} <span class="tag">${esc(rows[0][0][1])}</span></h2>
+      <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="4" class="grp gap" title="All games between clubs of the two countries">H2H (countries)</th><th colspan="4" class="grp" title="Only games in which a club from the home side&#39;s country played at home">H2H home (countries)</th></tr><tr><th class="n">W–L</th><th class="n" title="Home side average points">Home</th><th class="n" title="Away side average points">Away</th><th class="n gap" title="Handicap: home average minus away average">Hcp</th><th class="n">W–L</th><th class="n" title="Home side average points">Home</th><th class="n" title="Away side average points">Away</th><th class="n" title="Handicap: home average minus away average">Hcp</th></tr>${rows.map(([f, i]) => fixtureRow(f, i)).join('')}</table></div>`).join('') +
+    `<div class="tag" style="margin-top:18px">Fixtures as of ${esc(window.FIXTURES.updated)}.</div>`;
+  box.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => openMatch(FX[+tr.dataset.i]));
+}
+function openMatch([, , home, away]){
+  const ch = teams[home], ca = teams[away];
+  if (ch && ca && ch !== ca){ setMode('country'); $('a').value = ch; $('b').value = ca; }
+  else { setMode('team'); $('a').value = home; $('b').value = away; }
+  setVenue('all');
+  setView('h2h');
+  sync(); render();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+// ---------- Projections: peer-group points model
+// The home side is replaced by the countries ranked within +/- N places of its own country in the power rankings,
+// the away side likewise (N = 1..5, default 3, set separately). Only past games in which a club of the home group
+// played AT HOME against a club of the away group playing AWAY are used; the projection is the average score of each.
+const PEER_DEFAULT = 2;
+let pjAll = {h: PEER_DEFAULT, a: PEER_DEFAULT}, pjRow = {};      // global setting, per-fixture overrides by index
+const PJ_STAGES = ['Main', 'Second stage', 'First stage', 'Preliminary', 'Play Offs', 'Qualification'];
+const PJ_STAGE_LABEL = {'Main': 'Main · Group'};
+const ALL_SEASONS = [...new Set(matches.map(m => m[0]))].sort();
+// sample filters: how many of the latest seasons to use (0 = all) and which stages count; default = Main only
+const PJ_DEFAULT_SEASONS = 5;
+let pjFilter = {seasons: PJ_DEFAULT_SEASONS, stages: new Set(['Main'])};
+function pjSample(){
+  const ok = pjFilter.seasons ? new Set(ALL_SEASONS.slice(-pjFilter.seasons)) : null;
+  return m => (!ok || ok.has(m[0])) && pjFilter.stages.has(m[1]);
+}
+const seasonLabel = x => x.slice(0, 4) + '–' + x.slice(-2);
+function sampleText(){
+  const ss = pjFilter.seasons ? ALL_SEASONS.slice(-pjFilter.seasons) : ALL_SEASONS;
+  const st = PJ_STAGES.filter(x => pjFilter.stages.has(x)).map(x => PJ_STAGE_LABEL[x] || x).join(', ');
+  return `${ss.length === 1 ? 'season ' + seasonLabel(ss[0]) : (pjFilter.seasons ? 'last ' + ss.length + ' seasons' : 'all ' + ss.length + ' seasons') + ' (' + seasonLabel(ss[0]) + ' to ' + seasonLabel(ss[ss.length - 1]) + ')'}; stages: ${st}`;
+}
+function filterBar(){
+  const opts = [...Array(ALL_SEASONS.length - 1)].map((_, k) => k + 1).concat([0]).map(k =>
+    `<option value="${k}"${k === pjFilter.seasons ? ' selected' : ''}>${k ? (k === 1 ? 'Last season' : 'Last ' + k + ' seasons') : 'All ' + ALL_SEASONS.length + ' seasons'}</option>`).join('');
+  const chips = PJ_STAGES.map(x => `<button type="button" class="chip${pjFilter.stages.has(x) ? ' on' : ''}" data-stage="${esc(x)}" aria-pressed="${pjFilter.stages.has(x)}">${esc(PJ_STAGE_LABEL[x] || x)}</button>`).join('');
+  return `<div class="fbar"><label>Sample <select id="pjSeasons" class="peer">${opts}</select></label><span class="chips">${chips}</span></div>`;
+}
+function bindFilters(box, rerender){
+  const sel = box.querySelector('#pjSeasons');
+  sel.onchange = () => { pjFilter.seasons = +sel.value; sync(); rerender(); };
+  box.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    const st = b.dataset.stage;
+    if (pjFilter.stages.has(st)){ if (pjFilter.stages.size > 1) pjFilter.stages.delete(st); }   // keep at least one stage
+    else pjFilter.stages.add(st);
+    sync(); rerender();
+  });
+}
+// bookmaker lines (odds.js) by "home|away"; the comparison is only made when the sample has at least MIN_GAMES games
+const ODDS = {};
+for (const r of (window.ODDS && window.ODDS.list) || []) ODDS[r.h + '|' + r.a] = r;
+const MIN_GAMES = 8;
+const fmtLine = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+function bookCells(o){
+  if (!o) return '<td class="n tag gap">–</td><td class="n tag">–</td><td class="n tag">–</td>';
+  const ml = o.mlH && o.mlA ? `${o.mlH.toFixed(2)} / ${o.mlA.toFixed(2)}` : '–';
+  return `<td class="n gap" title="Spread on the home side, odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away"><b>${fmtLine(o.sp)}</b></td>
+    <td class="n" title="Total, odds ${o.ov.toFixed(2)} over / ${o.un.toFixed(2)} under">${o.tot.toFixed(1)}</td>
+    <td class="n${ml === '–' ? ' tag' : ''}" title="Money line, home / away">${ml}</td>`;
+}
+// model minus bookmaker, only when the sample is big enough
+function edgeCells(p, o, hp, ap){
+  const none = t => `<td class="n tag gap" title="${t}">–</td><td class="n tag" title="${t}">–</td>`;
+  if (!o) return none('No bookmaker line for this match');
+  if (!p || p.n < MIN_GAMES) return none('Fewer than ' + MIN_GAMES + ' games in the sample: no comparison');
+  const dh = (hp - ap) + o.sp, dt = (hp + ap) - o.tot;     // book handicap (home minus away) is minus the spread
+  return `<td class="n gap hcp" title="Model handicap minus bookmaker handicap: above zero means the model likes the home side more than the bookmaker does"><b>${sgn(dh)}</b></td>
+    <td class="n hcp" title="Model total minus bookmaker total: above zero means the model expects more points"><b>${sgn(dt)}</b></td>`;
+}
+let pjDetail = null;                                             // fixture index whose games are open, or null for the list
+const rankOf = c => { RANK ||= computeRankings(); const r = RANK.findIndex(x => x.c === c); return r < 0 ? '' : ` #${r + 1}`; };
+function peers(c, n){
+  RANK ||= computeRankings();
+  const i = RANK.findIndex(r => r.c === c);
+  if (i < 0) return null;
+  return {set: new Set(RANK.slice(Math.max(0, i - n), i + n + 1).map(r => r.c)), rank: i + 1};
+}
+// past games in which a club of the home group played at home against a club of the away group playing away
+function pjGames(home, away, nh, na){
+  const gh = peers(teams[home], nh), ga = peers(teams[away], na);
+  if (!gh || !ga) return null;
+  const inSample = pjSample();
+  const games = matches.filter(m => m[8] !== 'AWA.' && inSample(m) && teams[m[4]] !== teams[m[5]] && gh.set.has(teams[m[4]]) && ga.set.has(teams[m[5]]));
+  return {gh, ga, games};
+}
+function project(home, away, nh, na){
+  const g = pjGames(home, away, nh, na);
+  if (!g || !g.games.length) return null;
+  const n = g.games.length;
+  const w = g.games.filter(m => m[6] > m[7]).length;
+  return {hp: g.games.reduce((t, m) => t + m[6], 0) / n, ap: g.games.reduce((t, m) => t + m[7], 0) / n, n, w, l: n - w};
+}
+const peerSelect = (i, side, v) => `<select class="peer" data-i="${i}" data-side="${side}" aria-label="${side === 'h' ? 'Home' : 'Away'} places">` +
+  [0, 1, 2, 3].map(k => `<option value="${k}"${k === v ? ' selected' : ''}>±${k}</option>`).join('') + '</select>';
+function projectionRow(f, i){
+  const [when, round, home, away] = f;
+  const ch = teams[home] || '', ca = teams[away] || '';
+  const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
+  const p = project(home, away, nh, na);
+  let cells = '<td class="n tag gap" colspan="6">No comparable games</td>';
+  let hr = 0, ar = 0;
+  const o = ODDS[home + '|' + away];
+  if (p){
+    const hp = Math.round(p.hp * 10) / 10, ap = Math.round(p.ap * 10) / 10;   // round first so the row adds up
+    hr = hp; ar = ap;
+    cells = `<td class="n"><b>${hp.toFixed(1)}</b></td><td class="n"><b>${ap.toFixed(1)}</b></td>
+      <td class="n tag">${(hp + ap).toFixed(1)}</td><td class="n hcp">${sgn(hp - ap)}</td><td class="n" title="Home group record in those games"><span class="w">${p.w}</span>–<span class="l">${p.l}</span></td><td class="n tag gap" title="Games used: home-group clubs at home against away-group clubs away">${p.n}</td>`;
+  }
+  const rk = rankOf;
+  return `<tr class="click" data-i="${i}"><td class="n">${when.slice(11)}</td>
+    <td><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))}${rk(ch)})</span> – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))}${rk(ca)})</span></td>
+    <td class="n">${peerSelect(i, 'h', nh)}</td><td class="n gap">${peerSelect(i, 'a', na)}</td>${cells}${bookCells(o)}${edgeCells(p, o, hr, ar)}</tr>`;
+}
+function renderProjectionDetail(i){
+  const box = $('pjView');
+  const [when, round, home, away] = FX[i];
+  const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
+  const ch = teams[home] || '', ca = teams[away] || '';
+  const g = pjGames(home, away, nh, na);
+  const group = (grp, c) => [...grp.set].map(x => { const r = RANK.findIndex(y => y.c === x) + 1; return `${x === c ? '<b>' : ''}${esc(x)} <span class="tag">#${r}</span>${x === c ? '</b>' : ''}`; }).join(', ');
+  let html = `<a class="back" href="#view=projections" id="pjBack">&larr; All projections</a>
+    <h2 style="margin-top:10px"><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))}${rankOf(ch)})</span> – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))}${rankOf(ca)})</span></h2>
+    <div class="tag" style="margin-bottom:14px">${dayName(when.slice(0, 10))}, ${when.slice(11)} · ${esc(round)}</div>
+    ${filterBar()}
+    <div class="pjbar"><span class="tag">Places either side in the power rankings:</span>
+      <label>Home side ${peerSelect(i, 'h', nh)}</label><label>Away side ${peerSelect(i, 'a', na)}</label></div>`;
+  if (!g || !g.games.length){
+    html += `<div class="empty">No comparable games for these windows and this sample.</div>`;
+  } else {
+    const n = g.games.length, hp = g.games.reduce((t, m) => t + m[6], 0) / n, ap = g.games.reduce((t, m) => t + m[7], 0) / n;
+    const hr = Math.round(hp * 10) / 10, ar = Math.round(ap * 10) / 10, w = g.games.filter(m => m[6] > m[7]).length;
+    const list = g.games.slice().sort((x, y) => y[3].localeCompare(x[3]));
+    const o = ODDS[home + '|' + away];
+    html += `<div class="card"><div class="score">
+        <div><div class="name">${esc(home)}</div><div class="ctry">Home</div></div>
+        <div><div class="big">${hr.toFixed(1)}–${ar.toFixed(1)}</div><div class="lbl">${n} games (W–L ${w}–${n - w}) · total ${(hr + ar).toFixed(1)} · hcp ${sgn(hr - ar)}</div></div>
+        <div><div class="name">${esc(away)}</div><div class="ctry">Away</div></div></div></div>
+      ${o ? `<div class="note" style="margin-bottom:14px"><b>Bookmaker:</b> spread ${esc(home)} ${fmtLine(o.sp)} (${o.spH.toFixed(2)} / ${o.spA.toFixed(2)}) · total ${o.tot.toFixed(1)} (${o.ov.toFixed(2)} over / ${o.un.toFixed(2)} under)${o.mlH && o.mlA ? ' · money line ' + o.mlH.toFixed(2) + ' / ' + o.mlA.toFixed(2) : ''}.
+        ${n >= MIN_GAMES ? `<b>Model vs book:</b> handicap ${sgn((hr - ar) + o.sp)}, total ${sgn((hr + ar) - o.tot)} (model minus bookmaker; above zero = the model likes the home side more / expects more points).` : `<b>No comparison:</b> the sample has ${n} games, fewer than ${MIN_GAMES}.`}</div>` : ''}
+      <div class="tag" style="margin-bottom:6px"><b>Home group (±${nh}):</b> ${group(g.gh, ch)}</div>
+      <div class="tag" style="margin-bottom:18px"><b>Away group (±${na}):</b> ${group(g.ga, ca)}</div>
+      <h2>Games used</h2><div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Match</th><th class="n">Score</th><th>Competition</th></tr>` +
+      list.map(m => { const [season, stage, rnd, date, h, a, ph, pa, status] = m;
+        return `<tr><td class="n">${fmtDate(date)}</td><td>${esc(h)} <span class="tag">(${esc(code(teams[h]))}${rankOf(teams[h])})</span> – ${esc(a)} <span class="tag">(${esc(code(teams[a]))}${rankOf(teams[a])})</span></td>
+          <td class="n"><b>${ph}–${pa}</b>${status === 'AET' ? ' <span class="tag">OT</span>' : ''}</td><td class="tag">${esc(season)} · ${esc(stage)} · ${esc(rnd.replace(/ - /, ' · '))}</td></tr>`; }).join('') +
+      `</table></div>`;
+  }
+  box.innerHTML = html;
+  $('pjBack').onclick = e => { e.preventDefault(); pjDetail = null; sync(); renderProjections(); window.scrollTo({top: 0, behavior: 'smooth'}); };
+  bindFilters(box, () => renderProjectionDetail(i));
+  box.querySelectorAll('select.peer:not(#pjSeasons)').forEach(sel => sel.onchange = () => {
+    (pjRow[i] ||= {})[sel.dataset.side] = +sel.value;
+    sync(); renderProjectionDetail(i);
+  });
+}
+function renderProjections(){
+  const box = $('pjView');
+  RANK ||= computeRankings();
+  if (pjDetail !== null && FX[pjDetail]){ renderProjectionDetail(pjDetail); return; }
+  const list = nextRoundGames();
+  if (!list.length){ box.innerHTML = '<div class="empty">No upcoming fixtures.</div>'; return; }
+  RANK ||= computeRankings();
+  const head = filterBar() + `<div class="pjbar"><span class="tag">Places either side in the power rankings, all matches:</span>
+    <label>Home side ${peerSelect('all', 'h', pjAll.h)}</label><label>Away side ${peerSelect('all', 'a', pjAll.a)}</label>
+    <span class="tag">Each match can be adjusted on its own row.</span></div>`;
+  box.innerHTML = head + Object.entries(byDay(list)).map(([d, rows]) => `<h2>${dayName(d)} <span class="tag">${esc(rows[0][0][1])}</span></h2>
+      <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
+      <th colspan="2" class="grp gap" title="How many places either side of each country in the power rankings feed its group">Places</th>
+      <th colspan="6" class="grp gap">Projection</th>
+      <th colspan="3" class="grp gap" title="Bookmaker lines for the match">Bookmaker</th><th colspan="2" class="grp" title="Model minus bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
+      <tr><th class="n">Home</th><th class="n gap">Away</th>
+      <th class="n" title="Projected home points">Home</th><th class="n" title="Projected away points">Away</th><th class="n" title="Projected total points">Total</th><th class="n" title="Projected handicap: home minus away">Hcp</th><th class="n" title="Home group wins–losses in the games used">W–L</th><th class="n gap" title="Games used: home-group clubs at home against away-group clubs away">Games</th>
+      <th class="n gap" title="Spread on the home side">Spread</th><th class="n" title="Points total">Total</th><th class="n gap" title="Money line, home / away">ML</th>
+      <th class="n gap" title="Model handicap minus bookmaker handicap">Hcp</th><th class="n" title="Model total minus bookmaker total">Total</th></tr>
+      ${rows.map(([f, i]) => projectionRow(f, i)).join('')}</table></div>`).join('') +
+    `<div class="tag" style="margin-top:14px">How it works: each side is stood in for by the countries ranked within the chosen number of places of its own country in the power rankings
+     (the country itself included; at the top or bottom of the table the window is cut short). Only games in the chosen sample (see the filters at the top) in which a club from the home group played at home
+     against a club from the away group playing away are counted; the projection is the average score of each side in those games, and Games is how many there were.
+     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's spread on the home side, the points total and the money line. <b>Model vs book</b> is the model minus the bookmaker: for the handicap (home minus away) a positive number means the model likes the home side more than the bookmaker does, for the total a positive number means the model expects more points. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
+  box.querySelectorAll('tr.click').forEach(tr => tr.onclick = e => {
+    if (e.target.closest('select')) return;
+    pjDetail = +tr.dataset.i; sync(); renderProjections(); window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+  bindFilters(box, renderProjections);
+  box.querySelectorAll('select.peer:not(#pjSeasons)').forEach(sel => sel.onchange = () => {
+    const v = +sel.value, side = sel.dataset.side;
+    if (sel.dataset.i === 'all'){ pjAll[side] = v; pjRow = {}; }
+    else (pjRow[sel.dataset.i] ||= {})[side] = v;
+    renderProjections();
+  });
+}
+
+// ---------- Power rankings: country Elo over all games in date order
+// Start 1500; K 20; home advantage 75 Elo points; margin-of-victory multiplier as in
+// FiveThirtyEight's NBA Elo. Same-country games are skipped; awarded games count without margin.
+// The table is always ordered by today's rating. The season sample only changes the record columns and adds the
+// movement: today's place against the place at the end of the season before the sample began.
+let RANK = null;
+function computeRankings(){
+  const K = 20, HCA = 75, elo = {}, st = {}, snaps = {};
+  const get = c => (elo[c] ??= 1500);
+  const s = c => (st[c] ??= {g: 0, w: 0, l: 0, pf: 0, pa: 0, pg: 0, last: ''});
+  const snap = season => {          // place of every rated country after this season's games
+    const o = {};
+    Object.entries(elo).sort((x, y) => y[1] - x[1]).forEach(([c], i) => o[c] = i + 1);
+    snaps[season] = o;
+  };
+  const games = matches.slice().sort((x, y) => x[3].localeCompare(y[3]));
+  let prev = null;
+  for (const [season, , , date, h, a, hp, ap, status] of games){
+    if (prev !== null && season !== prev && season > prev) snap(prev);
+    if (prev === null || season > prev) prev = season;
+    const ch = teams[h], ca = teams[a];
+    if (!ch || !ca || ch === ca) continue;
+    const rh = get(ch), ra = get(ca);
+    const exp = 1 / (1 + 10 ** ((ra - (rh + HCA)) / 400));
+    const homeWon = hp > ap ? 1 : 0;
+    const margin = Math.abs(hp - ap);
+    const winDiff = homeWon ? (rh + HCA - ra) : (ra - rh - HCA);
+    const mult = status === 'AWA.' ? 1 : ((margin + 3) ** 0.8) / (7.5 + 0.006 * winDiff);
+    const d = K * mult * (homeWon - exp);
+    elo[ch] = rh + d; elo[ca] = ra - d;
+    for (const [c, own, opp] of [[ch, hp, ap], [ca, ap, hp]]){
+      const x = s(c); x.g++; own > opp ? x.w++ : x.l++; x.last = date;
+      if (status !== 'AWA.'){ x.pf += own; x.pa += opp; x.pg++; }
+    }
+  }
+  if (prev !== null) snap(prev);
+  const rows = Object.keys(st).map(c => ({c, elo: elo[c], ...st[c]})).sort((x, y) => y.elo - x.elo);
+  rows.snaps = snaps;
+  return rows;
+}
+// record columns over the last n seasons only (0 = all)
+function rankWindow(n){
+  const seasons = [...new Set(matches.map(m => m[0]))].sort();
+  const ok = n ? new Set(seasons.slice(-n)) : null;
+  const st = {};
+  for (const [season, , , , h, a, hp, ap, status] of matches){
+    if (ok && !ok.has(season)) continue;
+    const ch = teams[h], ca = teams[a];
+    if (!ch || !ca || ch === ca) continue;
+    for (const [c, own, opp] of [[ch, hp, ap], [ca, ap, hp]]){
+      const x = (st[c] ??= {g: 0, w: 0, l: 0, pf: 0, pa: 0, pg: 0});
+      x.g++; own > opp ? x.w++ : x.l++;
+      if (status !== 'AWA.'){ x.pf += own; x.pa += opp; x.pg++; }
+    }
+  }
+  return {st, seasons, base: n ? seasons[seasons.length - n - 1] : null};
+}
+let rkSeasons = 0;
+function rkMove(now, was){
+  if (was === undefined) return '<span class="tag">new</span>';
+  const d = was - now;                                    // positive = moved up
+  if (!d) return '<span class="tag">=</span>';
+  return `<span class="${d > 0 ? 'w' : 'l'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d)}</span>`;
+}
+function renderRankings(){
+  RANK ||= computeRankings();
+  const {st, seasons, base} = rankWindow(rkSeasons);
+  const was = base ? RANK.snaps[base] : null;
+  const sel = [...Array(seasons.length - 1)].map((_, k) => k + 1).concat([0]).map(k =>
+    `<option value="${k}"${k === rkSeasons ? ' selected' : ''}>${k ? (k === 1 ? 'Last season' : 'Last ' + k + ' seasons') : 'All ' + seasons.length + ' seasons'}</option>`).join('');
+  const rows = RANK.map((r, i) => {
+    const x = st[r.c] || {g: 0, w: 0, l: 0, pf: 0, pa: 0, pg: 0};
+    const m = x.pg ? (x.pf - x.pa) / x.pg : 0;
+    return `<tr class="click" data-c="${esc(r.c)}"><td class="n">${i + 1}</td>
+      <td><b>${esc(r.c)}</b> <span class="tag">(${esc(code(r.c))})</span></td>
+      <td class="n"><b class="hcp">${Math.round(r.elo)}</b></td>
+      ${was ? `<td class="n tag gap">${was[r.c] ?? '–'}</td><td class="n">${rkMove(i + 1, was[r.c])}</td>` : ''}
+      <td class="n${was ? '' : ''}">${x.g}</td>
+      <td class="n">${x.g ? `<span class="w">${x.w}</span>–<span class="l">${x.l}</span>` : '–'}</td>
+      <td class="n">${x.g ? (x.w / x.g * 100).toFixed(0) + '%' : '–'}</td>
+      <td class="n">${x.pg ? (m > 0 ? '+' : m < 0 ? '−' : '') + Math.abs(m).toFixed(1) : '–'}</td></tr>`;
+  }).join('');
+  const moveHead = was ? `<th class="n gap" title="Place at the end of ${esc(base)}, the season before the sample">Was</th><th class="n" title="Places gained (▲) or lost (▼) since then">Move</th>` : '';
+  const note = rkSeasons
+    ? `Sample: the ${rkSeasons === 1 ? 'last season' : 'last ' + rkSeasons + ' seasons'} (${esc(seasonLabel(seasons[seasons.length - rkSeasons]))} to ${esc(seasonLabel(seasons[seasons.length - 1]))}). <b>Was</b> is the place at the end of ${esc(seasonLabel(base))}; <b>Move</b> is the change to today's place. Games, W–L, win % and margin cover the sample only.`
+    : `Sample: all ${seasons.length} seasons. Pick a number of seasons to see which countries have moved up or down over that period.`;
+  $('rkView').innerHTML = `<div class="fbar"><label>Sample <select id="rkSeasons" class="peer">${sel}</select></label></div>
+    <div class="scroll"><table class="fx"><tr><th class="n">#</th><th>Country</th>
+    <th class="n" title="Elo rating today: starts at 1500, rises with wins (more for beating strong sides, by more, away)">Rating</th>${moveHead}
+    <th class="n" title="Games against clubs from other countries, within the sample">Games</th><th class="n">W–L</th><th class="n">Win %</th>
+    <th class="n" title="Average points margin per game">Margin</th></tr>${rows}</table></div>
+    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted. Click a country for its full record.</div>`;
+  $('rkSeasons').onchange = e => { rkSeasons = +e.target.value; sync(); renderRankings(); };
+  $('rkView').querySelectorAll('tr.click').forEach(tr => tr.onclick = () => {
+    setMode('country'); $('a').value = tr.dataset.c; $('b').value = ''; setVenue('all');
+    setView('h2h'); sync(); render(); window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+}
+function setView(v){
+  view = ['fixtures', 'projections', 'h2h', 'rankings'].includes(v) ? v : 'fixtures';
+  document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  $('fxView').hidden = view !== 'fixtures';
+  $('rkView').hidden = view !== 'rankings';
+  $('pjView').hidden = view !== 'projections';
+  $('h2hView').hidden = view !== 'h2h';
+  if (view === 'fixtures') renderFixtures();
+  if (view === 'rankings') renderRankings();
+  if (view === 'projections') renderProjections();
+}
+document.querySelectorAll('#tabs a').forEach(b => b.onclick = e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); if (b.dataset.view === 'projections') pjDetail = null; setView(b.dataset.view); sync(); });
+// Home: back to the start (countries, all venues, nothing selected, head to head tab)
+document.querySelectorAll('[data-home]').forEach(a => a.onclick = e => {
+  e.preventDefault();
+  setMode('country'); setVenue('all'); $('a').value = $('b').value = '';
+  setView('fixtures'); render();
+  history.replaceState(null, '', location.pathname);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+});
+
 function sync(){
-  const q = new URLSearchParams({mode, a:$('a').value, b:$('b').value});
+  // only the head to head page carries its picks; defaults and empty fields stay out of the link
+  const q = new URLSearchParams({view});
+  if (view === 'h2h'){
+    if (mode !== 'country') q.set('mode', mode);
+    if (venue !== 'all') q.set('venue', venue);
+    if ($('a').value) q.set('a', $('a').value);
+    if ($('b').value) q.set('b', $('b').value);
+  }
+  if (view === 'projections' && pjDetail !== null && FX[pjDetail]){
+    q.set('home', FX[pjDetail][2]); q.set('away', FX[pjDetail][3]);
+    const r = pjRow[pjDetail] || {};
+    if (r.h !== undefined && r.h !== PEER_DEFAULT) q.set('ph', r.h);   // places, kept apart from the head to head picks a / b
+    if (r.a !== undefined && r.a !== PEER_DEFAULT) q.set('pa', r.a);
+  }
+  if (view === 'rankings' && rkSeasons) q.set('seasons', rkSeasons);
+  if (view === 'projections'){
+    if (pjFilter.seasons !== PJ_DEFAULT_SEASONS) q.set('seasons', pjFilter.seasons || 'all');
+    if (!(pjFilter.stages.size === 1 && pjFilter.stages.has('Main'))) q.set('stages', PJ_STAGES.filter(x => pjFilter.stages.has(x)).join(','));
+  }
   history.replaceState(null, '', '#' + q.toString());
 }
 function setMode(m){
@@ -171,14 +631,40 @@ function setMode(m){
   fillOptions();
 }
 document.querySelectorAll('#seg button').forEach(b => b.onclick = () => { setMode(b.dataset.mode); $('a').value = $('b').value = ''; sync(); render(); });
+function setVenue(v){
+  venue = ['home','away'].includes(v) ? v : 'all';
+  document.querySelectorAll('#venue button').forEach(b => b.classList.toggle('on', b.dataset.venue === venue));
+}
+document.querySelectorAll('#venue button').forEach(b => b.onclick = () => { setVenue(b.dataset.venue); sync(); render(); });
 ['a','b'].forEach(id => $(id).addEventListener('input', () => { sync(); render(); }));
 $('a').addEventListener('change', render); $('b').addEventListener('change', render);
 
 // restore from URL hash
 const p = new URLSearchParams(location.hash.slice(1));
-setMode(p.get('mode') === 'country' ? 'country' : 'team');
-$('a').value = p.get('a') || ''; $('b').value = p.get('b') || '';
+setMode(p.get('mode') === 'team' ? 'team' : 'country');
+setVenue(p.get('venue'));
+if (p.get('view') !== 'projections'){ $('a').value = p.get('a') || ''; $('b').value = p.get('b') || ''; }
 render();
+if (p.get('view') === 'projections' && p.get('home') && p.get('away')){
+  const i = FX.findIndex(f => f[2] === p.get('home') && f[3] === p.get('away'));
+  if (i >= 0){
+    pjDetail = i;
+    const places = k => { const v = p.get(k); return v === null || isNaN(+v) ? PEER_DEFAULT : Math.min(3, Math.max(0, Math.round(+v))); };
+    pjRow[i] = {h: places('ph'), a: places('pa')};
+  }
+}
+if (p.get('view') === 'rankings'){
+  const n = +p.get('seasons');
+  if (n >= 1 && n < ALL_SEASONS.length) rkSeasons = Math.round(n);
+}
+if (p.get('view') === 'projections'){
+  const n = +p.get('seasons');
+  if (p.get('seasons') === 'all') pjFilter.seasons = 0;
+  else if (n >= 1 && n < ALL_SEASONS.length) pjFilter.seasons = Math.round(n);
+  const st = (p.get('stages') || '').split(',').filter(x => PJ_STAGES.includes(x));
+  if (st.length) pjFilter.stages = new Set(st);
+}
+setView(p.get('view'));
 </script>
 </body>
 </html>

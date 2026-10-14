@@ -20,3 +20,7 @@ python h2h.py           # H2H tables
 
 Cancelled games are ignored. Awarded games count as a win with no points.
 Results source: BetExplorer.
+
+## Site
+
+`site/` mirrors the live front end (https://antonisnikolitsopoulos.com/fibaeuropecup/), which is served from the `fibaeuropecup/` folder of the website repo. `site/data.js` there covers 2015-16 onwards, so it is no longer produced by `build_site.py` alone. `site/odds.js` holds the bookmaker lines used by the Projections comparison.
