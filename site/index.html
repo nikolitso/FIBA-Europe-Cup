@@ -364,9 +364,10 @@ function bookCells(o){
 }
 // model minus bookmaker, only when the sample is big enough
 function edgeCells(p, o, hp, ap){
-  const none = t => `<td class="n tag gap" title="${t}">–</td><td class="n tag" title="${t}">–</td>`;
-  if (!o) return none('No bookmaker line for this match');
-  if (!p || p.n < MIN_GAMES) return none('Fewer than ' + MIN_GAMES + ' games in the sample: no comparison');
+  const none = t => `<td class="n tag" colspan="2" title="${t}">${t}</td>`;   // say why there is no comparison
+  if (!o) return none('No bookmaker line yet');
+  if (!p) return none('No comparable games');
+  if (p.n < MIN_GAMES) return none(`Only ${p.n} game${p.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`);
   const dh = (hp - ap) + o.sp, dt = (hp + ap) - o.tot;     // book handicap (home minus away) is minus the spread
   return `<td class="n gap hcp" title="Model handicap minus bookmaker handicap: above zero means the model likes the home side more than the bookmaker does"><b>${sgn(dh)}</b></td>
     <td class="n hcp" title="Model total minus bookmaker total: above zero means the model expects more points"><b>${sgn(dt)}</b></td>`;
@@ -529,7 +530,7 @@ function renderArchive(){
       const cmp = g.n >= MIN_GAMES && g.mt !== null;
       const r = arResult(sn.date, g.h, g.a);
       const mv = cmp ? `<td class="n gap hcp"><b>${sgn(g.mh - g.bh)}</b></td><td class="n hcp"><b>${sgn(g.mt - g.bt)}</b></td>`
-                     : `<td class="n tag gap" title="Fewer than ${MIN_GAMES} games in the sample: no comparison">–</td><td class="n tag">–</td>`;
+                     : `<td class="n tag" colspan="2">${g.mt === null ? 'No comparable games' : `Only ${g.n} game${g.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`}</td>`;
       let res = '<td class="n tag gap" colspan="3">pending</td><td class="n tag gap" colspan="2"></td>';
       if (r){
         S.res++;
