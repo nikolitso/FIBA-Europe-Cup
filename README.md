@@ -38,3 +38,12 @@ python update_site.py odds
 ```
 
 Reads BetExplorer: results for the current season replace the 2026-27 rows in the site's `data.js`; for the next round on the fixtures page it writes the handicap, total and money line (Stake.com first, then bwin, then Betsson) to `odds.js`. It stops without writing anything if BetExplorer blocks the request (the site is unavailable in some countries). Then commit and push the site repo's `fibaeuropecup/` folder. `fixtures.js` (the match list and kick-off times) still comes from Flashscore.
+
+## One-step update
+
+```
+python update.py            # results + odds + fixtures from BetExplorer, then publish
+python update.py --no-push  # update the files only
+```
+
+Or double-click `Update FIBA Europe Cup.bat` on the Desktop. It runs `update_site.py` (results, odds) and refreshes `fixtures.js`, then commits and pushes the three files in the website repo and mirrors them into `site/` here. It keeps at least 2 s between requests and backs off when BetExplorer answers 429; if it blocks the request nothing is changed.
