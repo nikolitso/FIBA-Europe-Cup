@@ -37,7 +37,7 @@ python update_site.py results
 python update_site.py odds
 ```
 
-Reads BetExplorer: results for the current season replace the 2026-27 rows in the site's `data.js`; for the next round on the fixtures page it writes the handicap, total and money line (Stake.com first, then bwin, then Betsson) to `odds.js`. It stops without writing anything if BetExplorer blocks the request (the site is unavailable in some countries). Then commit and push the site repo's `fibaeuropecup/` folder. `fixtures.js` (the match list and kick-off times) still comes from Flashscore.
+Reads BetExplorer: for the next round on the fixtures page it writes the handicap, total and money line (Stake.com first, then bwin, then Betsson) to `odds.js`. Its `results` step (BetExplorer) is no longer used by `update.py`, which reads results from Flashscore instead. It stops without writing anything if BetExplorer blocks the request (the site is unavailable in some countries).
 
 ## One-step update
 
