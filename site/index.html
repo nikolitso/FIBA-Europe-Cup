@@ -351,14 +351,13 @@ const ODDS = {};
 for (const r of (window.ODDS && window.ODDS.list) || []) ODDS[r.h + '|' + r.a] = r;
 const MIN_GAMES = 8;
 const fmtLine = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
-// the bookmaker's scores, worked out the same way as the projection: total and handicap (home minus away = minus the spread)
-// (the total is only used here to turn the handicap into home and away scores; the site predicts winners, not totals)
+// the bookmaker's implied scores, worked out the same way as the projection (home minus away = minus the spread)
 function bookScores(o){ return {hp: (o.tot - o.sp) / 2, ap: (o.tot + o.sp) / 2}; }
 function bookCells(o){
   if (!o) return '<td class="n tag" colspan="3">–</td><td class="n tag gap">–</td>';
   const {hp, ap} = bookScores(o);
   const ml = o.mlH && o.mlA ? `${o.mlH.toFixed(2)} / ${o.mlA.toFixed(2)}` : '–';
-  return `<td class="n" title="Home points implied by the bookmaker's total and handicap"><b>${hp.toFixed(1)}</b></td><td class="n" title="Away points implied by the bookmaker's total and handicap"><b>${ap.toFixed(1)}</b></td>
+  return `<td class="n" title="Home points implied by the bookmaker line"><b>${hp.toFixed(1)}</b></td><td class="n" title="Away points implied by the bookmaker line"><b>${ap.toFixed(1)}</b></td>
     <td class="n hcp" title="Bookmaker handicap, home minus away (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)">${sgn(-o.sp)}</td>
     <td class="n gap${ml === '–' ? ' tag' : ''}" title="Money line odds, home / away">${ml}</td>`;
 }
@@ -477,7 +476,7 @@ function renderProjections(){
       <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
       <th colspan="2" class="grp gap" title="How many places either side of each country in the power rankings feed its group">Places</th>
       <th colspan="5" class="grp gap">Projection</th>
-      <th colspan="4" class="grp gap" title="The bookmaker line, shown as projected scores: its handicap and total turned into home and away points">Bookmaker</th><th colspan="2" class="grp" title="Model against bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
+      <th colspan="4" class="grp gap" title="The bookmaker line, shown as projected home and away scores">Bookmaker</th><th colspan="2" class="grp" title="Model against bookmaker, only where the sample has 8 or more games">Model vs book</th></tr>
       <tr><th class="n">Home</th><th class="n gap">Away</th>
       <th class="n" title="Projected home points">Home</th><th class="n" title="Projected away points">Away</th><th class="n" title="Projected handicap: home minus away">Hcp</th><th class="n" title="Home group wins–losses in the games used">W–L</th><th class="n gap" title="Games used: home-group clubs at home against away-group clubs away">Games</th>
       <th class="n" title="Home points implied by the bookmaker line">Home</th><th class="n" title="Away points implied by the bookmaker line">Away</th><th class="n" title="Bookmaker handicap: home minus away">Hcp</th><th class="n gap" title="Money line odds, home / away">ML</th>
@@ -486,7 +485,7 @@ function renderProjections(){
     `<div class="tag" style="margin-top:14px">How it works: each side is stood in for by the countries ranked within the chosen number of places of its own country in the power rankings
      (the country itself included; at the top or bottom of the table the window is cut short). Only games in the chosen sample (see the filters at the top) in which a club from the home group played at home
      against a club from the away group playing away are counted; the projection is the average score of each side in those games, and Games is how many there were.
-     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's handicap (home minus away) and money line, with its home and away scores worked out from handicap and total. <b>Model vs book</b>: the first number is the model's handicap minus the bookmaker's (positive = the model likes the home side more); <b>Pick</b> says whether the two favour the same side or differ. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
+     Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's handicap (home minus away) and money line, with the home and away scores that line implies. <b>Model vs book</b>: the first number is the model's handicap minus the bookmaker's (positive = the model likes the home side more); <b>Pick</b> says whether the two favour the same side or differ. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
   box.querySelectorAll('tr.click').forEach(tr => tr.onclick = e => {
     if (e.target.closest('select')) return;
     pjDetail = +tr.dataset.i; sync(); renderProjections(); window.scrollTo({top: 0, behavior: 'smooth'});
