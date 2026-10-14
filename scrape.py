@@ -7,6 +7,7 @@ import csv
 import re
 import sys
 import time
+from datetime import date, timedelta
 from pathlib import Path
 
 import requests
@@ -66,7 +67,13 @@ def scrape_stage(season, stage, href):
         spans = [s.get_text(strip=True) for s in a.find_all("span", recursive=False)]
         tds = tr.find_all("td")
         hp, ap, status = parse_score(tds[1].get_text(strip=True))
-        parts = tds[-1].get_text(strip=True).split(".")
+        when = tds[-1].get_text(strip=True)
+        rel = {"today": 0, "yesterday": 1}.get(when.lower())
+        if rel is not None:  # recent games say "Today" / "Yesterday"
+            day = date.today() - timedelta(days=rel)
+            parts = [f"{day.day:02d}", f"{day.month:02d}", str(day.year)]
+        else:
+            parts = when.split(".")
         if len(parts) != 3:  # unplayed fixtures show a time, not a date
             continue
         d, m, y = parts

@@ -28,3 +28,13 @@ Results source: BetExplorer.
 ### Archive
 
 `site/archive.js` holds one frozen entry per round (model and bookmaker total / handicap, written before the games). To add a round: update `odds.js`, open the Projections tab with the settings to freeze, run `makeSnapshot('YYYY-MM-DD')` in the browser console and add the returned JSON to `archive.js`. Results appear on the Archive tab by themselves once the games are in `data.js`.
+
+## Updating results and odds
+
+```
+python update_site.py            # results + odds
+python update_site.py results
+python update_site.py odds
+```
+
+Reads BetExplorer: results for the current season replace the 2026-27 rows in the site's `data.js`; for the next round on the fixtures page it writes the 10bet handicap, total and money line to `odds.js`. It stops without writing anything if BetExplorer blocks the request (the site is unavailable in some countries). Then commit and push the site repo's `fibaeuropecup/` folder. `fixtures.js` (the match list and kick-off times) still comes from Flashscore.
