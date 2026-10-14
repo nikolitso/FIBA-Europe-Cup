@@ -46,15 +46,26 @@ EXTRACT = r"""async () => {
 
 
 def read_flashscore():
+    """The page fills in with JavaScript, sometimes slowly: wait for the games and try up to three times."""
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(locale="en-GB", timezone_id="Europe/Athens")
-        page.goto(URL, wait_until="domcontentloaded", timeout=60000)
-        try:                                              # privacy-friendly choice on the cookie banner, if shown
-            page.click("#onetrust-reject-all-handler", timeout=4000)
-        except Exception:
-            pass
-        rows = page.evaluate(EXTRACT)
+        rows = []
+        for attempt in range(3):
+            page = browser.new_page(locale="en-GB", timezone_id="Europe/Athens")
+            try:
+                page.goto(URL, wait_until="domcontentloaded", timeout=60000)
+                try:                                      # privacy-friendly choice on the cookie banner, if shown
+                    page.click("#onetrust-reject-all-handler", timeout=4000)
+                except Exception:
+                    pass
+                page.wait_for_selector(".event__match", timeout=30000)
+                page.wait_for_timeout(1500)
+                rows = page.evaluate(EXTRACT)
+            except Exception as e:
+                print(f"  Flashscore attempt {attempt + 1} failed: {e.__class__.__name__}")
+            page.close()
+            if rows:
+                break
         browser.close()
     return rows
 
