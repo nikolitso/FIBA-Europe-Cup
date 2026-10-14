@@ -106,7 +106,7 @@ def group_pred(sub, gh, ga, home_adv, pooled, halflife, today):
     return sh / w, sa / w, n
 
 
-def run(prepared, eval_from=3, seasons_back=5, nn=2, halflife=548):
+def run(prepared, eval_from=3, seasons_back=5, nn=2, halflife=548, stages=None, only_season=None):
     games, seasons = prepared
     rows = []
     # points per Elo point, fitted on group-stage games before the evaluation seasons
@@ -115,7 +115,9 @@ def run(prepared, eval_from=3, seasons_back=5, nn=2, halflife=548):
                        max(1e-9, sum(g[key] ** 2 for g in train if g[key] is not None)))
     b_c, b_k = fit("cdiff"), fit("kdiff")
     for idx, g in enumerate(games):
-        if g["season"] < eval_from or g["stage"] not in GROUP_STAGES or g["awa"] or g["ch"] == g["ca"]:
+        if g["season"] < eval_from or g["stage"] not in (stages or GROUP_STAGES) or g["awa"] or g["ch"] == g["ca"]:
+            continue
+        if only_season is not None and g["season"] != only_season:
             continue
         past = [x for x in games[:idx] if x["day"] < g["day"] and not x["awa"] and x["ch"] != x["ca"]]
         sub = [x for x in past if x["stage"] in GROUP_STAGES and g["season"] - seasons_back < x["season"] <= g["season"]]
@@ -125,7 +127,8 @@ def run(prepared, eval_from=3, seasons_back=5, nn=2, halflife=548):
         avg_total = sum(x["hp"] + x["ap"] for x in sub) / len(sub)
         gh, ga = peers(g["order"], g["ch"], nn), peers(g["order"], g["ca"], nn)
         actual = (g["hp"] - g["ap"], g["hp"] + g["ap"])
-        r = {"actual": actual, "season": g["season"], "base": (home_adv, avg_total)}
+        r = {"actual": actual, "season": g["season"], "stage": g["stage"], "key": (g["day"].isoformat(), g["h"], g["a"]),
+             "base": (home_adv, avg_total)}
         if gh and ga:
             s = group_pred(sub, gh, ga, home_adv, False, 0, g["day"])
             p = group_pred(sub, gh, ga, home_adv, True, 0, g["day"])
