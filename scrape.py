@@ -24,6 +24,8 @@ FIELDS = ["season", "stage", "round", "date", "home", "away",
 def get(url):
     r = requests.get(url, headers=HEADERS, timeout=30)
     r.raise_for_status()
+    if "unavailable in" in r.text[:2000] or r.url.endswith(".html"):  # geo-block page
+        raise SystemExit(f"BetExplorer blocked the request ({r.url}); nothing written.")
     time.sleep(0.5)
     return BeautifulSoup(r.text, "html.parser")
 
@@ -89,6 +91,8 @@ def main():
             got = scrape_stage(season, stage, href)
             print(f"{season} {stage}: {len(got)}")
             rows += got
+    if not rows:
+        raise SystemExit("No matches scraped; leaving the existing file untouched.")
     OUT.parent.mkdir(exist_ok=True)
     rows.sort(key=lambda r: (r["season"], r["date"]))
     with OUT.open("w", newline="", encoding="utf-8") as f:
