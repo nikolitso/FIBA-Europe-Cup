@@ -184,14 +184,17 @@ const gameRow = g => {
 };
 
 // stages counted on the head to head pages; same default as the rankings and projections
-let hStages = new Set(['Main']);
+let hStages = new Set(['Main']), hSeasons = 5;                 // seasons: how many of the latest (0 = all)
 function hChips(){
-  return `<div class="fbar"><span class="chips">` + PJ_STAGES.map(x => `<button type="button" class="chip${hStages.has(x) ? ' on' : ''}" data-stage="${esc(x)}" aria-pressed="${hStages.has(x)}">${esc(PJ_STAGE_LABEL[x] || x)}</button>`).join('') + `</span></div>`;
+  const opts = [...Array(ALL_SEASONS.length - 1)].map((_, k) => k + 1).concat([0]).map(k =>
+    `<option value="${k}"${k === hSeasons ? ' selected' : ''}>${k ? (k === 1 ? 'Last season' : 'Last ' + k + ' seasons') : 'All ' + ALL_SEASONS.length + ' seasons'}</option>`).join('');
+  return `<div class="fbar"><label>Sample <select id="hSeasons" class="peer">${opts}</select></label><span class="chips">` + PJ_STAGES.map(x => `<button type="button" class="chip${hStages.has(x) ? ' on' : ''}" data-stage="${esc(x)}" aria-pressed="${hStages.has(x)}">${esc(PJ_STAGE_LABEL[x] || x)}</button>`).join('') + `</span></div>`;
 }
 function render(){
   const box = $('out');
   const out = {set innerHTML(h){
     box.innerHTML = hChips() + h;
+    box.querySelector('#hSeasons').onchange = e => { hSeasons = +e.target.value; sync(); render(); };
     box.querySelectorAll('.fbar .chip').forEach(b => b.onclick = () => {
       const st = b.dataset.stage;
       if (hStages.has(st)){ if (hStages.size > 1) hStages.delete(st); }   // keep at least one stage
@@ -203,7 +206,7 @@ function render(){
   const ok = n => names().includes(n);
   if (!A){ box.innerHTML = `<div class="empty">Pick a ${mode} to see its record against everyone, or two to see their head to head.</div>`; return; }
   if (!ok(A)){ out.innerHTML = `<div class="empty">No ${mode} called “${esc(A)}”. Choose from the suggestions.</div>`; return; }
-  const gs = gamesFor(A).filter(g => (venue === 'all' || (venue === 'home') === g.home) && hStages.has(g.m[1]));
+  const gs = gamesFor(A).filter(g => (venue === 'all' || (venue === 'home') === g.home) && hStages.has(g.m[1]) && (!hSeasons || ALL_SEASONS.indexOf(g.m[0]) >= ALL_SEASONS.length - hSeasons));
   const where = venue === 'all' ? '' : (venue === 'home' ? ' at home' : ' away');
 
   if (B && ok(B)){
@@ -787,7 +790,7 @@ function renderRankings(){
     renderRankings();
   });
   $('rkView').querySelectorAll('tr.click').forEach(tr => tr.onclick = () => {
-    setMode('country'); $('a').value = tr.dataset.c; $('b').value = ''; setVenue('all'); hStages = new Set(rkStages);
+    setMode('country'); $('a').value = tr.dataset.c; $('b').value = ''; setVenue('all'); hStages = new Set(rkStages); hSeasons = rkSeasons;
     setView('h2h'); sync(); render(); window.scrollTo({top: 0, behavior: 'smooth'});
   });
 }
@@ -861,6 +864,7 @@ function sync(){
     if (venue !== 'all') q.set('venue', venue);
     if ($('a').value) q.set('a', $('a').value);
     if ($('b').value) q.set('b', $('b').value);
+    if (hSeasons !== PJ_DEFAULT_SEASONS) q.set('seasons', hSeasons || 'all');
     if (!(hStages.size === 1 && hStages.has('Main'))) q.set('stages', PJ_STAGES.filter(x => hStages.has(x)).join(','));
   }
   if (view === 'projections' && pjDetail !== null && FX[pjDetail]){
@@ -900,6 +904,9 @@ setVenue(p.get('venue'));
 if (p.get('view') === 'h2h' || !p.get('view')){
   const st = (p.get('stages') || '').split(',').filter(x => PJ_STAGES.includes(x));
   if (st.length) hStages = new Set(st);
+  const v = p.get('seasons'), n = +v;
+  if (v === 'all') hSeasons = 0;
+  else if (n >= 1 && n < ALL_SEASONS.length) hSeasons = Math.round(n);
 }
 if (p.get('view') !== 'projections'){ $('a').value = p.get('a') || ''; $('b').value = p.get('b') || ''; }
 render();
