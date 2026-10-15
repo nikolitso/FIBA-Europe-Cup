@@ -130,6 +130,8 @@ select.peer:focus{outline:2px solid var(--gold)}
 <script src="fixtures.js"></script>
 <script src="odds.js"></script>
 <script src="archive.js"></script>
+<script src="rosters.js"></script>
+<script src="injuries.js"></script>
 <script>
 const {matches, teams} = window.DATA;
 let mode = 'country';
@@ -429,8 +431,27 @@ function project(home, away, nh, na){
   }
   const elo = ELO_POINTS * (eloOf(teams[home]) - eloOf(teams[away]) + ELO_HOME);
   const group = w ? (sh / w + half) - (sa / w - half) : null;
-  const hcp = Math.round((group === null ? elo : (group + elo) / 2) * 10) / 10;
-  return {hcp, group, elo, pHome: phi(hcp / SPREAD), n, w: wins, l: n - wins};
+  const base = Math.round((group === null ? elo : (group + elo) / 2) * 10) / 10;
+  const oh = absences(home), oa = absences(away);
+  const adj = Math.round((oa.pts - oh.pts) * 10) / 10;             // missing players cost their side points
+  const hcp = Math.round((base + adj) * 10) / 10;
+  return {hcp, base, adj, outH: oh.list, outA: oa.list, group, elo, pHome: phi(hcp / SPREAD), n, w: wins, l: n - wins};
+}
+// Absences: players listed in injuries.js, each worth their impact from rosters.js (box-score efficiency this season)
+const roster = t => (window.ROSTERS && ROSTERS.teams[t]) || [];
+function absences(team){
+  const list = ((window.INJURIES && INJURIES.out) || []).filter(x => x.team === team).map(x => {
+    const r = roster(team).find(p => p[0] === x.player);
+    return {player: x.player, note: x.note || '', imp: x.impact ?? (r ? r[1] : 0)};
+  });
+  return {list, pts: list.reduce((t, x) => t + x.imp, 0)};
+}
+const outTag = list => list.length ? ` <span class="tag" title="${esc(list.map(x => `${x.player} out${x.note ? ' (' + x.note + ')' : ''}, worth ${x.imp} pts`).join('; '))}">· out: ${esc(list.map(x => x.player.split(' ').slice(-1)[0]).join(', '))}</span>` : '';
+function keyPlayers(team, out){
+  const r = roster(team);
+  if (!r.length) return '<span class="tag">No box scores yet</span>';
+  const gone = new Set(out.map(x => x.player));
+  return r.map(p => `${gone.has(p[0]) ? '<s>' : ''}${esc(p[0])} <span class="tag">${p[1].toFixed(1)}</span>${gone.has(p[0]) ? '</s>' : ''}`).join(', ');
 }
 const peerSelect = (i, side, v) => `<select class="peer" data-i="${i}" data-side="${side}" aria-label="${side === 'h' ? 'Home' : 'Away'} places">` +
   [0, 1, 2, 3].map(k => `<option value="${k}"${k === v ? ' selected' : ''}>±${k}</option>`).join('') + '</select>';
@@ -443,11 +464,11 @@ function projectionRow(f, i){
   const o = ODDS[home + '|' + away];
   if (p){
     cells = `<td class="n"><b>${pct(p.pHome)}</b></td><td class="n"><b>${pct(1 - p.pHome)}</b></td>
-      <td class="n hcp">${sgn(p.hcp)}</td><td class="n" title="Home group record in those games">${p.n ? `<span class="w">${p.w}</span>–<span class="l">${p.l}</span>` : '–'}</td><td class="n tag gap" title="Games between the two groups in the sample, either direction">${p.n}</td>`;
+      <td class="n hcp"${p.adj ? ` title="Before absences ${sgn(p.base)}, absences ${sgn(p.adj)}"` : ''}>${sgn(p.hcp)}${p.adj ? '*' : ''}</td><td class="n" title="Home group record in those games">${p.n ? `<span class="w">${p.w}</span>–<span class="l">${p.l}</span>` : '–'}</td><td class="n tag gap" title="Games between the two groups in the sample, either direction">${p.n}</td>`;
   }
   const rk = rankOf;
   return `<tr class="click" data-i="${i}"><td class="n">${when.slice(11)}</td>
-    <td><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))}${rk(ch)})</span> – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))}${rk(ca)})</span></td>
+    <td><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))}${rk(ch)})</span>${p ? outTag(p.outH) : ''} – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))}${rk(ca)})</span>${p ? outTag(p.outA) : ''}</td>
     <td class="n">${peerSelect(i, 'h', nh)}</td><td class="n gap">${peerSelect(i, 'a', na)}</td>${cells}${bookCells(o)}${edgeCells(p, o, p && p.hcp)}</tr>`;
 }
 function renderProjectionDetail(i){
@@ -471,8 +492,11 @@ function renderProjectionDetail(i){
     const o = ODDS[home + '|' + away], pb = bookWin(o);
     html += `<div class="card"><div class="score">
         <div><div class="name">${esc(home)}</div><div class="ctry">Home</div></div>
-        <div><div class="big">${pct(p.pHome)}–${pct(1 - p.pHome)}</div><div class="lbl">hcp ${sgn(p.hcp)} · group ${p.group === null ? '–' : sgn(Math.round(p.group * 10) / 10)} · Elo gap ${sgn(Math.round(p.elo * 10) / 10)} · ${n} games (W–L ${p.w}–${p.l})</div></div>
+        <div><div class="big">${pct(p.pHome)}–${pct(1 - p.pHome)}</div><div class="lbl">hcp ${sgn(p.hcp)} · group ${p.group === null ? '–' : sgn(Math.round(p.group * 10) / 10)} · Elo gap ${sgn(Math.round(p.elo * 10) / 10)}${p.adj ? ` · before absences ${sgn(p.base)}, absences ${sgn(p.adj)}` : ''} · ${n} games (W–L ${p.w}–${p.l})</div></div>
         <div><div class="name">${esc(away)}</div><div class="ctry">Away</div></div></div></div>
+      <div class="note" style="margin-bottom:14px"><b>Absences:</b> ${[[home, p.outH], [away, p.outA]].map(([t, l]) => `${esc(t)}: ${l.length ? l.map(x => `${esc(x.player)}${x.note ? ' (' + esc(x.note) + ')' : ''} −${x.imp.toFixed(1)}`).join(', ') : 'none listed'}`).join(' · ')}.
+        <br><b>Key players</b> <span class="tag">(points the side loses without them, from this season's box scores)</span><br>
+        ${esc(home)}: ${keyPlayers(home, p.outH)}<br>${esc(away)}: ${keyPlayers(away, p.outA)}</div>
       ${o ? `<div class="note" style="margin-bottom:14px"><b>Bookmaker:</b> ${pb === null ? '' : pct(pb) + '–' + pct(1 - pb) + ' · '}Hcp ${sgn(-o.sp)} (odds ${o.spH.toFixed(2)} home / ${o.spA.toFixed(2)} away)${o.mlH && o.mlA ? ' · money line ' + o.mlH.toFixed(2) + ' / ' + o.mlA.toFixed(2) : ''}.
         ${n >= MIN_GAMES ? `<b>Model vs book:</b> handicap ${sgn(Math.round((p.hcp + o.sp) * 10) / 10)} (model minus bookmaker; above zero = the model likes the home side more). The model favours <b>${sideName(favourite(p.hcp))}</b>, the bookmaker <b>${sideName(favourite(-o.sp))}</b>.` : `<b>No comparison:</b> the sample has ${n} games, fewer than ${MIN_GAMES}.`}</div>` : ''}
       <div class="tag" style="margin-bottom:6px"><b>Home group (±${nh}):</b> ${group(g.gh, ch)}</div>
@@ -516,6 +540,7 @@ function renderProjections(){
      and averages every game in the chosen sample between the two groups, in either direction, with home advantage taken out of each score and recent games counting more (Games is how many there were).
      The <b>Elo</b> estimate is the gap between the two countries' power-ranking ratings plus home advantage, in points. The win % is that handicap turned into a chance of winning.
      This mix picked the winner in 67.8% of 466 recent games in a backtest, against 65.7% for the earlier home-at-home group average.
+     <b>Absences</b> then move the handicap: each missing player costs the side that player's impact, the points the player's efficiency this season adds over a bench player (from FIBA box scores); a handicap marked * includes them, and the missing players are named next to the club.
      Sample now: ${esc(sampleText())}. Click a match to see the games behind its projection.<br><b>Bookmaker</b> columns show the bookmaker's win chances (from the money line, margin removed), handicap and money line. <b>Model vs book</b>: the first number is the model's handicap minus the bookmaker's (positive = the model likes the home side more); <b>Pick</b> says whether the two favour the same side or differ. The comparison is made only when Games is ${MIN_GAMES} or more.</div>`;
   box.querySelectorAll('tr.click').forEach(tr => tr.onclick = e => {
     if (e.target.closest('select')) return;
@@ -542,7 +567,8 @@ window.makeSnapshot = function(date){
     const nh = pjRow[i]?.h ?? pjAll.h, na = pjRow[i]?.a ?? pjAll.a;
     const p = project(f[2], f[3], nh, na);
     games.push({when: f[0].slice(11), h: f[2], a: f[3], nh, na, model: 'mix',
-      mh: p ? p.hcp : null, pH: p ? Math.round(p.pHome * 1000) / 1000 : null, n: p ? p.n : 0,
+      mh: p ? p.hcp : null, adj: p ? p.adj : 0,
+      out: p ? [...p.outH.map(x => [f[2], x.player, x.imp]), ...p.outA.map(x => [f[3], x.player, x.imp])] : [], pH: p ? Math.round(p.pHome * 1000) / 1000 : null, n: p ? p.n : 0,
       bh: -o.sp, mlH: o.mlH, mlA: o.mlA});
   });
   return JSON.stringify({date, round: FX.find(f => f[0].slice(0, 10) === date)?.[1] || '', taken: new Date().toLocaleDateString('en-CA'),

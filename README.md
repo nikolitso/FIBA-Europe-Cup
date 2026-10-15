@@ -47,3 +47,12 @@ python update.py --no-push  # update the files only
 ```
 
 Or double-click `Update FIBA Europe Cup.bat` on the Desktop. Results come from Flashscore (`flashscore_results.py`, a headless Chromium via Playwright: `pip install playwright` and `python -m playwright install chromium` once); new games are added, existing rows are never changed. Odds (`update_site.py`) and `fixtures.js` come from BetExplorer and are skipped, keeping the old files, if BetExplorer is blocked. It then commits and pushes the three files in the website repo and mirrors them into `site/` here. It keeps at least 2 s between requests and backs off when BetExplorer answers 429; if it blocks the request nothing is changed.
+
+## Rosters and absences
+
+- `site/rosters.js`: player impact per club (points the side loses without the player), computed from this season's
+  FIBA box scores: `impact = min(10, max(0, (EFF/min - 0.25) x minutes per team game) x 0.5 x g/(g+1))`, top 8 per club.
+  FIBA blocks headless browsers, so box scores are read through a normal browser session and the file is rewritten
+  after each round.
+- `site/injuries.js`: players out for the next round, `{"team": ..., "player": ..., "note": ...}` (optional `"impact"`
+  for players not in rosters.js). Each listed player moves the model handicap by their impact against their club.
