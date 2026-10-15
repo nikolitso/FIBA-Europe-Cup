@@ -657,7 +657,8 @@ function renderArchive(){
 // FiveThirtyEight's NBA Elo. Same-country games are skipped; awarded games count without margin.
 // The table is always ordered by today's rating; the season sample only changes the record columns.
 // Hidden countries still count in the ratings of the countries they played, but take no place in the table or in
-// the projections' groups (Russian clubs have been out of FIBA competitions since 2022).
+// the projections' groups: Russia (out of FIBA competitions since 2022) and any country without a game in the last
+// PJ_DEFAULT_SEASONS seasons.
 const RANK_HIDDEN = new Set(['Russia']);
 let RANK = null;
 function computeRankings(){
@@ -685,12 +686,13 @@ function computeRankings(){
     const d = K * mult * (homeWon - exp);
     elo[ch] = rh + d; elo[ca] = ra - d;
     for (const [c, own, opp] of [[ch, hp, ap], [ca, ap, hp]]){
-      const x = s(c); x.g++; own > opp ? x.w++ : x.l++; x.last = date;
+      const x = s(c); x.g++; own > opp ? x.w++ : x.l++; x.last = date; x.season = season;
       if (status !== 'AWA.'){ x.pf += own; x.pa += opp; x.pg++; }
     }
   }
   if (prev !== null) snap(prev);
-  const rows = Object.keys(st).filter(c => !RANK_HIDDEN.has(c)).map(c => ({c, elo: elo[c], ...st[c]})).sort((x, y) => y.elo - x.elo);
+  const active = ALL_SEASONS[Math.max(0, ALL_SEASONS.length - PJ_DEFAULT_SEASONS)];
+  const rows = Object.keys(st).filter(c => !RANK_HIDDEN.has(c) && st[c].season >= active).map(c => ({c, elo: elo[c], ...st[c]})).sort((x, y) => y.elo - x.elo);
   rows.snaps = snaps;
   return rows;
 }
@@ -737,7 +739,7 @@ function renderRankings(){
     if (a === null || b === null) return (a === null) - (b === null) || p.keys.place - q.keys.place;
     return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || p.keys.place - q.keys.place;
   });
-  const rows = list.map(x => x.html).join('');
+  const rows = list.filter(x => x.keys.games).map(x => x.html).join('');   // no games in the sample: not listed
   const th = (key, label, cls, title) => `<th class="${cls} sort${key === k ? ' on' : ''}" data-k="${key}"${title ? ` title="${title}"` : ''}>${label}${key === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
   const note = rkSeasons
     ? `Sample: the ${rkSeasons === 1 ? 'last season' : 'last ' + rkSeasons + ' seasons'} (${esc(seasonLabel(seasons[seasons.length - rkSeasons]))} to ${esc(seasonLabel(seasons[seasons.length - 1]))}). Games, W–L, win % and margin cover the sample only.`
@@ -747,7 +749,7 @@ function renderRankings(){
     ${th('rating', 'Rating', 'n', 'Elo rating today: starts at 1500, rises with wins (more for beating strong sides, by more, away)')}
     ${th('games', 'Games', 'n', 'Games against clubs from other countries, within the sample')}${th('wl', 'W–L', 'n', 'Sorted by wins minus losses')}${th('pct', 'Win %', 'n')}
     ${th('margin', 'Margin', 'n', 'Average points margin per game')}</tr>${rows}</table></div>
-    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted, and Russia, out of FIBA competitions since 2022, is not ranked. Click a column heading to sort, a country for its full record.</div>`;
+    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted. Countries without a game in the last ${PJ_DEFAULT_SEASONS} seasons are not ranked, nor is Russia, out of FIBA competitions since 2022. Click a column heading to sort, a country for its full record.</div>`;
   $('rkSeasons').onchange = e => { rkSeasons = +e.target.value; sync(); renderRankings(); };
   $('rkView').querySelectorAll('th.sort').forEach(h => h.onclick = () => {   // first click: best first; again: reverse
     const key = h.dataset.k;
