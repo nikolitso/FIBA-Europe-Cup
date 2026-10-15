@@ -223,10 +223,17 @@ function render(){
   const rows = Object.entries(by).map(([o,v]) => ({o, r:record(v), last:v.reduce((a,g)=>g.m[3]>a?g.m[3]:a,'')}))
     .sort((x,y) => y.r.n - x.r.n || x.o.localeCompare(y.o));
   const tot = record(gs);
-  out.innerHTML = `<div class="card"><div class="score"><div></div><div><div class="name">${esc(A)}</div><div class="ctry">${mode==='team'?esc(teams[A]):''}</div><div class="big" style="margin-top:12px">${tot.w}–${tot.l}</div><div class="lbl">${tot.n} games${where} · ${rows.length} opponents</div></div><div></div></div></div>
+  const avg = r => r.pg ? (r.pf / r.pg).toFixed(1) + '–' + (r.pa / r.pg).toFixed(1) : '–';
+  const wl = r => r.n ? `<b><span class="w">${r.w}</span>–<span class="l">${r.l}</span></b>` : '<b>–</b>';
+  const split = ['home', 'away'].filter(v => venue === 'all' || venue === v).map(v => {
+    const r = record(gs.filter(g => g.home === (v === 'home')));
+    return `<span>${v === 'home' ? 'Home' : 'Away'} ${wl(r)} <span class="tag">avg ${avg(r)}</span></span>`;
+  }).join('');
+  out.innerHTML = `<div class="card"><div class="score"><div></div><div><div class="name">${esc(A)}</div><div class="ctry">${mode==='team'?esc(teams[A]):''}</div><div class="big" style="margin-top:12px">${tot.w}–${tot.l}</div><div class="lbl">${tot.n} games${where} · ${rows.length} opponents</div></div><div></div></div>
+    <div class="facts">${split}<span>Avg points <b>${avg(tot)}</b></span></div></div>
     <div class="tag" style="margin-bottom:8px">Click an opponent for the full head to head.</div>
-    <div class="scroll"><table><tr><th>Opponent</th><th class="n">P</th><th class="n">W</th><th class="n">L</th><th class="n">Pts</th></tr>` +
-    rows.map(({o,r,last}) => `<tr class="click" data-o="${esc(o)}"><td>${esc(o)}${mode==='team'?` <span class="tag">${esc(teams[o])}</span>`:''}</td><td class="n">${r.n}</td><td class="n w">${r.w}</td><td class="n l">${r.l}</td><td class="n">${r.pf}–${r.pa}</td></tr>`).join('') + `</table></div>`;
+    <div class="scroll"><table><tr><th>Opponent</th><th class="n">P</th><th class="n">W</th><th class="n">L</th><th class="n" title="Average points for–against per game (awarded games left out)">Avg pts</th></tr>` +
+    rows.map(({o,r,last}) => `<tr class="click" data-o="${esc(o)}"><td>${esc(o)}${mode==='team'?` <span class="tag">${esc(teams[o])}</span>`:''}</td><td class="n">${r.n}</td><td class="n w">${r.w}</td><td class="n l">${r.l}</td><td class="n">${avg(r)}</td></tr>`).join('') + `</table></div>`;
   out.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => { $('b').value = tr.dataset.o; sync(); render(); window.scrollTo({top:0,behavior:'smooth'}); });
 }
 
