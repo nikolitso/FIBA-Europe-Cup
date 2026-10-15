@@ -322,7 +322,7 @@ function openMatch([, , home, away]){
 // The home side is replaced by the countries ranked within +/- N places of its own country in the power rankings,
 // the away side likewise (N = 1..5, default 3, set separately). Only past games in which a club of the home group
 // played AT HOME against a club of the away group playing AWAY are used; the projection is the average score of each.
-const PEER_DEFAULT = 2;
+const PEER_DEFAULT = 3;
 let pjAll = {h: PEER_DEFAULT, a: PEER_DEFAULT}, pjRow = {};      // global setting, per-fixture overrides by index
 const PJ_STAGES = ['Main', 'Second stage', 'First stage', 'Preliminary', 'Play Offs', 'Qualification'];
 const PJ_STAGE_LABEL = {'Main': 'Main · Group'};
