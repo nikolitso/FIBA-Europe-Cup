@@ -657,9 +657,9 @@ function renderArchive(){
 // FiveThirtyEight's NBA Elo. Same-country games are skipped; awarded games count without margin.
 // The table is always ordered by today's rating; the season sample only changes the record columns.
 // Hidden countries still count in the ratings of the countries they played, but take no place in the table or in
-// the projections' groups: Russia (out of FIBA competitions since 2022) and any country without a game in the last
+// the projections' groups: Russia and Belarus (out of FIBA competitions since 2022) and any country without a game in the last
 // PJ_DEFAULT_SEASONS seasons.
-const RANK_HIDDEN = new Set(['Russia']);
+const RANK_HIDDEN = new Set(['Russia', 'Belarus']);
 let RANK = null;
 function computeRankings(){
   const K = 20, HCA = 75, elo = {}, st = {}, snaps = {};
@@ -749,7 +749,7 @@ function renderRankings(){
     ${th('rating', 'Rating', 'n', 'Elo rating today: starts at 1500, rises with wins (more for beating strong sides, by more, away)')}
     ${th('games', 'Games', 'n', 'Games against clubs from other countries, within the sample')}${th('wl', 'W–L', 'n', 'Sorted by wins minus losses')}${th('pct', 'Win %', 'n')}
     ${th('margin', 'Margin', 'n', 'Average points margin per game')}</tr>${rows}</table></div>
-    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted. Countries without a game in the last ${PJ_DEFAULT_SEASONS} seasons are not ranked, nor is Russia, out of FIBA competitions since 2022. Click a column heading to sort, a country for its full record.</div>`;
+    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted. Countries without a game in the last ${PJ_DEFAULT_SEASONS} seasons are not ranked, nor are Russia and Belarus, out of FIBA competitions since 2022. Click a column heading to sort, a country for its full record.</div>`;
   $('rkSeasons').onchange = e => { rkSeasons = +e.target.value; sync(); renderRankings(); };
   $('rkView').querySelectorAll('th.sort').forEach(h => h.onclick = () => {   // first click: best first; again: reverse
     const key = h.dataset.k;
