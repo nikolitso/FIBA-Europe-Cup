@@ -656,6 +656,9 @@ function renderArchive(){
 // FiveThirtyEight's NBA Elo. Same-country games are skipped; awarded games count without margin.
 // The table is always ordered by today's rating. The season sample only changes the record columns and adds the
 // movement: today's place against the place at the end of the season before the sample began.
+// Hidden countries still count in the ratings of the countries they played, but take no place in the table or in
+// the projections' groups (Russian clubs have been out of FIBA competitions since 2022).
+const RANK_HIDDEN = new Set(['Russia']);
 let RANK = null;
 function computeRankings(){
   const K = 20, HCA = 75, elo = {}, st = {}, snaps = {};
@@ -663,7 +666,7 @@ function computeRankings(){
   const s = c => (st[c] ??= {g: 0, w: 0, l: 0, pf: 0, pa: 0, pg: 0, last: ''});
   const snap = season => {          // place of every rated country after this season's games
     const o = {};
-    Object.entries(elo).sort((x, y) => y[1] - x[1]).forEach(([c], i) => o[c] = i + 1);
+    Object.entries(elo).filter(([c]) => !RANK_HIDDEN.has(c)).sort((x, y) => y[1] - x[1]).forEach(([c], i) => o[c] = i + 1);
     snaps[season] = o;
   };
   const games = matches.slice().sort((x, y) => x[3].localeCompare(y[3]));
@@ -687,7 +690,7 @@ function computeRankings(){
     }
   }
   if (prev !== null) snap(prev);
-  const rows = Object.keys(st).map(c => ({c, elo: elo[c], ...st[c]})).sort((x, y) => y.elo - x.elo);
+  const rows = Object.keys(st).filter(c => !RANK_HIDDEN.has(c)).map(c => ({c, elo: elo[c], ...st[c]})).sort((x, y) => y.elo - x.elo);
   rows.snaps = snaps;
   return rows;
 }
@@ -709,6 +712,7 @@ function rankWindow(n){
   return {st, seasons, base: n ? seasons[seasons.length - n - 1] : null};
 }
 let rkSeasons = PJ_DEFAULT_SEASONS;                            // same sample as the projections; 0 = all seasons
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 function rkMove(now, was){
   if (was === undefined) return '<span class="tag">new</span>';
   const d = was - now;                                    // positive = moved up
@@ -727,15 +731,15 @@ function renderRankings(){
     return `<tr class="click" data-c="${esc(r.c)}"><td class="n">${i + 1}</td>
       <td><b>${esc(r.c)}</b> <span class="tag">(${esc(code(r.c))})</span></td>
       <td class="n"><b class="hcp">${Math.round(r.elo)}</b></td>
-      ${was ? `<td class="n tag gap">${was[r.c] ?? '–'}</td><td class="n">${rkMove(i + 1, was[r.c])}</td>` : ''}
+      ${was ? `<td class="n gap"${was[r.c] ? ` title="${ordinal(was[r.c])} at the end of ${esc(seasonLabel(base))}"` : ''}>${rkMove(i + 1, was[r.c])}</td>` : ''}
       <td class="n${was ? '' : ''}">${x.g}</td>
       <td class="n">${x.g ? `<span class="w">${x.w}</span>–<span class="l">${x.l}</span>` : '–'}</td>
       <td class="n">${x.g ? (x.w / x.g * 100).toFixed(0) + '%' : '–'}</td>
       <td class="n">${x.pg ? (m > 0 ? '+' : m < 0 ? '−' : '') + Math.abs(m).toFixed(1) : '–'}</td></tr>`;
   }).join('');
-  const moveHead = was ? `<th class="n gap" title="Place at the end of ${esc(base)}, the season before the sample">Was</th><th class="n" title="Places gained (▲) or lost (▼) since then">Move</th>` : '';
+  const moveHead = was ? `<th class="n gap" title="Places gained (▲) or lost (▼) since the end of ${esc(seasonLabel(base))}, the season before the sample">Move</th>` : '';
   const note = rkSeasons
-    ? `Sample: the ${rkSeasons === 1 ? 'last season' : 'last ' + rkSeasons + ' seasons'} (${esc(seasonLabel(seasons[seasons.length - rkSeasons]))} to ${esc(seasonLabel(seasons[seasons.length - 1]))}). <b>Was</b> is the place at the end of ${esc(seasonLabel(base))}; <b>Move</b> is the change to today's place. Games, W–L, win % and margin cover the sample only.`
+    ? `Sample: the ${rkSeasons === 1 ? 'last season' : 'last ' + rkSeasons + ' seasons'} (${esc(seasonLabel(seasons[seasons.length - rkSeasons]))} to ${esc(seasonLabel(seasons[seasons.length - 1]))}). <b>Move</b> is the change in place since the end of ${esc(seasonLabel(base))} (hover for the old place). Games, W–L, win % and margin cover the sample only.`
     : `Sample: all ${seasons.length} seasons. Pick a number of seasons to see which countries have moved up or down over that period.`;
   $('rkView').innerHTML = `<div class="fbar"><label>Sample <select id="rkSeasons" class="peer">${sel}</select></label></div>
     <div class="scroll"><table class="fx"><tr><th class="n">#</th><th>Country</th>
