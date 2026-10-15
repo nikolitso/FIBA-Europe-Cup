@@ -708,7 +708,7 @@ function rankWindow(n){
   }
   return {st, seasons, base: n ? seasons[seasons.length - n - 1] : null};
 }
-let rkSeasons = 0;
+let rkSeasons = PJ_DEFAULT_SEASONS;                            // same sample as the projections; 0 = all seasons
 function rkMove(now, was){
   if (was === undefined) return '<span class="tag">new</span>';
   const d = was - now;                                    // positive = moved up
@@ -826,7 +826,7 @@ function sync(){
     if (r.h !== undefined && r.h !== PEER_DEFAULT) q.set('ph', r.h);   // places, kept apart from the head to head picks a / b
     if (r.a !== undefined && r.a !== PEER_DEFAULT) q.set('pa', r.a);
   }
-  if (view === 'rankings' && rkSeasons) q.set('seasons', rkSeasons);
+  if (view === 'rankings' && rkSeasons !== PJ_DEFAULT_SEASONS) q.set('seasons', rkSeasons || 'all');
   if (view === 'projections'){
     if (pjFilter.seasons !== PJ_DEFAULT_SEASONS) q.set('seasons', pjFilter.seasons || 'all');
     if (!(pjFilter.stages.size === 1 && pjFilter.stages.has('Main'))) q.set('stages', PJ_STAGES.filter(x => pjFilter.stages.has(x)).join(','));
@@ -864,8 +864,9 @@ if (p.get('view') === 'projections' && p.get('home') && p.get('away')){
   }
 }
 if (p.get('view') === 'rankings'){
-  const n = +p.get('seasons');
-  if (n >= 1 && n < ALL_SEASONS.length) rkSeasons = Math.round(n);
+  const v = p.get('seasons'), n = +v;
+  if (v === 'all') rkSeasons = 0;
+  else if (n >= 1 && n < ALL_SEASONS.length) rkSeasons = Math.round(n);
 }
 if (p.get('view') === 'projections'){
   const n = +p.get('seasons');
