@@ -63,6 +63,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .scroll{overflow-x:auto}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
+th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gold)}
 .rogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:16px}
 .rogrid .card{padding:16px;margin:0}.rogrid h3{font:600 18px var(--serif);margin:0 0 2px;cursor:pointer}.rogrid h3:hover{color:var(--gold)}
 .rogrid table{width:100%;border-collapse:collapse;margin-top:8px}.rogrid td,.rogrid th{padding:4px 4px;border-top:1px solid var(--line);font-size:14px}
@@ -654,8 +655,7 @@ function renderArchive(){
 // ---------- Power rankings: country Elo over all games in date order
 // Start 1500; K 20; home advantage 75 Elo points; margin-of-victory multiplier as in
 // FiveThirtyEight's NBA Elo. Same-country games are skipped; awarded games count without margin.
-// The table is always ordered by today's rating. The season sample only changes the record columns and adds the
-// movement: today's place against the place at the end of the season before the sample began.
+// The table is always ordered by today's rating; the season sample only changes the record columns.
 // Hidden countries still count in the ratings of the countries they played, but take no place in the table or in
 // the projections' groups (Russian clubs have been out of FIBA competitions since 2022).
 const RANK_HIDDEN = new Set(['Russia']);
@@ -711,43 +711,49 @@ function rankWindow(n){
   }
   return {st, seasons, base: n ? seasons[seasons.length - n - 1] : null};
 }
+let rkSort = {k: 'place', dir: 1};
 let rkSeasons = PJ_DEFAULT_SEASONS;                            // same sample as the projections; 0 = all seasons
-const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
-function rkMove(now, was){
-  if (was === undefined) return '<span class="tag">new</span>';
-  const d = was - now;                                    // positive = moved up
-  if (!d) return '<span class="tag">=</span>';
-  return `<span class="${d > 0 ? 'w' : 'l'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d)}</span>`;
-}
 function renderRankings(){
   RANK ||= computeRankings();
   const {st, seasons, base} = rankWindow(rkSeasons);
-  const was = base ? RANK.snaps[base] : null;
   const sel = [...Array(seasons.length - 1)].map((_, k) => k + 1).concat([0]).map(k =>
     `<option value="${k}"${k === rkSeasons ? ' selected' : ''}>${k ? (k === 1 ? 'Last season' : 'Last ' + k + ' seasons') : 'All ' + seasons.length + ' seasons'}</option>`).join('');
-  const rows = RANK.map((r, i) => {
+  const list = RANK.map((r, i) => {
     const x = st[r.c] || {g: 0, w: 0, l: 0, pf: 0, pa: 0, pg: 0};
     const m = x.pg ? (x.pf - x.pa) / x.pg : 0;
-    return `<tr class="click" data-c="${esc(r.c)}"><td class="n">${i + 1}</td>
+    const keys = {place: i + 1, country: r.c, rating: r.elo, games: x.g,
+      wl: x.g ? x.w - x.l : null, pct: x.g ? x.w / x.g : null, margin: x.pg ? m : null};
+    return {keys, html: `<tr class="click" data-c="${esc(r.c)}"><td class="n">${i + 1}</td>
       <td><b>${esc(r.c)}</b> <span class="tag">(${esc(code(r.c))})</span></td>
       <td class="n"><b class="hcp">${Math.round(r.elo)}</b></td>
-      ${was ? `<td class="n gap"${was[r.c] ? ` title="${ordinal(was[r.c])} at the end of ${esc(seasonLabel(base))}"` : ''}>${rkMove(i + 1, was[r.c])}</td>` : ''}
-      <td class="n${was ? '' : ''}">${x.g}</td>
+      <td class="n">${x.g}</td>
       <td class="n">${x.g ? `<span class="w">${x.w}</span>–<span class="l">${x.l}</span>` : '–'}</td>
       <td class="n">${x.g ? (x.w / x.g * 100).toFixed(0) + '%' : '–'}</td>
-      <td class="n">${x.pg ? (m > 0 ? '+' : m < 0 ? '−' : '') + Math.abs(m).toFixed(1) : '–'}</td></tr>`;
-  }).join('');
-  const moveHead = was ? `<th class="n gap" title="Places gained (▲) or lost (▼) since the end of ${esc(seasonLabel(base))}, the season before the sample">Move</th>` : '';
+      <td class="n">${x.pg ? (m > 0 ? '+' : m < 0 ? '−' : '') + Math.abs(m).toFixed(1) : '–'}</td></tr>`};
+  });
+  const {k, dir} = rkSort;
+  list.sort((p, q) => {                                         // empty values always last
+    const a = p.keys[k], b = q.keys[k];
+    if (a === null || b === null) return (a === null) - (b === null) || p.keys.place - q.keys.place;
+    return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || p.keys.place - q.keys.place;
+  });
+  const rows = list.map(x => x.html).join('');
+  const th = (key, label, cls, title) => `<th class="${cls} sort${key === k ? ' on' : ''}" data-k="${key}"${title ? ` title="${title}"` : ''}>${label}${key === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
   const note = rkSeasons
-    ? `Sample: the ${rkSeasons === 1 ? 'last season' : 'last ' + rkSeasons + ' seasons'} (${esc(seasonLabel(seasons[seasons.length - rkSeasons]))} to ${esc(seasonLabel(seasons[seasons.length - 1]))}). <b>Move</b> is the change in place since the end of ${esc(seasonLabel(base))} (hover for the old place). Games, W–L, win % and margin cover the sample only.`
-    : `Sample: all ${seasons.length} seasons. Pick a number of seasons to see which countries have moved up or down over that period.`;
+    ? `Sample: the ${rkSeasons === 1 ? 'last season' : 'last ' + rkSeasons + ' seasons'} (${esc(seasonLabel(seasons[seasons.length - rkSeasons]))} to ${esc(seasonLabel(seasons[seasons.length - 1]))}). Games, W–L, win % and margin cover the sample only.`
+    : `Sample: all ${seasons.length} seasons. Games, W–L, win % and margin cover the sample.`;
   $('rkView').innerHTML = `<div class="fbar"><label>Sample <select id="rkSeasons" class="peer">${sel}</select></label></div>
-    <div class="scroll"><table class="fx"><tr><th class="n">#</th><th>Country</th>
-    <th class="n" title="Elo rating today: starts at 1500, rises with wins (more for beating strong sides, by more, away)">Rating</th>${moveHead}
-    <th class="n" title="Games against clubs from other countries, within the sample">Games</th><th class="n">W–L</th><th class="n">Win %</th>
-    <th class="n" title="Average points margin per game">Margin</th></tr>${rows}</table></div>
-    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted. Click a country for its full record.</div>`;
+    <div class="scroll"><table class="fx"><tr>${th('place', '#', 'n')}${th('country', 'Country', '')}
+    ${th('rating', 'Rating', 'n', 'Elo rating today: starts at 1500, rises with wins (more for beating strong sides, by more, away)')}
+    ${th('games', 'Games', 'n', 'Games against clubs from other countries, within the sample')}${th('wl', 'W–L', 'n', 'Sorted by wins minus losses')}${th('pct', 'Win %', 'n')}
+    ${th('margin', 'Margin', 'n', 'Average points margin per game')}</tr>${rows}</table></div>
+    <div class="tag" style="margin-top:14px">${note} Rating is an Elo rating updated game by game since 2015–16 and always reflects today. Games between clubs from the same country are not counted, and Russia, out of FIBA competitions since 2022, is not ranked. Click a column heading to sort, a country for its full record.</div>`;
   $('rkSeasons').onchange = e => { rkSeasons = +e.target.value; sync(); renderRankings(); };
+  $('rkView').querySelectorAll('th.sort').forEach(h => h.onclick = () => {   // first click: best first; again: reverse
+    const key = h.dataset.k;
+    rkSort = key === k ? {k, dir: -dir} : {k: key, dir: key === 'place' || key === 'country' ? 1 : -1};
+    renderRankings();
+  });
   $('rkView').querySelectorAll('tr.click').forEach(tr => tr.onclick = () => {
     setMode('country'); $('a').value = tr.dataset.c; $('b').value = ''; setVenue('all');
     setView('h2h'); sync(); render(); window.scrollTo({top: 0, behavior: 'smooth'});
