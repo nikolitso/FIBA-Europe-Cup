@@ -63,6 +63,12 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .scroll{overflow-x:auto}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
+.rogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:16px}
+.rogrid .card{padding:16px;margin:0}.rogrid h3{font:600 18px var(--serif);margin:0 0 2px;cursor:pointer}.rogrid h3:hover{color:var(--gold)}
+.rogrid table{width:100%;border-collapse:collapse;margin-top:8px}.rogrid td,.rogrid th{padding:4px 4px;border-top:1px solid var(--line);font-size:14px}
+.rogrid th{font:400 11px var(--mono);color:var(--muted);text-align:left;border-top:0}.rogrid .n{text-align:right}
+.rogrid tr.out td{color:var(--loss)}.rogrid tr.out .pl{text-decoration:line-through}
+@media (max-width:420px){.rogrid{grid-template-columns:1fr}}
 .back{font:500 13px var(--mono);color:var(--gold);text-decoration:none;letter-spacing:.04em}
 .back:hover{text-decoration:underline}
 .fbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:0 0 14px}
@@ -97,6 +103,7 @@ select.peer:focus{outline:2px solid var(--gold)}
     <a href="#view=projections" data-view="projections">Projections</a>
     <a href="#view=archive" data-view="archive">Archive</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
+    <a href="#view=rosters" data-view="rosters">Rosters</a>
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
   </div>
 
@@ -104,6 +111,7 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div id="rkView" hidden></div>
   <div id="pjView" hidden></div>
   <div id="arView" hidden></div>
+  <div id="roView" hidden></div>
 
   <div id="h2hView" hidden>
   <div class="controls">
@@ -741,8 +749,44 @@ function renderRankings(){
     setView('h2h'); sync(); render(); window.scrollTo({top: 0, behavior: 'smooth'});
   });
 }
+// ---------- Rosters: each club's key players this season and who is out
+let roQuery = '';
+function renderRosters(){
+  const box = $('roView');
+  if (!window.ROSTERS){ box.innerHTML = '<div class="empty">No rosters yet.</div>'; return; }
+  const out = (window.INJURIES && INJURIES.out) || [];
+  const clubs = Object.keys(ROSTERS.teams).sort((x, y) => (teams[x] || '').localeCompare(teams[y] || '') || x.localeCompare(y));
+  const nOut = out.length;
+  box.innerHTML = `<div class="note" style="margin-bottom:14px">Key players of the ${clubs.length} clubs in this season's FIBA Europe Cup, from ${esc(ROSTERS.source.replace(/^FIBA box scores, /, ''))} of FIBA box scores (updated ${fmtDate(ROSTERS.updated)}).
+      <b>Impact</b> is roughly how many points weaker a side is without the player: efficiency per minute above a bench level, times minutes per team game, halved, and trimmed for players with few games.
+      Players listed as out (${nOut ? nOut + ', updated ' + fmtDate(INJURIES.updated) : 'none at the moment'}) are struck through; their impact comes off the club's handicap in the projections.</div>
+    <input id="roSearch" placeholder="Search a club, country or player" value="${esc(roQuery)}" aria-label="Search rosters">
+    <div class="rogrid" id="roGrid"></div>`;
+  const draw = () => {
+    const q = roQuery.trim().toLowerCase();
+    const cards = clubs.filter(c => !q || c.toLowerCase().includes(q) || (teams[c] || '').toLowerCase().includes(q) ||
+      ROSTERS.teams[c].some(p => p[0].toLowerCase().includes(q))).map(c => {
+      const gone = new Map(out.filter(x => x.team === c).map(x => [x.player, x]));
+      const extra = [...gone.values()].filter(x => !ROSTERS.teams[c].some(p => p[0] === x.player));
+      return `<div class="card"><h3 data-club="${esc(c)}">${esc(c)}</h3><div class="tag">${esc(teams[c] || '')}${rankOf(teams[c])}</div>
+        <table><tr><th>Player</th><th class="n" title="Points the side loses without the player">Impact</th><th class="n" title="Minutes per team game">Min</th><th class="n" title="Efficiency per game played">Eff</th><th class="n" title="Games played">G</th></tr>` +
+        ROSTERS.teams[c].map(p => { const o = gone.get(p[0]);
+          return `<tr${o ? ` class="out" title="Out${o.note ? ': ' + esc(o.note) : ''}"` : ''}><td><span class="pl">${esc(p[0])}</span>${o ? ' <span class="tag">out' + (o.note ? ' · ' + esc(o.note) : '') + '</span>' : ''}</td>
+            <td class="n"><b>${p[1].toFixed(1)}</b></td><td class="n">${p[2].toFixed(1)}</td><td class="n">${p[3].toFixed(1)}</td><td class="n">${p[4]}</td></tr>`; }).join('') +
+        extra.map(o => `<tr class="out"><td><span class="pl">${esc(o.player)}</span> <span class="tag">out${o.note ? ' · ' + esc(o.note) : ''}</span></td><td class="n"><b>${(o.impact || 0).toFixed(1)}</b></td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr>`).join('') +
+        `</table></div>`;
+    });
+    $('roGrid').innerHTML = cards.join('') || '<div class="empty">No club or player matches.</div>';
+    $('roGrid').querySelectorAll('h3[data-club]').forEach(h => h.onclick = () => {
+      setMode('team'); $('a').value = h.dataset.club; $('b').value = ''; setVenue('all');
+      setView('h2h'); sync(); render(); window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+  };
+  $('roSearch').oninput = e => { roQuery = e.target.value; draw(); };
+  draw();
+}
 function setView(v){
-  view = ['fixtures', 'projections', 'archive', 'h2h', 'rankings'].includes(v) ? v : 'fixtures';
+  view = ['fixtures', 'projections', 'archive', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'fixtures';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   document.body.classList.toggle('wide', view === 'projections' || view === 'archive');
   $('fxView').hidden = view !== 'fixtures';
@@ -750,10 +794,12 @@ function setView(v){
   $('arView').hidden = view !== 'archive';
   $('pjView').hidden = view !== 'projections';
   $('h2hView').hidden = view !== 'h2h';
+  $('roView').hidden = view !== 'rosters';
   if (view === 'fixtures') renderFixtures();
   if (view === 'rankings') renderRankings();
   if (view === 'projections') renderProjections();
   if (view === 'archive') renderArchive();
+  if (view === 'rosters') renderRosters();
 }
 document.querySelectorAll('#tabs a').forEach(b => b.onclick = e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); if (b.dataset.view === 'projections') pjDetail = null; setView(b.dataset.view); sync(); });
 // Home: back to the start (countries, all venues, nothing selected, head to head tab)
