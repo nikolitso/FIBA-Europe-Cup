@@ -68,6 +68,8 @@ th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gol
 .rogrid .card{padding:16px;margin:0}.rogrid h3{font:600 18px var(--serif);margin:0 0 2px;cursor:pointer}.rogrid h3:hover{color:var(--gold)}
 .rogrid table{width:100%;border-collapse:collapse;margin-top:8px}.rogrid td,.rogrid th{padding:4px 4px;border-top:1px solid var(--line);font-size:14px}
 .rogrid th{font:400 11px var(--mono);color:var(--muted);text-align:left;border-top:0}.rogrid .n{text-align:right}
+.tier{display:inline-block;min-width:22px;text-align:center;font:600 12px var(--mono);border-radius:4px;padding:2px 6px;border:1px solid var(--line)}
+.tier.A{color:var(--bg);background:var(--gold);border-color:var(--gold)}.tier.B{color:var(--gold);border-color:var(--gold)}.tier.C{color:var(--muted)}
 .rogrid tr.out td{color:var(--loss)}.rogrid tr.out .pl{text-decoration:line-through}
 @media (max-width:420px){.rogrid{grid-template-columns:1fr}}
 .back{font:500 13px var(--mono);color:var(--gold);text-decoration:none;letter-spacing:.04em}
@@ -105,6 +107,7 @@ select.peer:focus{outline:2px solid var(--gold)}
     <a href="#view=archive" data-view="archive">Archive</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
     <a href="#view=rosters" data-view="rosters">Rosters</a>
+    <a href="#view=budgets" data-view="budgets">Team Budgets</a>
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
   </div>
 
@@ -113,6 +116,7 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div id="pjView" hidden></div>
   <div id="arView" hidden></div>
   <div id="roView" hidden></div>
+  <div id="buView" hidden></div>
 
   <div id="h2hView" hidden>
   <div class="controls">
@@ -141,6 +145,7 @@ select.peer:focus{outline:2px solid var(--gold)}
 <script src="archive.js"></script>
 <script src="rosters.js"></script>
 <script src="injuries.js"></script>
+<script src="budgets.js"></script>
 <script>
 const {matches, teams} = window.DATA;
 let mode = 'country';
@@ -838,8 +843,26 @@ function renderRosters(){
   $('roSearch').oninput = e => { roQuery = e.target.value; draw(); };
   draw();
 }
+// ---------- Team Budgets: tier per club, with how sure each one is
+const BU_STATUS = {official: ['Confirmed', 'Official league figure'], press: ['Confirmed (press)', 'Figure reported in the press'], estimate: ['Estimate', 'No published figure; tier estimated from league level, European record and club news']};
+function renderBudgets(){
+  const box = $('buView');
+  if (!window.BUDGETS){ box.innerHTML = '<div class="empty">No budgets yet.</div>'; return; }
+  const list = BUDGETS.clubs.slice().sort((x, y) => x.tier.localeCompare(y.tier) || (y.budget ?? -1) - (x.budget ?? -1) || x.club.localeCompare(y.club));
+  const n = s => list.filter(c => c.status === s).length;
+  const money = c => c.budget === null ? '–' : (c.status === 'press' ? 'about ' : '') + `${c.currency === 'EUR' ? '€' : c.currency + ' '}${c.budget.toFixed(c.status === 'press' ? 1 : 2)}m`;
+  const rows = list.map(c => `<tr><td class="n"><span class="tier ${c.tier}">${c.tier}</span></td>
+      <td><b>${esc(c.club)}</b> <span class="tag">(${esc(code(teams[c.club]))})</span></td>
+      <td class="n">${money(c)}</td><td class="n tag">${esc(c.season.replace('c. ', 'around ').replace('-', '–'))}</td>
+      <td title="${esc(BU_STATUS[c.status][1])}">${c.status === 'estimate' ? `<span class="tag">${BU_STATUS[c.status][0]}</span>` : `<b>${BU_STATUS[c.status][0]}</b>`}</td>
+      <td class="tag">${c.source ? `<a href="${esc(c.source)}" target="_blank" rel="noopener">${esc(new URL(c.source).hostname.replace(/^www\./, ''))}</a>` : ''}</td></tr>`).join('');
+  box.innerHTML = `<div class="note" style="margin-bottom:14px"><b>Budget tiers</b> for the ${list.length} clubs of this season: <span class="tier A">A</span> €4m or more, <span class="tier B">B</span> €1.5–4m, <span class="tier C">C</span> under €1.5m.
+      Most clubs at this level publish nothing, so <b>${n('official') + n('press')} tiers are confirmed by a published figure</b> (${n('official')} from official league reports, ${n('press')} from the press, some of them older) and <b>${n('estimate')} are estimates</b>, made from league level, European record and club news.</div>
+    <div class="scroll"><table class="fx"><tr><th class="n">Tier</th><th>Club</th><th class="n" title="Total club budget for the season shown">Budget</th><th class="n">Season</th><th>Basis</th><th>Source</th></tr>${rows}</table></div>
+    <div class="tag" style="margin-top:14px">Budgets are not comparable to the cent: leagues count different things (youth teams, arena costs). Figures from earlier seasons are shown with their season. Estimates are updated as figures become available. Updated ${fmtDate(BUDGETS.updated)}.</div>`;
+}
 function setView(v){
-  view = ['fixtures', 'projections', 'archive', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'fixtures';
+  view = ['fixtures', 'projections', 'archive', 'h2h', 'rosters', 'budgets', 'rankings'].includes(v) ? v : 'fixtures';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   document.body.classList.toggle('wide', view === 'projections' || view === 'archive');
   $('fxView').hidden = view !== 'fixtures';
@@ -848,11 +871,13 @@ function setView(v){
   $('pjView').hidden = view !== 'projections';
   $('h2hView').hidden = view !== 'h2h';
   $('roView').hidden = view !== 'rosters';
+  $('buView').hidden = view !== 'budgets';
   if (view === 'fixtures') renderFixtures();
   if (view === 'rankings') renderRankings();
   if (view === 'projections') renderProjections();
   if (view === 'archive') renderArchive();
   if (view === 'rosters') renderRosters();
+  if (view === 'budgets') renderBudgets();
 }
 document.querySelectorAll('#tabs a').forEach(b => b.onclick = e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); if (b.dataset.view === 'projections') pjDetail = null; setView(b.dataset.view); sync(); });
 // Home: back to the start (countries, all venues, nothing selected, head to head tab)
