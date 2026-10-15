@@ -183,8 +183,19 @@ const gameRow = g => {
   return `<tr><td class="n">${fmtDate(date)}</td><td>${venue}</td><td class="n ${win?'w':'l'}">${score}</td><td class="tag">${esc(season)} · ${esc(stage)} · ${esc(round.replace(/ - /,' · '))}</td></tr>`;
 };
 
-// stages counted on the head to head pages; same default as the rankings and projections
-let hStages = new Set(['Main']), hSeasons = 5;                 // seasons: how many of the latest (0 = all)
+// sample of the head to head pages and the fixtures (shared): stages and how many of the latest seasons (0 = all);
+// same defaults as the rankings and projections
+let hStages = new Set(['Main']), hSeasons = 5;
+const hKeep = m => hStages.has(m[1]) && (!hSeasons || ALL_SEASONS.indexOf(m[0]) >= ALL_SEASONS.length - hSeasons);
+function hBind(box, rerender){
+  box.querySelector('#hSeasons').onchange = e => { hSeasons = +e.target.value; sync(); rerender(); };
+  box.querySelectorAll('.fbar .chip').forEach(b => b.onclick = () => {
+    const st = b.dataset.stage;
+    if (hStages.has(st)){ if (hStages.size > 1) hStages.delete(st); }   // keep at least one stage
+    else hStages.add(st);
+    sync(); rerender();
+  });
+}
 function hChips(){
   const opts = [...Array(ALL_SEASONS.length - 1)].map((_, k) => k + 1).concat([0]).map(k =>
     `<option value="${k}"${k === hSeasons ? ' selected' : ''}>${k ? (k === 1 ? 'Last season' : 'Last ' + k + ' seasons') : 'All ' + ALL_SEASONS.length + ' seasons'}</option>`).join('');
@@ -194,19 +205,13 @@ function render(){
   const box = $('out');
   const out = {set innerHTML(h){
     box.innerHTML = hChips() + h;
-    box.querySelector('#hSeasons').onchange = e => { hSeasons = +e.target.value; sync(); render(); };
-    box.querySelectorAll('.fbar .chip').forEach(b => b.onclick = () => {
-      const st = b.dataset.stage;
-      if (hStages.has(st)){ if (hStages.size > 1) hStages.delete(st); }   // keep at least one stage
-      else hStages.add(st);
-      sync(); render();
-    });
+    hBind(box, render);
   }, querySelectorAll: q => box.querySelectorAll(q)};
   const A = $('a').value.trim(), B = $('b').value.trim();
   const ok = n => names().includes(n);
   if (!A){ box.innerHTML = `<div class="empty">Pick a ${mode} to see its record against everyone, or two to see their head to head.</div>`; return; }
   if (!ok(A)){ out.innerHTML = `<div class="empty">No ${mode} called “${esc(A)}”. Choose from the suggestions.</div>`; return; }
-  const gs = gamesFor(A).filter(g => (venue === 'all' || (venue === 'home') === g.home) && hStages.has(g.m[1]) && (!hSeasons || ALL_SEASONS.indexOf(g.m[0]) >= ALL_SEASONS.length - hSeasons));
+  const gs = gamesFor(A).filter(g => (venue === 'all' || (venue === 'home') === g.home) && hKeep(g.m));
   const where = venue === 'all' ? '' : (venue === 'home' ? ' at home' : ' away');
 
   if (B && ok(B)){
@@ -270,7 +275,9 @@ const code = c => CODE[c] || (c || '').slice(0, 3).toUpperCase();
 // pf/pa = points for x / against x, over pg games with a real score (awarded games excluded)
 function h2hRecord(x, y, byCountry, homeOnly){
   let w = 0, l = 0, pf = 0, pa = 0, pg = 0;
-  for (const [, , , , h, a, hp, ap, status] of matches){
+  for (const m of matches){
+    if (!hKeep(m)) continue;
+    const [, , , , h, a, hp, ap, status] = m;
     const eh = byCountry ? teams[h] : h, ea = byCountry ? teams[a] : a;
     let own, opp;
     if (eh === x && ea === y) [own, opp] = [hp, ap];
@@ -327,12 +334,13 @@ function renderFixtures(){
   const days = {};
   for (const [f, i] of list) (days[f[0].slice(0, 10)] ||= []).push([f, i]);
   const dayName = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
-  box.innerHTML =
-    `<div class="note"><b>H2H is country against country.</b> Each fixture is compared by the countries of the two clubs, using every game between clubs of those countries since 2015–16, not only games between these two clubs. <b>H2H home</b> counts only games in which a club from the home side's country played at home. W–L is the home side's country; Home and Away are the average points of each country; Hcp is Home minus Away. Fixtures between two clubs of the same country compare the two clubs themselves.</div>` +
+  box.innerHTML = hChips() +
+    `<div class="note"><b>H2H is country against country.</b> Each fixture is compared by the countries of the two clubs, using every game in the sample between clubs of those countries, not only games between these two clubs. <b>H2H home</b> counts only games in which a club from the home side's country played at home. W–L is the home side's country; Home and Away are the average points of each country; Hcp is Home minus Away. Fixtures between two clubs of the same country compare the two clubs themselves.</div>` +
     Object.entries(days).map(([d, rows]) => `<h2>${dayName(d)} <span class="tag">${esc(rows[0][0][1])}</span></h2>
       <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="4" class="grp gap" title="All games between clubs of the two countries">H2H (countries)</th><th colspan="4" class="grp" title="Only games in which a club from the home side&#39;s country played at home">H2H home (countries)</th></tr><tr><th class="n">W–L</th><th class="n" title="Home side average points">Home</th><th class="n" title="Away side average points">Away</th><th class="n gap" title="Handicap: home average minus away average">Hcp</th><th class="n">W–L</th><th class="n" title="Home side average points">Home</th><th class="n" title="Away side average points">Away</th><th class="n" title="Handicap: home average minus away average">Hcp</th></tr>${rows.map(([f, i]) => fixtureRow(f, i)).join('')}</table></div>`).join('') +
-    `<div class="tag" style="margin-top:18px">Fixtures as of ${esc(window.FIXTURES.updated)}.</div>`;
+    `<div class="tag" style="margin-top:18px">Sample: ${hSeasons ? (hSeasons === 1 ? 'the last season' : 'the last ' + hSeasons + ' seasons') : 'all seasons'}; stages: ${esc(PJ_STAGES.filter(x => hStages.has(x)).map(x => PJ_STAGE_LABEL[x] || x).join(', '))}. The same sample is kept when a fixture is opened. Fixtures as of ${esc(window.FIXTURES.updated)}.</div>`;
   box.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => openMatch(FX[+tr.dataset.i]));
+  hBind(box, renderFixtures);
 }
 function openMatch([, , home, away]){
   const ch = teams[home], ca = teams[away];
@@ -864,6 +872,8 @@ function sync(){
     if (venue !== 'all') q.set('venue', venue);
     if ($('a').value) q.set('a', $('a').value);
     if ($('b').value) q.set('b', $('b').value);
+  }
+  if (view === 'h2h' || view === 'fixtures'){
     if (hSeasons !== PJ_DEFAULT_SEASONS) q.set('seasons', hSeasons || 'all');
     if (!(hStages.size === 1 && hStages.has('Main'))) q.set('stages', PJ_STAGES.filter(x => hStages.has(x)).join(','));
   }
@@ -901,7 +911,7 @@ $('a').addEventListener('change', render); $('b').addEventListener('change', ren
 const p = new URLSearchParams(location.hash.slice(1));
 setMode(p.get('mode') === 'team' ? 'team' : 'country');
 setVenue(p.get('venue'));
-if (p.get('view') === 'h2h' || !p.get('view')){
+if (['h2h', 'fixtures', null].includes(p.get('view'))){
   const st = (p.get('stages') || '').split(',').filter(x => PJ_STAGES.includes(x));
   if (st.length) hStages = new Set(st);
   const v = p.get('seasons'), n = +v;
