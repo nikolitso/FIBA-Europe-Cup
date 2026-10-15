@@ -1,0 +1,51 @@
+club,country,budget_m,currency,season,kind,confidence,source,note
+Chalon/Saone,France,7.188,EUR,2025-26,official (LNB DNCCG),high,https://cdn.lnb.fr/uploads/content-library/e0645ba3c01ab4ec93d0376812e175afc201fafa7958aa2b7264766ee102e1d0.pdf,"Updated 2025-26 budget, 6th in Betclic Elite; payroll 2.034m (28%). 2026-27 club figure not found yet (league median 6.6m)."
+Nancy,France,5.836,EUR,2025-26,official (LNB DNCCG),high,https://cdn.lnb.fr/uploads/content-library/e0645ba3c01ab4ec93d0376812e175afc201fafa7958aa2b7264766ee102e1d0.pdf,"Updated 2025-26 budget, 12th in Betclic Elite; payroll 1.733m (30%)."
+Wurzburg,Germany,6.305,EUR,2024-25,official (BBL),medium,https://www.basketball-world.news/artikel/transparenz-in-der-bbl-etats-von-13-teams-veroeffentlicht-1070450,Plan as of 15 Oct 2024; sport personnel 3.506m. BBL published 2025-26 for all 18 clubs (Dec 2025) but the club figure was not readable.
+Trier,Germany,,EUR,,,,https://www.eurohoops.net/en/bbl/1909310/bayern-bbl-season-budgets-germany/,In the BBL 2025-26 list (chart) but figure not readable; promoted in 2025.
+Basquet Girona,Spain,3.5,EUR,2023-24,press estimate,low,https://www.que.es/2024/03/12/esfuerzo-marc-gasol-levantar-basquet-girona/,Estimated 3-4m for 2023-24; likely higher now (first European season).
+VEF Riga,Latvia,1.7,EUR,2024-25,press (coach quote),low,https://www.lsm.lv/raksts/sports/basketbols/20.09.2024-basketbola-specialisti-klubi-sperusi-pussoli-uz-prieksu-latvijas-igaunijas-liga-saasinasies-cina-par-medalam.a569386/,"Almost 1.7m, largest in Latvia (Sep 2024)."
+Oostende,Belgium,2.5,EUR,c. 2022,press (club),low,https://www.made-in.be/west-vlaanderen/sportief-succes-van-kampioenenploeg-bc-filou-oostende-is-mede-te-danken-aan-de-bedrijfswereld/,About 2.5m after Covid (3.2-3.4m before); old.
+Fribourg Olympic,Switzerland,1.2,CHF,c. 2019,press,low,https://www.letemps.ch/sport/fribourg-capitale-suisse-basketball,Old figure; later reports mention further cuts.
+Benfica,Portugal,,EUR,,,,https://www.rtp.pt/noticias/benfica/orcamento-do-benfica-para-a-epoca-202627-aprovado-por-5457_d1749958,"Club budget 2026-27 approved (70m revenue, all sports excl. football SAD); basketball not broken out."
+Sporting CP,Portugal,,EUR,,,,,Not found.
+Zielona Gora,Poland,,PLN,,,,https://sportowefakty.wp.pl/KOSZYKOWKA/wiadomosci/1442,Only a 2022 headline (5m PLN) and a 0.5m PLN regional grant (2025).
+Dziki Warszawa,Poland,,PLN,,,,,Not found.
+Szczecin,Poland,,PLN,,,,,Not found.
+Mykonos,Greece,,EUR,,,,,Not found; check GEMI accounts.
+Iraklis,Greece,,EUR,,,,,Not found; check GEMI accounts.
+Kolossos Rhodes,Greece,,EUR,,,,,Not found; check GEMI accounts.
+Promitheas,Greece,,EUR,,,,,Not found; check GEMI accounts.
+Denizli Basket,Turkey,,USD,,,,,Not found.
+Esenler Erokspor,Turkey,,USD,,,,,Not found.
+Korfez Basket,Turkey,,USD,,,,,Not found.
+Bakken Bears,Denmark,,DKK,,,,,Not found; check CVR annual report.
+BC Kalev/Cramo,Estonia,,EUR,,,,,Not found; check Estonian business register.
+Parnu,Estonia,,EUR,,,,,Not searched yet.
+Tartu Ulikool,Estonia,,EUR,,,,,Not searched yet.
+Valmiera Glass Via,Latvia,,EUR,,,,,Below VEF (largest in Latvia at ~1.7m in 2024).
+Szolnoki Olaj,Hungary,,HUF,,,,,Not found (TAO-funded).
+Dinamo Bucharest,Romania,,EUR,,,,,Not found.
+SCM Craiova,Romania,,EUR,,,,,Not searched yet.
+CSM Oradea,Romania,,EUR,,,,https://csmoradea.ro/wp-content/uploads/2026/01/RaportActivitate_CSMOradea_2025.pdf,Municipal multi-sport club; activity report may hold the figure.
+Vienna Basket,Austria,,EUR,,,,,Not searched yet.
+Geneva Lions,Switzerland,,CHF,,,,,Not found.
+Opava,Czech Republic,,CZK,,,,,Not searched yet.
+BC Prievidza,Slovakia,,EUR,,,,,Not searched yet.
+Levice,Slovakia,,EUR,,,,,Not searched yet.
+Nitra Blue Wings,Slovakia,,EUR,,,,,Not searched yet.
+Samobor,Croatia,,EUR,,,,,Not searched yet.
+Split,Croatia,,EUR,,,,,Not searched yet.
+MZT Skopje,North Macedonia,,EUR,,,,,Not searched yet.
+Lok. Plovdiv,Bulgaria,,EUR,,,,,Not searched yet.
+Rilski Sportist,Bulgaria,,EUR,,,,,Not searched yet.
+Keravnos,Cyprus,,EUR,,,,,Not searched yet.
+AEK Larnaca,Cyprus,,EUR,,,,,Not searched yet.
+Batumi,Georgia,,EUR,,,,,Not searched yet.
+Neftchi IK,Azerbaijan,,EUR,,,,,Not searched yet.
+Absheron Lions,Azerbaijan,,EUR,,,,,Not searched yet.
+Gence,Azerbaijan,,EUR,,,,,Not searched yet.
+Peja,Kosovo,,EUR,,,,,Not searched yet.
+Trepca,Kosovo,,EUR,,,,,Not searched yet.
+Bashkimi,Kosovo,,EUR,,,,,Not searched yet.
+Manchester Basketball,United Kingdom,,GBP,,,,,Not searched yet.
