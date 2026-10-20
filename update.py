@@ -64,7 +64,7 @@ def update_fixtures():
     if "unavailable in" in r.text[:2000] or r.url.endswith(".html"):
         raise SystemExit(f"BetExplorer blocked the request ({r.url}); nothing written.")
     soup = BeautifulSoup(r.text, "html.parser")
-    today = datetime.now(ATHENS).date()
+    today = datetime.now(BE_TZ).date()          # "Today" / "Tomorrow" are BetExplorer's own (UTC+1) dates, not Athens'
     rows, hdr = [], ""
     for tr in soup.select("table.table-main tr"):
         th = tr.find("th")
