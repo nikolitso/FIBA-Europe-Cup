@@ -18,5 +18,6 @@ window.ARCHIVE = {"list": [
 {"when":"20:00","h":"Split","a":"Trepca","nh":2,"na":2,"mt":160,"mh":7.4,"n":3,"bt":159.5,"bh":9.5,"mlH":null,"mlA":null},
 {"when":"21:30","h":"Geneva Lions","a":"Bakken Bears","nh":2,"na":2,"mt":161,"mh":-2,"n":12,"bt":170.5,"bh":2.5,"mlH":null,"mlA":null},
 {"when":"22:00","h":"Benfica","a":"Denizli Basket","nh":2,"na":2,"mt":166.5,"mh":2.1,"n":9,"bt":169.5,"bh":-5.5,"mlH":null,"mlA":null}
-]}
+]},
+{"date":"2026-10-20","round":"Round 3","taken":"2026-10-20","sample":"last 5 seasons (2022–23 to 2026–27); stages: Main · Group, places ±3 / ±3","games":[{"when":"19:00","h":"Mykonos","a":"Lok. Plovdiv","nh":3,"na":3,"model":"mix","mh":29.6,"adj":0,"out":[],"pH":0.977,"n":28,"bh":14.5,"mlH":1.09,"mlA":5.9},{"when":"20:00","h":"Wurzburg","a":"MZT Skopje","nh":3,"na":3,"model":"mix","mh":25,"adj":0,"out":[],"pH":0.954,"n":20,"bh":13.5,"mlH":1.1,"mlA":5.6},{"when":"21:00","h":"Basquet Girona","a":"Zielona Gora","nh":3,"na":3,"model":"mix","mh":14.7,"adj":0,"out":[],"pH":0.84,"n":22,"bh":11.5,"mlH":1.14,"mlA":4.6},{"when":"21:00","h":"Chalon/Saone","a":"Valmiera Glass Via","nh":3,"na":3,"model":"mix","mh":7,"adj":0.5,"out":[["Valmiera Glass Via","Prince Oduro",0.5]],"pH":0.682,"n":54,"bh":16.5,"mlH":1.06,"mlA":6.8},{"when":"21:00","h":"Nancy","a":"Nitra Blue Wings","nh":3,"na":3,"model":"mix","mh":16.5,"adj":0,"out":[],"pH":0.868,"n":55,"bh":17.5,"mlH":1.05,"mlA":7.4},{"when":"21:30","h":"Oostende","a":"Dinamo Bucharest","nh":3,"na":3,"model":"mix","mh":4.6,"adj":0,"out":[],"pH":0.622,"n":27,"bh":2.5,"mlH":1.6,"mlA":2.15}]}
 ]};
