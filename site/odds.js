@@ -17,5 +17,7 @@ window.ODDS = {"updated": "2026-10-21", "source": "Flashscore pre-game odds (Bwi
   {"h": "Geneva Lions", "a": "Denizli Basket", "sp": 6.5, "spH": 1.87, "spA": 1.8, "tot": 162.5, "ov": 1.85, "un": 1.83, "mlH": 2.9, "mlA": 1.34, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
   {"h": "Benfica", "a": "BC Prievidza", "sp": -7.5, "spH": 1.83, "spA": 1.83, "tot": 173.5, "ov": 1.83, "un": 1.83, "mlH": 1.3, "mlA": 3.1, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
   {"h": "Parnu", "a": "Vienna Basket", "sp": 7.5, "spH": 1.83, "spA": 1.85, "tot": 159.5, "ov": 1.83, "un": 1.85, "mlH": 3.2, "mlA": 1.28, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
-  {"h": "Levice", "a": "Szolnoki Olaj", "sp": -5.5, "spH": 1.87, "spA": 1.8, "tot": 161.5, "ov": 1.7, "un": 2.0, "mlH": 1.4, "mlA": 2.65, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]}
+  {"h": "Levice", "a": "Szolnoki Olaj", "sp": -5.5, "spH": 1.87, "spA": 1.8, "tot": 161.5, "ov": 1.7, "un": 2.0, "mlH": 1.4, "mlA": 2.65, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Sporting CP", "a": "Kolossos Rhodes", "sp": 2.5, "spH": 1.83, "spA": 1.8, "tot": 157.5, "ov": 1.72, "un": 1.95, "mlH": 1.95, "mlA": 1.72, "src": ["Stoiximan.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Korfez Basket", "a": "Manchester Basketball", "sp": -15.5, "spH": 1.7, "spA": 2.0, "tot": 163.5, "ov": 2.0, "un": 1.7, "mlH": 1.05, "mlA": 7.25, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]}
 ]};
