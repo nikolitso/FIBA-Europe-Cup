@@ -76,7 +76,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 td.big{color:var(--bg);background:var(--gold);font-weight:700}
 /* Vs Market group tables */
 h2.mkh{font:600 21px var(--serif);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-table.mkt{table-layout:fixed;width:100%;min-width:1400px;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+table.mkt{table-layout:fixed;width:100%;min-width:1500px;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
 table.mkt th{font:500 10.5px var(--mono);letter-spacing:.09em;color:var(--muted);text-transform:uppercase;vertical-align:bottom;padding:6px 12px 9px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:visible}
 table.mkt tr.mkgrp th{border-bottom:0;padding:0 12px 2px;height:16px}
 table.mkt th.grp{color:var(--gold);text-align:center;font-size:10px;letter-spacing:.14em}
@@ -951,7 +951,25 @@ function mkGames(x){
       <th class="n">Book total</th><th class="n">Total</th><th class="n" title="Against the total line, with the difference">Over / under</th></tr>${rows}</table></td></tr>`;
 }
 // one set of column widths for every group table, so the columns line up down the page
-const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
+const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px"><col style="width:92px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
+// market rating: line = r[home] - r[away] + home advantage over every game with a line, ridge-shrunk toward 0
+// (lambda 1, home advantage not shrunk), centred on the average club; solved by Gaussian elimination
+function mkRatings(games){
+  const clubs = [...new Set(games.flatMap(g => [g.h, g.a]))], k = clubs.length + 1, ix = new Map(clubs.map((c, i) => [c, i]));
+  const A = Array.from({length: k}, () => new Array(k).fill(0)), b = new Array(k).fill(0);
+  for (const g of games){
+    const v = [[ix.get(g.h), 1], [ix.get(g.a), -1], [k - 1, 1]];
+    for (const [i, xi] of v){ b[i] += xi * g.bh; for (const [j, xj] of v) A[i][j] += xi * xj; }
+  }
+  for (let i = 0; i < k - 1; i++) A[i][i] += 1;
+  for (let c = 0; c < k; c++){                                  // elimination with partial pivoting
+    let p = c; for (let r = c + 1; r < k; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]]; [b[c], b[p]] = [b[p], b[c]];
+    for (let r = 0; r < k; r++) if (r !== c && A[r][c]){ const f = A[r][c] / A[c][c]; for (let j = c; j < k; j++) A[r][j] -= f * A[c][j]; b[r] -= f * b[c]; }
+  }
+  const x = b.map((v, i) => v / A[i][i]), mean = clubs.reduce((t, c, i) => t + x[i], 0) / clubs.length;
+  return {r: new Map(clubs.map((c, i) => [c, x[i] - mean])), hca: x[k - 1]};
+}
 function renderMarket(){
   const box = $('mkView');
   // lines from the archive (frozen with a projection) plus market.js (games never archived)
@@ -977,9 +995,10 @@ function renderMarket(){
       if (g.bt !== null){ x.tn++; x.texp += g.bt; x.treal += tot; tot > g.bt ? x.o++ : tot < g.bt ? x.u++ : x.tp++; }
     }
   }
+  const MR = mkRatings(games);
   const rows = Object.values(club).map(x => {
     const vsS = (x.real - x.exp) / x.n, vsT = x.tn ? (x.treal - x.texp) / x.tn : null;
-    return {...x, vsS, vsT, bh: x.exp / x.n, rm: x.real / x.n, bt: x.tn ? x.texp / x.tn : null, rt: x.tn ? x.treal / x.tn : null,
+    return {...x, mr: MR.r.get(x.team) ?? null, vsS, vsT, bh: x.exp / x.n, rm: x.real / x.n, bt: x.tn ? x.texp / x.tn : null, rt: x.tn ? x.treal / x.tn : null,
       own: vsT === null ? null : (vsT + vsS) / 2, opp: vsT === null ? null : (vsT - vsS) / 2};
   });
   const one = v => v === null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
@@ -987,8 +1006,8 @@ function renderMarket(){
   const {k, dir} = mkSort;
   const val = (x, c) => c === 'team' ? x.team : c === 'cov' ? (x.n ? x.w / x.n : 0) : c === 'ou' ? (x.tn ? x.o / x.tn : 0) : c === 'vs' ? x.vsS : (x[c] ?? -999);
   const th = (c, label, cls, title, extra = '') => `<th class="${cls} sort${c === k ? ' on' : ''}" data-k="${c}"${extra}${title ? ` title="${title}"` : ''}>${label}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
-  const head = `<tr class="mkgrp"><th></th><th></th><th colspan="4" class="grp sec"><span>Handicap</span></th><th colspan="4" class="grp sec"><span>Total</span></th><th colspan="2" class="grp sec" title="How far the club's own points and its opponents' points were from what the two lines implied"><span>Points vs line</span></th><th></th></tr>
-    <tr>${th('team', 'Team', 'tl')}${th('n', 'GP', 'n', 'Games with a line')}
+  const head = `<tr class="mkgrp"><th></th><th></th><th></th><th colspan="4" class="grp sec"><span>Handicap</span></th><th colspan="4" class="grp sec"><span>Total</span></th><th colspan="2" class="grp sec" title="How far the club's own points and its opponents' points were from what the two lines implied"><span>Points vs line</span></th><th></th></tr>
+    <tr>${th('team', 'Team', 'tl')}${th('n', 'GP', 'n', 'Games with a line')}${th('mr', 'Market', 'n sec0', 'Market rating: points better (+) or worse (−) than an average club on a neutral court, as the bookmaker lines rate it')}
       ${th('bh', 'Book', 'n sec0', 'Average bookmaker handicap for the club, per game (+ = favourite)')}${th('rm', 'Result', 'n', 'Average real margin for the club, per game')}${th('cov', 'Covered', 'n', 'Beat the handicap – did not (pushes after)')}${th('vs', 'Vs line', 'n', 'Real margin minus the margin the handicap expected, per game: above 0 = underrated')}
       ${th('bt', 'Book', 'n sec0', 'Average total line in the club games')}${th('rt', 'Result', 'n', 'Average points scored in the club games')}${th('ou', 'O–U', 'n', 'Overs – unders')}${th('vsT', 'Vs line', 'n', 'Points in the game minus the total line, per game: above 0 = over')}
       ${th('own', 'Own', 'n sec0', 'Own points minus what the lines implied, per game: (total vs line + handicap vs line) / 2')}${th('opp', 'Opp', 'n', 'Opponents points minus what the lines implied, per game: (total vs line − handicap vs line) / 2')}<th class="tl rd sec0">Read</th></tr>`;
@@ -1003,7 +1022,7 @@ function renderMarket(){
       const ts = x.tn ? `Total line ${(x.texp / x.tn).toFixed(1)}, real total ${(x.treal / x.tn).toFixed(1)}` : '';
       const open = mkOpen.has(x.team);
       return `<tr class="click" data-club="${esc(x.team)}" title="Click for the club's games">
-        <td class="tl"><span class="caret">${open ? '▾' : '▸'}</span><b>${esc(x.team)}</b> <span class="tag">${esc(code(teams[x.team]))}</span></td><td class="n">${x.n}</td>
+        <td class="tl"><span class="caret">${open ? '▾' : '▸'}</span><b>${esc(x.team)}</b> <span class="tag">${esc(code(teams[x.team]))}</span></td><td class="n">${x.n}</td><td class="n sec0"><b class="hcp">${x.mr === null ? '–' : one(x.mr)}</b></td>
         <td class="n sec0">${one(x.bh)}</td><td class="n">${one(x.rm)}</td>
         <td class="n" title="${hs}">${x.w}–${x.l}${x.p ? `<span class="tag">–${x.p}</span>` : ''}</td>
         <td class="n" title="${hs}; counts from ±${mkLim(MK_SD.hcp, x.n).toFixed(1)} after ${x.n} games"><b class="${col(x.vsS, mkLim(MK_SD.hcp, x.n))}">${one(x.vsS)}</b></td>
@@ -1025,6 +1044,7 @@ function renderMarket(){
   }).join('');
   box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's pre-game line for every Regular Season game from Round 1 (${fmtDate(MK_FROM)}) against what happened: ${games.length} games so far, by group. Each club appears in every game it played, home or away.
       <b>Handicap vs line</b> above 0 = the club did better than priced (underrated); <b>Total vs line</b> above 0 = its games went over.
+      <b>Market</b> = the club's rating in the bookmaker's eyes: points better (+) or worse (−) than an average club on a neutral court, fitted from every line so far (home advantage in the lines: ${one(MR.hca)}).
       <b>Points vs line</b> splits the two: <b>Own</b> = its own points against what the lines implied, <b>Opp</b> = its opponents' points.
       Each of the four is judged on its own, and only after ${MK_MIN} completed games: the Read names every one that is off by more than its sample's noise (own points and defence included, even when the total alone is not off).
       A club's average only counts once it is larger than the noise of its sample: the book's typical miss divided by √games, about ${MK_SD.hcp} ÷ √games on the handicap and ${MK_SD.tot} ÷ √games on the total (±${mkLim(MK_SD.hcp, 3).toFixed(1)} and ±${mkLim(MK_SD.tot, 3).toFixed(1)} after 3 games, ±${mkLim(MK_SD.hcp, 10).toFixed(1)} and ±${mkLim(MK_SD.tot, 10).toFixed(1)} after 10). Smaller differences are greyed out and left out of the Read; green = better for the club than priced, red = worse. Click a club for its games one by one.</div>
