@@ -677,13 +677,15 @@ function renderArchive(){
         if (cmp){
           S.cmp++;
           const eh = [Math.abs(ah - g.mh), Math.abs(ah - g.bh)];
-          S.eh[0] += eh[0]; S.eh[1] += eh[1];
           const c1 = closer(eh[0], eh[1]);
-          if (big){ S.big++; S.ch[c1 === 'Model' ? 0 : c1 === 'Book' ? 1 : 2]++; }
           const fm = favourite(g.mh), fb = favourite(g.bh);
-          if (fm && fb){ S.wn++; if ((fm > 0) === homeWon) S.w[0]++; if ((fb > 0) === homeWon) S.w[1]++; }
-          // the side of the handicap line the model leaned to (home or away covers)
-          if (g.mh !== g.bh && ah !== g.bh){ S.sh[1]++; if ((g.mh > g.bh) === (ah > g.bh)) S.sh[0]++; }
+          if (big){                                          // the summary covers only games more than gapMin apart
+            S.big++; S.ch[c1 === 'Model' ? 0 : c1 === 'Book' ? 1 : 2]++;
+            S.eh[0] += eh[0]; S.eh[1] += eh[1];
+            if (fm && fb){ S.wn++; if ((fm > 0) === homeWon) S.w[0]++; if ((fb > 0) === homeWon) S.w[1]++; }
+            // the side of the handicap line the model leaned to (home or away covers)
+            if (ah !== g.bh){ S.sh[1]++; if ((g.mh > g.bh) === (ah > g.bh)) S.sh[0]++; }
+          }
           const cls = c1 === 'Model' ? 'w' : c1 === 'Book' ? 'l' : 'tag';
           if (big) cl = `<td class="n ${cls}" title="Model off by ${eh[0].toFixed(1)}, book off by ${eh[1].toFixed(1)}"><b>${c1}</b></td>`;
         }
@@ -706,16 +708,16 @@ function renderArchive(){
   const pc = (a, b) => b ? `${a} of ${b}` : '–';
   const card = (t, v, sub) => `<div class="metric"><div class="lbl">${t}</div><div class="big2">${v}</div><div class="tag">${sub}</div></div>`;
   const summary = `<div class="metrics">
-    ${card('Results in', `${S.res} of ${S.total}`, `${S.cmp} with a comparison (Games ${MIN_GAMES}+)`)}
+    ${card('Results in', `${S.res} of ${S.total}`, `${S.big} of ${S.cmp} compared games more than ${gapMin} pts apart`)}
     ${card('Winner picked', S.wn ? `${S.w[0]} <span class="tag">vs</span> ${S.w[1]}` : '–', S.wn ? `model vs book, out of ${S.wn} (${Math.round(S.w[0] / S.wn * 100)}% vs ${Math.round(S.w[1] / S.wn * 100)}%)` : 'model vs book')}
-    ${card('Handicap error (avg points)', S.cmp ? `${avg(S.eh[0], S.cmp)} <span class="tag">vs</span> ${avg(S.eh[1], S.cmp)}` : '–', 'model vs book, lower is better')}
+    ${card('Handicap error (avg points)', S.big ? `${avg(S.eh[0], S.big)} <span class="tag">vs</span> ${avg(S.eh[1], S.big)}` : '–', 'model vs book, lower is better')}
     ${card(`Closer when over ${gapMin} pts apart`, S.big ? `${S.ch[0]} <span class="tag">vs</span> ${S.ch[1]}` : '–', `model vs book, ${S.big} game${S.big === 1 ? '' : 's'}${S.ch[2] ? ', ' + S.ch[2] + ' tie' : ''}`)}
     ${card("Model's side of the handicap", pc(S.sh[0], S.sh[1]), 'covered (pushes and equal lines left out)')}
   </div>`;
-  box.innerHTML = `<div class="pjbar">${gapSelect()}<span class="tag">Games further apart than this are highlighted and judged.</span></div>` + summary + sections +
+  box.innerHTML = `<div class="pjbar">${gapSelect()}<span class="tag">Games further apart than this are highlighted, judged and counted in the cards below.</span></div>` + summary + sections +
     `<div class="tag" style="margin-top:14px">Each round is frozen from the Projections tab before the games, with the sample shown above, so later results never change it. Hcp is home minus away; Model vs book is the model's handicap minus the bookmaker's.
      Differences of more than ${gapMin} points are highlighted; only those games are judged, and Closer says whose handicap was nearer the actual one. The result fills in by itself once the match is in the data.
-     The model's side is the side of the bookmaker's line it leaned to (above the line = home covers). Only matches with ${MIN_GAMES} or more games in the sample are compared.</div>`;
+     The model's side is the side of the bookmaker's line it leaned to (above the line = home covers). Only matches with ${MIN_GAMES} or more games in the sample are compared, and the cards above count only the games more than ${gapMin} points apart.</div>`;
   bindGap(box, renderArchive);
 }
 
