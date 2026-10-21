@@ -2,11 +2,20 @@
 // src = bookmaker used for [handicap, total, money line].
 // sp = handicap on the home side (+ means the home side is the underdog), spH / spA = its odds home / away,
 // tot = points total, ov / un = odds over / under, mlH / mlA = money line odds (null when not offered).
-window.ODDS = {"updated": "2026-10-20", "source": "Antonis's screenshot (BetExplorer blocked)", "list": [
-  {"h": "Mykonos", "a": "Lok. Plovdiv", "sp": -14.5, "spH": 1.83, "spA": 1.8, "tot": 159.5, "ov": 1.8, "un": 1.83, "mlH": 1.09, "mlA": 5.9, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]},
-  {"h": "Wurzburg", "a": "MZT Skopje", "sp": -13.5, "spH": 1.78, "spA": 1.87, "tot": 158.5, "ov": 1.82, "un": 1.82, "mlH": 1.1, "mlA": 5.6, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]},
-  {"h": "Basquet Girona", "a": "Zielona Gora", "sp": -11.5, "spH": 1.82, "spA": 1.82, "tot": 170.5, "ov": 1.8, "un": 1.85, "mlH": 1.14, "mlA": 4.6, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]},
-  {"h": "Chalon/Saone", "a": "Valmiera Glass Via", "sp": -16.5, "spH": 1.85, "spA": 1.78, "tot": 162.5, "ov": 1.8, "un": 1.83, "mlH": 1.06, "mlA": 6.8, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]},
-  {"h": "Nancy", "a": "Nitra Blue Wings", "sp": -17.5, "spH": 1.78, "spA": 1.85, "tot": 163.5, "ov": 1.8, "un": 1.83, "mlH": 1.05, "mlA": 7.4, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]},
-  {"h": "Oostende", "a": "Dinamo Bucharest", "sp": -2.5, "spH": 1.78, "spA": 1.87, "tot": 163.5, "ov": 1.83, "un": 1.82, "mlH": 1.6, "mlA": 2.15, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]}
+window.ODDS = {"updated": "2026-10-21", "source": "Flashscore pre-game odds (Bwin.gr, else Stoiximan.gr)", "list": [
+  {"h": "AEK Larnaca", "a": "Tartu Ulikool", "sp": -10.5, "spH": 1.83, "spA": 1.85, "tot": 165.5, "ov": 1.83, "un": 1.83, "mlH": 1.19, "mlA": 4.0, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "CSM Oradea", "a": "VEF Riga", "sp": -1.5, "spH": 1.72, "spA": 1.95, "tot": 172.5, "ov": 1.85, "un": 1.83, "mlH": 1.62, "mlA": 2.1, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Esenler Erokspor", "a": "SCM Craiova", "sp": -22.5, "spH": 1.87, "spA": 1.8, "tot": 165.5, "ov": 1.87, "un": 1.8, "mlH": 1.01, "mlA": 11.5, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Keravnos", "a": "Szczecin", "sp": 3.5, "spH": 1.91, "spA": 1.75, "tot": 166.5, "ov": 1.85, "un": 1.83, "mlH": 2.35, "mlA": 1.5, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Promitheas", "a": "Batumi", "sp": -24.5, "spH": 1.57, "spA": 2.2, "tot": 166.5, "ov": 1.8, "un": 1.87, "mlH": 1.01, "mlA": 10.0, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Stoiximan.gr (Flashscore)"]},
+  {"h": "Bakken Bears", "a": "Absheron Lions", "sp": -16.5, "spH": 1.83, "spA": 1.85, "tot": 178.5, "ov": 1.83, "un": 1.83, "mlH": 1.06, "mlA": 6.75, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "BC Kalev/Cramo", "a": "Bashkimi", "sp": -3.5, "spH": 1.85, "spA": 1.83, "tot": 161.5, "ov": 1.83, "un": 1.83, "mlH": 1.72, "mlA": 1.98, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Iraklis", "a": "Dziki Warszawa", "sp": -6.5, "spH": 1.87, "spA": 1.8, "tot": 168.5, "ov": 1.83, "un": 1.83, "mlH": 1.4, "mlA": 2.65, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Trepca", "a": "Opava", "sp": -6.5, "spH": 1.83, "spA": 1.85, "tot": 162.5, "ov": 1.85, "un": 1.83, "mlH": 1.35, "mlA": 2.85, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Fribourg Olympic", "a": "Neftchi IK", "sp": -6.5, "spH": 1.85, "spA": 1.83, "tot": 160.5, "ov": 1.83, "un": 1.85, "mlH": 1.36, "mlA": 2.8, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Trier", "a": "Split", "sp": -14.5, "spH": 1.85, "spA": 1.83, "tot": 160.5, "ov": 1.57, "un": 2.2, "mlH": 1.09, "mlA": 5.75, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Geneva Lions", "a": "Denizli Basket", "sp": 6.5, "spH": 1.87, "spA": 1.8, "tot": 162.5, "ov": 1.85, "un": 1.83, "mlH": 2.9, "mlA": 1.34, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Benfica", "a": "BC Prievidza", "sp": -7.5, "spH": 1.83, "spA": 1.83, "tot": 173.5, "ov": 1.83, "un": 1.83, "mlH": 1.3, "mlA": 3.1, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Parnu", "a": "Vienna Basket", "sp": 7.5, "spH": 1.83, "spA": 1.85, "tot": 159.5, "ov": 1.83, "un": 1.85, "mlH": 3.2, "mlA": 1.28, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]},
+  {"h": "Levice", "a": "Szolnoki Olaj", "sp": -5.5, "spH": 1.87, "spA": 1.8, "tot": 161.5, "ov": 1.7, "un": 2.0, "mlH": 1.4, "mlA": 2.65, "src": ["Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)", "Bwin.gr (Flashscore)"]}
 ]};
