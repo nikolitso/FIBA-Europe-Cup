@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FIBA Europe Cup</title>
+<meta name="description" content="FIBA Europe Cup by the numbers: head-to-heads by country and club, next-round fixtures with handicaps, projections and Elo power rankings, 2015-16 to today.">
+<link rel="canonical" href="https://antonisnikolitsopoulos.com/fibaeuropecup/">
+<meta property="og:title" content="FIBA Europe Cup">
+<meta property="og:description" content="FIBA Europe Cup by the numbers: head-to-heads by country and club, next-round fixtures with handicaps, projections and Elo power rankings, 2015-16 to today.">
+<meta property="og:url" content="https://antonisnikolitsopoulos.com/fibaeuropecup/">
+<meta property="og:image" content="https://antonisnikolitsopoulos.com/fibaeuropecup.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="64x64">
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b67bbb76d0e24af196b24ded3ab71ad0"}'></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -96,6 +106,16 @@ select.peer:focus{outline:2px solid var(--gold)}
 </style>
 </head>
 <body>
+<!-- sitebar:start (link back to antonisnikolitsopoulos.com; keep on every page) -->
+<style>
+.an-sitebar{background:#0d1220;border-bottom:1px solid rgba(255,255,255,.09);font:500 13px/1.2 "Segoe UI",system-ui,-apple-system,sans-serif;letter-spacing:.02em}
+.an-sitebar>div{max-width:72rem;margin:0 auto;padding:6px 16px;display:flex;justify-content:flex-end;align-items:center;gap:18px}
+.an-sitebar a{color:#9aa1b2;text-decoration:none;display:inline-flex;align-items:center;min-height:24px}.an-sitebar a:hover{color:#fff}
+.an-sitebar svg{width:17px;height:17px;fill:currentColor}
+.an-sitebar a[href="/"]{padding:6px 8px;margin:-6px -8px -6px -4px;border-radius:6px}.an-sitebar a[href="/"]:hover{background:rgba(255,255,255,.08)}
+</style>
+<nav class="an-sitebar" aria-label="Main site"><div><a href="/books/">Books</a><a href="/#projects">Projects</a><a href="/about/">About</a><a href="/" title="Main site: antonisnikolitsopoulos.com" aria-label="Main site"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg></a></div></nav>
+<!-- sitebar:end -->
 <div class="wrap">
   <a class="home-link" href="/fibaeuropecup/" data-home>&#8962; Home</a>
   <h1><a href="/fibaeuropecup/" data-home>FIBA Europe Cup</a></h1>
@@ -323,8 +343,12 @@ function nextRoundGames(){
                      .sort((x, y) => x[0][0].localeCompare(y[0][0]));
   if (!upcoming.length) return [];
   const nextRound = upcoming[0][0][1];
-  return nextRound ? upcoming.filter(([f]) => f[1] === nextRound)
-                   : upcoming.filter(([f]) => f[0].slice(0, 10) === upcoming[0][0][0].slice(0, 10));
+  if (!nextRound) return upcoming.filter(([f]) => f[0].slice(0, 10) === upcoming[0][0][0].slice(0, 10));
+  const list = upcoming.filter(([f]) => f[1] === nextRound);
+  if (list.length >= 12) return list;
+  // only the tail of a round is left (late games): show the round after it as well
+  const after = upcoming.find(([f]) => f[1] && f[1] !== nextRound);
+  return after ? list.concat(upcoming.filter(([f]) => f[1] === after[0][1])) : list;
 }
 const dayName = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
 function byDay(list){
