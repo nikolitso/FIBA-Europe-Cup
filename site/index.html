@@ -939,16 +939,21 @@ function mkGames(x){
     const exp = home ? g.bh : -g.bh, m = own - them, tot = g.hp + g.ap;
     const cov = m > exp ? '<span class="w">Covered</span>' : m < exp ? '<span class="l">Not covered</span>' : '<span class="tag">Push</span>';
     const ou = g.bt === null ? '–' : tot > g.bt ? 'Over' : tot < g.bt ? 'Under' : 'Push';
+    // points the two lines implied: own = (total + handicap) / 2, opponent = (total - handicap) / 2
+    const eo = g.bt === null ? null : (g.bt + exp) / 2, ep = g.bt === null ? null : (g.bt - exp) / 2;
+    const pv = (v, good) => v === null ? '<td class="n">–</td>' : `<td class="n"><span class="${v === 0 ? 'tag' : (good ? v > 0 : v < 0) ? 'w' : 'l'}">${one(v)}</span></td>`;
     return `<tr><td class="n">${fmtDate(g.date)}</td><td class="tag">${esc(g.stage.split(' · ')[0])}</td>
       <td>${home ? 'vs' : 'at'} <b>${esc(opp)}</b> <span class="tag">(${esc(code(teams[opp]))})</span></td>
       <td class="n"><b class="${m > 0 ? 'w' : 'l'}">${own}–${them}</b>${g.ot ? ' <span class="tag">OT</span>' : ''}</td>
       <td class="n gap">${one(exp)}</td><td class="n">${one(m)}</td><td class="n gap">${cov} <span class="tag">${one(m - exp)}</span></td>
-      <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n">${ou} ${g.bt === null ? '' : `<span class="tag">${one(tot - g.bt)}</span>`}</td></tr>`;
+      <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n gap">${ou} ${g.bt === null ? '' : `<span class="tag">${one(tot - g.bt)}</span>`}</td>
+      <td class="n tag" title="Points the lines implied for the club and its opponent">${eo === null ? '–' : `${eo.toFixed(1)}–${ep.toFixed(1)}`}</td>${pv(eo === null ? null : own - eo, true)}${pv(ep === null ? null : them - ep, false)}</tr>`;
   }).join('');
   return `<tr class="mkgames"><td colspan="13" style="padding:4px 0 14px 22px;background:var(--panel)">
     <table class="fx" style="margin:0"><tr><th class="n">Date</th><th>Round</th><th>Opponent</th><th class="n">Score</th>
       <th class="n gap" title="The club's handicap: + = favourite by that many">Book hcp</th><th class="n" title="The club's margin">Result</th><th class="n gap" title="Against the handicap, with the difference">Handicap</th>
-      <th class="n">Book total</th><th class="n">Total</th><th class="n" title="Against the total line, with the difference">Over / under</th></tr>${rows}</table></td></tr>`;
+      <th class="n">Book total</th><th class="n">Total</th><th class="n gap" title="Against the total line, with the difference">Over / under</th>
+      <th class="n" title="Points the two lines implied: own = (total + handicap) / 2, opponent = (total − handicap) / 2">Lines said</th><th class="n" title="Own points minus what the lines implied">Own</th><th class="n" title="Opponent points minus what the lines implied">Opp</th></tr>${rows}</table></td></tr>`;
 }
 // one set of column widths for every group table, so the columns line up down the page
 const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px"><col style="width:92px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
