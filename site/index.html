@@ -933,7 +933,8 @@ function renderMarket(){
   }
   const rows = Object.values(club).map(x => {
     const vsS = (x.real - x.exp) / x.n, vsT = x.tn ? (x.treal - x.texp) / x.tn : null;
-    return {...x, vsS, vsT, own: vsT === null ? null : (vsT + vsS) / 2, opp: vsT === null ? null : (vsT - vsS) / 2};
+    return {...x, vsS, vsT, bh: x.exp / x.n, rm: x.real / x.n, bt: x.tn ? x.texp / x.tn : null, rt: x.tn ? x.treal / x.tn : null,
+      own: vsT === null ? null : (vsT + vsS) / 2, opp: vsT === null ? null : (vsT - vsS) / 2};
   });
   const one = v => v === null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
   const col = v => v === null ? '' : v >= MK_NOTE ? 'w' : v <= -MK_NOTE ? 'l' : 'tag';
@@ -941,9 +942,9 @@ function renderMarket(){
   const val = (x, c) => c === 'team' ? x.team : c === 'cov' ? (x.n ? x.w / x.n : 0) : c === 'ou' ? (x.tn ? x.o / x.tn : 0) : c === 'vs' ? x.vsS : (x[c] ?? -999);
   const th = (c, label, cls, title, extra = '') => `<th class="${cls} sort${c === k ? ' on' : ''}" data-k="${c}"${extra}${title ? ` title="${title}"` : ''}>${label}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
   const head = `<tr>${th('team', 'Team', '', '', ' rowspan="2"')}${th('n', 'GP', 'n', 'Games with a line', ' rowspan="2"')}
-      <th colspan="2" class="grp gap">Handicap</th><th colspan="2" class="grp gap">Total</th><th colspan="2" class="grp gap" title="How far the club's own points and its opponents' points were from what the two lines implied">Points vs line</th><th rowspan="2">Read</th></tr>
-    <tr>${th('cov', 'Covered', 'n', 'Beat the handicap – did not (pushes after)')}${th('vs', 'Vs line', 'n gap', 'Real margin minus the margin the handicap expected, per game: above 0 = underrated')}
-      ${th('ou', 'O–U', 'n', 'Overs – unders')}${th('vsT', 'Vs line', 'n gap', 'Points in the game minus the total line, per game: above 0 = over')}
+      <th colspan="4" class="grp gap">Handicap</th><th colspan="4" class="grp gap">Total</th><th colspan="2" class="grp gap" title="How far the club's own points and its opponents' points were from what the two lines implied">Points vs line</th><th rowspan="2">Read</th></tr>
+    <tr>${th('bh', 'Book', 'n', 'Average bookmaker handicap for the club, per game (+ = favourite)')}${th('rm', 'Result', 'n', 'Average real margin for the club, per game')}${th('cov', 'Covered', 'n', 'Beat the handicap – did not (pushes after)')}${th('vs', 'Vs line', 'n gap', 'Real margin minus the margin the handicap expected, per game: above 0 = underrated')}
+      ${th('bt', 'Book', 'n', 'Average total line in the club games')}${th('rt', 'Result', 'n', 'Average points scored in the club games')}${th('ou', 'O–U', 'n', 'Overs – unders')}${th('vsT', 'Vs line', 'n gap', 'Points in the game minus the total line, per game: above 0 = over')}
       ${th('own', 'Own', 'n', 'Own points minus what the lines implied, per game: (total vs line + handicap vs line) / 2')}${th('opp', 'Opp', 'n gap', 'Opponents points minus what the lines implied, per game: (total vs line − handicap vs line) / 2')}</tr>`;
   const groups = [...new Set(rows.map(x => x.grp))].sort();
   const sections = groups.map(gr => {
@@ -956,8 +957,10 @@ function renderMarket(){
       const ts = x.tn ? `Total line ${(x.texp / x.tn).toFixed(1)}, real total ${(x.treal / x.tn).toFixed(1)}` : '';
       return `<tr>
         <td><b>${esc(x.team)}</b> <span class="tag">(${esc(code(teams[x.team]))})</span></td><td class="n">${x.n}</td>
+        <td class="n">${one(x.bh)}</td><td class="n">${one(x.rm)}</td>
         <td class="n" title="${hs}"><span class="w">${x.w}</span>–<span class="l">${x.l}</span>${x.p ? `<span class="tag">–${x.p}</span>` : ''}</td>
         <td class="n gap" title="${hs}"><b class="${col(x.vsS)}">${one(x.vsS)}</b></td>
+        <td class="n">${x.bt === null ? '–' : x.bt.toFixed(1)}</td><td class="n">${x.rt === null ? '–' : x.rt.toFixed(1)}</td>
         <td class="n" title="${ts}">${x.tn ? `${x.o}–${x.u}${x.tp ? `<span class="tag">–${x.tp}</span>` : ''}` : '–'}</td>
         <td class="n gap" title="${ts}"><b>${one(x.vsT)}</b></td>
         <td class="n"><span class="${col(x.own)}">${one(x.own)}</span></td><td class="n gap"><span class="${col(x.opp === null ? null : -x.opp)}">${one(x.opp)}</span></td>
