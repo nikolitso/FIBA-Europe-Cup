@@ -31,8 +31,7 @@ def main():
     out = {"updated": date.today().isoformat(), "clubs": clubs}
     text = ("// Club budget tiers for this season's FIBA Europe Cup, built by build_budgets.py from data/budgets.csv.\n"
             "window.BUDGETS = " + json.dumps(out, ensure_ascii=False) + ";\n")
-    for d in (SITE, ROOT / "site"):
-        (d / "budgets.js").write_text(text, encoding="utf-8")
+    (ROOT / "data" / "budgets.js").write_text(text, encoding="utf-8")   # private only: the site no longer shows budgets
     print(f"budgets.js: {len(clubs)} clubs")
 
 
