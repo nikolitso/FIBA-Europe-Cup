@@ -885,13 +885,15 @@ function renderRosters(){
 }
 // ---------- Vs Market: every Regular Season game's bookmaker line against what happened, by group and club
 let mkSort = {k: 'vs', dir: -1};
+const mkOpen = new Set();                                      // clubs whose games are shown
 const MK_FROM = '2026-10-06';                                  // Vs Market counts the Regular Season from Round 1 on
 const MK_NOTE = 3;                                             // points per game before a difference is worth a comment
 function mkRead(x){
   const sp = x.vsS, to = x.vsT, n = MK_NOTE, one = v => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
   const parts = [];
-  parts.push(sp >= n ? `underrated on the handicap (${one(sp)})` : sp <= -n ? `overrated on the handicap (${one(sp)})` : 'handicap priced about right');
-  if (to !== null) parts.push(to >= n ? `games go over (${one(to)})` : to <= -n ? `games go under (${one(to)})` : 'totals priced about right');
+  if (sp >= n) parts.push(`underrated on the handicap (${one(sp)})`); else if (sp <= -n) parts.push(`overrated on the handicap (${one(sp)})`);
+  if (to !== null){ if (to >= n) parts.push(`games go over (${one(to)})`); else if (to <= -n) parts.push(`games go under (${one(to)})`); }
+  if (!parts.length) return '';                                 // nothing off by MK_NOTE or more: no comment
   let txt = parts.join('; ');
   let tone = '';
   if (to !== null && Math.abs(sp) >= n && Math.abs(to) >= n){
@@ -906,6 +908,26 @@ function mkRead(x){
   } else if (Math.abs(sp) >= n) tone = sp > 0 ? 'w' : 'l';
   if (x.n < 3) txt += ' <span class="tag">(small sample)</span>';
   return `<span class="${tone}">${txt.charAt(0).toUpperCase() + txt.slice(1)}</span>`;
+}
+// one club's games, from its own side: its handicap and margin, the total, and how each went against the line
+function mkGames(x){
+  const one = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+  const rows = x.games.slice().sort((a, b) => a.date.localeCompare(b.date)).map(g => {
+    const home = g.h === x.team, opp = home ? g.a : g.h;
+    const own = home ? g.hp : g.ap, them = home ? g.ap : g.hp;
+    const exp = home ? g.bh : -g.bh, m = own - them, tot = g.hp + g.ap;
+    const cov = m > exp ? '<span class="w">Covered</span>' : m < exp ? '<span class="l">Not covered</span>' : '<span class="tag">Push</span>';
+    const ou = g.bt === null ? '–' : tot > g.bt ? 'Over' : tot < g.bt ? 'Under' : 'Push';
+    return `<tr><td class="n">${fmtDate(g.date)}</td><td class="tag">${esc(g.stage.split(' · ')[0])}</td>
+      <td>${home ? 'vs' : 'at'} <b>${esc(opp)}</b> <span class="tag">(${esc(code(teams[opp]))})</span></td>
+      <td class="n"><b class="${m > 0 ? 'w' : 'l'}">${own}–${them}</b>${g.ot ? ' <span class="tag">OT</span>' : ''}</td>
+      <td class="n gap">${one(exp)}</td><td class="n">${one(m)}</td><td class="n gap">${cov} <span class="tag">${one(m - exp)}</span></td>
+      <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n">${ou} ${g.bt === null ? '' : `<span class="tag">${one(tot - g.bt)}</span>`}</td></tr>`;
+  }).join('');
+  return `<tr class="mkgames"><td colspan="13" style="padding:4px 0 14px 22px;background:var(--panel)">
+    <table class="fx" style="margin:0"><tr><th class="n">Date</th><th>Round</th><th>Opponent</th><th class="n">Score</th>
+      <th class="n gap" title="The club's handicap: + = favourite by that many">Book hcp</th><th class="n" title="The club's margin">Result</th><th class="n gap" title="Against the handicap, with the difference">Handicap</th>
+      <th class="n">Book total</th><th class="n">Total</th><th class="n" title="Against the total line, with the difference">Over / under</th></tr>${rows}</table></td></tr>`;
 }
 function renderMarket(){
   const box = $('mkView');
@@ -926,7 +948,8 @@ function renderMarket(){
   for (const g of games){
     const m = g.hp - g.ap, tot = g.hp + g.ap;
     for (const [t, exp, real] of [[g.h, g.bh, m], [g.a, -g.bh, -m]]){
-      const x = (club[t] ??= {team: t, grp: g.grp, n: 0, w: 0, l: 0, p: 0, exp: 0, real: 0, tn: 0, o: 0, u: 0, tp: 0, texp: 0, treal: 0});
+      const x = (club[t] ??= {team: t, grp: g.grp, n: 0, w: 0, l: 0, p: 0, exp: 0, real: 0, tn: 0, o: 0, u: 0, tp: 0, texp: 0, treal: 0, games: []});
+      x.games.push(g);
       x.n++; x.exp += exp; x.real += real; real > exp ? x.w++ : real < exp ? x.l++ : x.p++;
       if (g.bt !== null){ x.tn++; x.texp += g.bt; x.treal += tot; tot > g.bt ? x.o++ : tot < g.bt ? x.u++ : x.tp++; }
     }
@@ -955,8 +978,9 @@ function renderMarket(){
     return `<h2>Group ${esc(gr)}</h2><div class="scroll"><table class="fx">${head}` + list.map(x => {
       const hs = `Line said ${one(x.exp / x.n)}, real margin ${one(x.real / x.n)}`;
       const ts = x.tn ? `Total line ${(x.texp / x.tn).toFixed(1)}, real total ${(x.treal / x.tn).toFixed(1)}` : '';
-      return `<tr>
-        <td><b>${esc(x.team)}</b> <span class="tag">(${esc(code(teams[x.team]))})</span></td><td class="n">${x.n}</td>
+      const open = mkOpen.has(x.team);
+      return `<tr class="click" data-club="${esc(x.team)}" title="Click for the club's games">
+        <td><span class="tag">${open ? '▾' : '▸'}</span> <b>${esc(x.team)}</b> <span class="tag">(${esc(code(teams[x.team]))})</span></td><td class="n">${x.n}</td>
         <td class="n">${one(x.bh)}</td><td class="n">${one(x.rm)}</td>
         <td class="n" title="${hs}"><span class="w">${x.w}</span>–<span class="l">${x.l}</span>${x.p ? `<span class="tag">–${x.p}</span>` : ''}</td>
         <td class="n gap" title="${hs}"><b class="${col(x.vsS)}">${one(x.vsS)}</b></td>
@@ -964,7 +988,7 @@ function renderMarket(){
         <td class="n" title="${ts}">${x.tn ? `${x.o}–${x.u}${x.tp ? `<span class="tag">–${x.tp}</span>` : ''}` : '–'}</td>
         <td class="n gap" title="${ts}"><b>${one(x.vsT)}</b></td>
         <td class="n"><span class="${col(x.own)}">${one(x.own)}</span></td><td class="n gap"><span class="${col(x.opp === null ? null : -x.opp)}">${one(x.opp)}</span></td>
-        <td style="font-size:13px">${mkRead(x)}</td></tr>`;
+        <td style="font-size:13px">${mkRead(x)}</td></tr>` + (open ? mkGames(x) : '');
     }).join('') + `</table></div>`;
   }).join('');
   const all = games.slice().sort((x, y) => y.date.localeCompare(x.date) || x.h.localeCompare(y.h)).map(g => {
@@ -980,10 +1004,13 @@ function renderMarket(){
       <b>Handicap vs line</b> above 0 = the club did better than priced (underrated); <b>Total vs line</b> above 0 = its games went over.
       <b>Points vs line</b> splits the two: <b>Own</b> = its own points against what the lines implied, <b>Opp</b> = its opponents' points.
       When both are off: underrated and over = own points underrated; overrated and under = own points overrated; underrated and under = defence underrated; overrated and over = defence overrated.
-      Differences under ${MK_NOTE} points a game count as priced about right; green = better for the club than priced, red = worse.</div>
+      Differences under ${MK_NOTE} points a game are left out of the Read; green = better for the club than priced, red = worse. Click a club for its games one by one.</div>
     ${sections}
     <details class="ros" style="margin-top:18px"><summary><b>Every game</b> <span class="tag">${games.length}</span></summary>
       <div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Round</th><th>Match</th><th class="n">Score</th><th class="n gap" title="Bookmaker handicap, home minus away">Hcp line</th><th class="n" title="Home minus away">Margin</th><th class="n gap">Covered</th><th class="n">Total line</th><th class="n">Total</th><th class="n">O/U</th></tr>${all}</table></div></details>`;
+  box.querySelectorAll('tr.click[data-club]').forEach(tr => tr.onclick = () => {
+    const c = tr.dataset.club; mkOpen.has(c) ? mkOpen.delete(c) : mkOpen.add(c); renderMarket();
+  });
   box.querySelectorAll('th.sort').forEach(h => h.onclick = () => {
     const c = h.dataset.k;
     mkSort = mkSort.k === c ? {k: c, dir: -mkSort.dir} : {k: c, dir: c === 'team' ? 1 : -1};
