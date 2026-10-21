@@ -885,6 +885,7 @@ function renderRosters(){
 }
 // ---------- Vs Market: every archived game's bookmaker line against what happened, by club
 let mkSort = {sp: {k: 'vs', dir: -1}, to: {k: 'vs', dir: -1}};
+const MK_FROM = '2026-10-06';                                  // Vs Market counts the Regular Season from Round 1 on
 function renderMarket(){
   const box = $('mkView');
   // lines from the archive (frozen with a projection) plus market.js (games played before archiving began, or never archived)
@@ -892,7 +893,7 @@ function renderMarket(){
   const add = (date, g) => {
     const r = arResult(date, g.h, g.a);
     const key = g.h + '|' + g.a + '|' + (r ? r[3] : date);
-    if (!r || r[8] === 'AWA.' || seen.has(key)) return;
+    if (!r || r[8] === 'AWA.' || r[1] !== 'Main' || r[3] < MK_FROM || seen.has(key)) return;
     seen.add(key);
     games.push({date: r[3], stage: r[1] === 'Main' ? r[2].replace(/^Group (\w) - (\d+)\. Round$/, 'Round $2 · $1') : r[1] + ' · ' + r[2], h: g.h, a: g.a, hp: r[6], ap: r[7], ot: r[8] === 'AET', bh: g.bh, bt: g.bt ?? null});
   };
@@ -933,7 +934,7 @@ function renderMarket(){
       <td class="n gap">${one(g.bh)}</td><td class="n">${one(m)}</td><td class="n gap">${esc(cov)}</td>
       <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n">${ou}</td></tr>`;
   }).join('');
-  box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's pre-game line for every played game this season, qualifiers included, against what happened: ${games.length} games so far. Each club appears in every game it played, home or away.</div>
+  box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's pre-game line for every Regular Season game from Round 1 (${fmtDate(MK_FROM)}) against what happened: ${games.length} games so far. Each club appears in every game it played, home or away.</div>
     <h2>Spread</h2>
     <div class="tag" style="margin-bottom:8px"><b>Vs line</b> = real margin − the margin the handicap expected, averaged over the club's games: above 0, the club did better than the market priced it (underrated); below 0, worse (overrated). <b>Covered</b> = games it beat the line–games it did not (pushes after).</div>
     ${table('sp', sp, 'Covered', 'Line said', 'Real margin', true)}
