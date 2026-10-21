@@ -162,7 +162,7 @@ select.peer:focus{outline:2px solid var(--gold)}
 <script>
 // data files change after every update; a per-minute stamp keeps browsers from showing a cached copy for up to 10 minutes
 (() => { const v = Math.floor(Date.now() / 60000);
-  for (const f of ['data', 'fixtures', 'odds', 'archive', 'rosters', 'injuries']) document.write(`<script src="${f}.js?v=${v}"><\/script>`); })();
+  for (const f of ['data', 'fixtures', 'odds', 'archive', 'market', 'rosters', 'injuries']) document.write(`<script src="${f}.js?v=${v}"><\/script>`); })();
 </script>
 <script>
 const {matches, teams} = window.DATA;
@@ -887,11 +887,17 @@ function renderRosters(){
 let mkSort = {sp: {k: 'vs', dir: -1}, to: {k: 'vs', dir: -1}};
 function renderMarket(){
   const box = $('mkView');
-  const games = [];
-  for (const sn of (window.ARCHIVE && ARCHIVE.list) || []) for (const g of sn.games){
-    const r = arResult(sn.date, g.h, g.a);
-    if (r && r[8] !== 'AWA.') games.push({date: r[3], h: g.h, a: g.a, hp: r[6], ap: r[7], ot: r[8] === 'AET', bh: g.bh, bt: g.bt ?? null});
-  }
+  // lines from the archive (frozen with a projection) plus market.js (games played before archiving began, or never archived)
+  const games = [], seen = new Set();
+  const add = (date, g) => {
+    const r = arResult(date, g.h, g.a);
+    const key = g.h + '|' + g.a + '|' + (r ? r[3] : date);
+    if (!r || r[8] === 'AWA.' || seen.has(key)) return;
+    seen.add(key);
+    games.push({date: r[3], stage: r[1] === 'Main' ? r[2].replace(/^Group (\w) - (\d+)\. Round$/, 'Round $2 · $1') : r[1] + ' · ' + r[2], h: g.h, a: g.a, hp: r[6], ap: r[7], ot: r[8] === 'AET', bh: g.bh, bt: g.bt ?? null});
+  };
+  for (const sn of (window.ARCHIVE && ARCHIVE.list) || []) for (const g of sn.games) add(sn.date, g);
+  for (const g of (window.MARKET && MARKET.list) || []) add(g.date, g);
   if (!games.length){ box.innerHTML = '<div class="empty">No archived game has a result yet.</div>'; return; }
   const sp = {}, to = {};
   for (const g of games){
@@ -922,12 +928,12 @@ function renderMarket(){
     const m = g.hp - g.ap, tot = g.hp + g.ap;
     const cov = m > g.bh ? g.h : m < g.bh ? g.a : 'push';
     const ou = g.bt === null ? '' : tot > g.bt ? 'Over' : tot < g.bt ? 'Under' : 'push';
-    return `<tr><td class="n">${fmtDate(g.date)}</td><td><b>${esc(g.h)}</b> – <b>${esc(g.a)}</b></td>
+    return `<tr><td class="n">${fmtDate(g.date)}</td><td class="tag">${esc(g.stage)}</td><td><b>${esc(g.h)}</b> – <b>${esc(g.a)}</b></td>
       <td class="n"><b>${g.hp}–${g.ap}</b>${g.ot ? ' <span class="tag">OT</span>' : ''}</td>
       <td class="n gap">${one(g.bh)}</td><td class="n">${one(m)}</td><td class="n gap">${esc(cov)}</td>
       <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n">${ou}</td></tr>`;
   }).join('');
-  box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's line for every archived game (frozen before tip-off) against what happened, ${games.length} games so far. Each club appears in every game it played, home or away.</div>
+  box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's pre-game line for every played game this season, qualifiers included, against what happened: ${games.length} games so far. Each club appears in every game it played, home or away.</div>
     <h2>Spread</h2>
     <div class="tag" style="margin-bottom:8px"><b>Vs line</b> = real margin − the margin the handicap expected, averaged over the club's games: above 0, the club did better than the market priced it (underrated); below 0, worse (overrated). <b>Covered</b> = games it beat the line–games it did not (pushes after).</div>
     ${table('sp', sp, 'Covered', 'Line said', 'Real margin', true)}
@@ -935,7 +941,7 @@ function renderMarket(){
     <div class="tag" style="margin-bottom:8px"><b>Vs line</b> = points scored in the game − the total line, averaged over the club's games: positive = over, negative = under. <b>O–U</b> = overs and unders.</div>
     ${table('to', to, 'O–U', 'Total line', 'Real total', false)}
     <details class="ros" style="margin-top:18px"><summary><b>Every game</b> <span class="tag">${games.length}</span></summary>
-      <div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Match</th><th class="n">Score</th><th class="n gap" title="Bookmaker handicap, home minus away">Hcp line</th><th class="n" title="Home minus away">Margin</th><th class="n gap">Covered</th><th class="n">Total line</th><th class="n">Total</th><th class="n">O/U</th></tr>${rows}</table></div></details>`;
+      <div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Round</th><th>Match</th><th class="n">Score</th><th class="n gap" title="Bookmaker handicap, home minus away">Hcp line</th><th class="n" title="Home minus away">Margin</th><th class="n gap">Covered</th><th class="n">Total line</th><th class="n">Total</th><th class="n">O/U</th></tr>${rows}</table></div></details>`;
   box.querySelectorAll('th.sort').forEach(h => h.onclick = () => {
     const t = h.dataset.t, k = h.dataset.k, cur = mkSort[t];
     mkSort[t] = cur.k === k ? {k, dir: -cur.dir} : {k, dir: k === 'team' ? 1 : -1};
