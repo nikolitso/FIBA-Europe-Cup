@@ -160,13 +160,11 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div id="out"></div>
   </div>
 </div>
-<script src="data.js"></script>
-<script src="fixtures.js"></script>
-<script src="odds.js"></script>
-<script src="archive.js"></script>
-<script src="rosters.js"></script>
-<script src="injuries.js"></script>
-<script src="budgets.js"></script>
+<script>
+// data files change after every update; a per-minute stamp keeps browsers from showing a cached copy for up to 10 minutes
+(() => { const v = Math.floor(Date.now() / 60000);
+  for (const f of ['data', 'fixtures', 'odds', 'archive', 'rosters', 'injuries', 'budgets']) document.write(`<script src="${f}.js?v=${v}"><\/script>`); })();
+</script>
 <script>
 const {matches, teams} = window.DATA;
 let mode = 'country';
