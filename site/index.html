@@ -675,7 +675,7 @@ function renderArchive(){
       if (r){
         S.res++;
         const ah = r[6] - r[7], homeWon = r[6] > r[7];
-        let cl = `<td class="n tag"${cmp ? ` title="Gap of ${gapMin} points or less: not judged"` : ''}>–</td>`;
+        let cl = '<td class="n"></td>';                         // only judged when the gap is over gapMin
         if (cmp){
           S.cmp++;
           const eh = [Math.abs(ah - g.mh), Math.abs(ah - g.bh)];
@@ -700,9 +700,9 @@ function renderArchive(){
       <div class="tag" style="margin-bottom:8px">Frozen ${esc(sn.taken)} · sample: ${esc(sn.sample)}</div>
       <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th>
         <th class="grp gap" title="The model's handicap, home minus away">Projection</th><th class="grp gap">Bookmaker</th><th class="grp gap" title="Model against bookmaker, only where the sample had 8 or more games">Model vs book</th>
-        <th colspan="2" class="grp gap">Result</th><th class="grp" title="Only where model and bookmaker were more than ${gapMin} points apart">Who was right</th></tr>
+        <th colspan="2" class="grp gap">Result</th><th class="grp" title="Whose handicap was nearer the actual one, only where model and bookmaker were more than ${gapMin} points apart">Closer</th></tr>
         <tr><th class="n gap">Hcp</th><th class="n gap">Hcp</th><th class="n gap" title="Model handicap minus bookmaker handicap; highlighted when more than ${gapMin} points">Hcp</th>
-        <th class="n gap">Score</th><th class="n gap">Hcp</th><th class="n" title="Whose handicap was nearer the actual one, when they were more than ${gapMin} points apart">Closer</th></tr>${rows}</table></div>`;
+        <th class="n gap">Score</th><th class="n gap">Hcp</th><th class="n" title="Whose handicap was nearer the actual one, when they were more than ${gapMin} points apart">Gap over ${gapMin}</th></tr>${rows}</table></div>`;
   }).join('');
   const avg = (v, n) => n ? (v / n).toFixed(1) : '–';
   const pc = (a, b) => b ? `${a} of ${b}` : '–';
