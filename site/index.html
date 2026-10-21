@@ -74,7 +74,31 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
 td.big{color:var(--bg);background:var(--gold);font-weight:700}
-table.mkt{table-layout:fixed;width:100%;min-width:1400px}table.mkt td{overflow:hidden;text-overflow:ellipsis}table.mkt th{overflow:visible;padding-left:4px;padding-right:4px}table.mkt tr.mkgames td{white-space:normal}table.mkt tr.mkgames table{table-layout:auto;width:auto;min-width:0}
+/* Vs Market group tables */
+h2.mkh{font:600 21px var(--serif);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+table.mkt{table-layout:fixed;width:100%;min-width:1400px;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+table.mkt th{font:500 10.5px var(--mono);letter-spacing:.09em;color:var(--muted);text-transform:uppercase;vertical-align:bottom;padding:6px 12px 9px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:visible}
+table.mkt tr.mkgrp th{border-bottom:0;padding:0 12px 2px;height:16px}
+table.mkt th.grp{color:var(--gold);text-align:center;font-size:10px;letter-spacing:.14em}
+table.mkt th.grp span{display:block;border-bottom:1px solid color-mix(in srgb,var(--gold) 45%,transparent);padding-bottom:4px}
+table.mkt td{padding:11px 12px;border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.mkt td.n,table.mkt th.n{text-align:right;font-family:var(--mono);font-size:13.5px}
+table.mkt td.n b{font-weight:600}
+table.mkt .tl{text-align:left}
+table.mkt .sec0{border-left:1px solid color-mix(in srgb,var(--line) 80%,transparent);padding-left:16px}
+table.mkt tr.click td{transition:background .12s}
+table.mkt tr.click:hover td{background:color-mix(in srgb,var(--gold) 6%,transparent)}
+table.mkt td.tl b{font-weight:600}
+table.mkt .caret{display:inline-block;width:14px;color:var(--muted);font-size:11px}
+table.mkt td.rd{white-space:normal;padding-top:8px;padding-bottom:8px}
+table.mkt th.rd{padding-left:16px}
+.pill{display:inline-block;margin:2px 6px 2px 0;padding:2px 9px;border-radius:999px;font:500 12px var(--body);line-height:1.5;border:1px solid transparent;white-space:nowrap}
+.pill b{font:600 11.5px var(--mono);margin-left:2px}
+.pill.w{color:var(--win);background:color-mix(in srgb,var(--win) 11%,transparent);border-color:color-mix(in srgb,var(--win) 28%,transparent)}
+.pill.l{color:var(--loss);background:color-mix(in srgb,var(--loss) 11%,transparent);border-color:color-mix(in srgb,var(--loss) 28%,transparent)}
+.pill.o{color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent);border-color:color-mix(in srgb,var(--gold) 26%,transparent)}
+table.mkt tr.mkgames td{white-space:normal;background:color-mix(in srgb,var(--panel) 70%,transparent)}
+table.mkt tr.mkgames table{table-layout:auto;width:auto;min-width:0}
 td.better{color:var(--win)!important;font-weight:700}td.worse{color:var(--loss)!important}
 th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gold)}
 .rogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:16px}
@@ -895,21 +919,16 @@ const MK_SD = {hcp: 12.5, tot: 17.5, pts: 10.75};
 const MK_MIN = 3;                                              // no comment before a club has this many games with a line
 const mkLim = (sd, n) => n >= MK_MIN ? sd / Math.sqrt(n) : Infinity;
 function mkRead(x){
-  // each of the four numbers is judged on its own noise bar; every one that clears it is mentioned
+  // each of the four numbers is judged on its own noise bar; every one that clears it becomes a tag
   const one = v => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
   const nS = mkLim(MK_SD.hcp, x.n), nT = mkLim(MK_SD.tot, x.tn), nP = mkLim(MK_SD.pts, x.tn);
-  const sS = Math.abs(x.vsS) >= nS, sT = x.vsT !== null && Math.abs(x.vsT) >= nT;
-  const sO = x.own !== null && Math.abs(x.own) >= nP, sD = x.opp !== null && Math.abs(x.opp) >= nP;
-  const parts = [];
-  if (sS) parts.push(x.vsS > 0 ? `underrated on the handicap (${one(x.vsS)})` : `overrated on the handicap (${one(x.vsS)})`);
-  if (sT) parts.push(x.vsT > 0 ? `games go over (${one(x.vsT)})` : `games go under (${one(x.vsT)})`);
-  if (sO) parts.push(x.own > 0 ? `<b>own points underrated</b>, scores ${Math.abs(x.own).toFixed(1)} more than priced` : `<b>own points overrated</b>, scores ${Math.abs(x.own).toFixed(1)} fewer than priced`);
-  if (sD) parts.push(x.opp < 0 ? `<b>defence underrated</b>, concedes ${Math.abs(x.opp).toFixed(1)} fewer than priced` : `<b>defence overrated</b>, concedes ${Math.abs(x.opp).toFixed(1)} more than priced`);
-  if (!parts.length) return '';
-  // colour: green when the club is better than priced overall (margin, or own points minus conceded)
-  const lean = sS ? x.vsS : (sO ? x.own : 0) - (sD ? x.opp : 0);
-  const txt = parts.join('; ');
-  return `<span class="${lean > 0 ? 'w' : lean < 0 ? 'l' : ''}">${txt.replace(/^(<b>)?([a-z])/, (m, b, c) => (b || '') + c.toUpperCase())}</span>`;
+  const tags = [];
+  const tag = (cls, label, v, title) => tags.push(`<span class="pill ${cls}" title="${title}">${label} <b>${one(v)}</b></span>`);
+  if (Math.abs(x.vsS) >= nS) tag(x.vsS > 0 ? 'w' : 'l', x.vsS > 0 ? 'Underrated' : 'Overrated', x.vsS, `Handicap: ${x.vsS > 0 ? 'beats' : 'falls short of'} the line by ${Math.abs(x.vsS).toFixed(1)} a game`);
+  if (x.vsT !== null && Math.abs(x.vsT) >= nT) tag('o', x.vsT > 0 ? 'Over' : 'Under', x.vsT, `Total: games go ${x.vsT > 0 ? 'over' : 'under'} the line by ${Math.abs(x.vsT).toFixed(1)}`);
+  if (x.own !== null && Math.abs(x.own) >= nP) tag(x.own > 0 ? 'w' : 'l', x.own > 0 ? 'Attack underrated' : 'Attack overrated', x.own, `Scores ${Math.abs(x.own).toFixed(1)} ${x.own > 0 ? 'more' : 'fewer'} than priced`);
+  if (x.opp !== null && Math.abs(x.opp) >= nP) tag(x.opp < 0 ? 'w' : 'l', x.opp < 0 ? 'Defence underrated' : 'Defence overrated', x.opp, `Concedes ${Math.abs(x.opp).toFixed(1)} ${x.opp < 0 ? 'fewer' : 'more'} than priced`);
+  return tags.join('');
 }
 // one club's games, from its own side: its handicap and margin, the total, and how each went against the line
 function mkGames(x){
@@ -932,7 +951,7 @@ function mkGames(x){
       <th class="n">Book total</th><th class="n">Total</th><th class="n" title="Against the total line, with the difference">Over / under</th></tr>${rows}</table></td></tr>`;
 }
 // one set of column widths for every group table, so the columns line up down the page
-const MK_COLS = '<colgroup><col style="width:230px"><col style="width:46px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
+const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
 function renderMarket(){
   const box = $('mkView');
   // lines from the archive (frozen with a projection) plus market.js (games never archived)
@@ -968,31 +987,31 @@ function renderMarket(){
   const {k, dir} = mkSort;
   const val = (x, c) => c === 'team' ? x.team : c === 'cov' ? (x.n ? x.w / x.n : 0) : c === 'ou' ? (x.tn ? x.o / x.tn : 0) : c === 'vs' ? x.vsS : (x[c] ?? -999);
   const th = (c, label, cls, title, extra = '') => `<th class="${cls} sort${c === k ? ' on' : ''}" data-k="${c}"${extra}${title ? ` title="${title}"` : ''}>${label}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
-  const head = `<tr>${th('team', 'Team', '', '', ' rowspan="2"')}${th('n', 'GP', 'n', 'Games with a line', ' rowspan="2"')}
-      <th colspan="4" class="grp gap">Handicap</th><th colspan="4" class="grp gap">Total</th><th colspan="2" class="grp gap" title="How far the club's own points and its opponents' points were from what the two lines implied">Points vs line</th><th rowspan="2">Read</th></tr>
-    <tr>${th('bh', 'Book', 'n', 'Average bookmaker handicap for the club, per game (+ = favourite)')}${th('rm', 'Result', 'n', 'Average real margin for the club, per game')}${th('cov', 'Covered', 'n', 'Beat the handicap – did not (pushes after)')}${th('vs', 'Vs line', 'n gap', 'Real margin minus the margin the handicap expected, per game: above 0 = underrated')}
-      ${th('bt', 'Book', 'n', 'Average total line in the club games')}${th('rt', 'Result', 'n', 'Average points scored in the club games')}${th('ou', 'O–U', 'n', 'Overs – unders')}${th('vsT', 'Vs line', 'n gap', 'Points in the game minus the total line, per game: above 0 = over')}
-      ${th('own', 'Own', 'n', 'Own points minus what the lines implied, per game: (total vs line + handicap vs line) / 2')}${th('opp', 'Opp', 'n gap', 'Opponents points minus what the lines implied, per game: (total vs line − handicap vs line) / 2')}</tr>`;
+  const head = `<tr class="mkgrp"><th></th><th></th><th colspan="4" class="grp sec"><span>Handicap</span></th><th colspan="4" class="grp sec"><span>Total</span></th><th colspan="2" class="grp sec" title="How far the club's own points and its opponents' points were from what the two lines implied"><span>Points vs line</span></th><th></th></tr>
+    <tr>${th('team', 'Team', 'tl')}${th('n', 'GP', 'n', 'Games with a line')}
+      ${th('bh', 'Book', 'n sec0', 'Average bookmaker handicap for the club, per game (+ = favourite)')}${th('rm', 'Result', 'n', 'Average real margin for the club, per game')}${th('cov', 'Covered', 'n', 'Beat the handicap – did not (pushes after)')}${th('vs', 'Vs line', 'n', 'Real margin minus the margin the handicap expected, per game: above 0 = underrated')}
+      ${th('bt', 'Book', 'n sec0', 'Average total line in the club games')}${th('rt', 'Result', 'n', 'Average points scored in the club games')}${th('ou', 'O–U', 'n', 'Overs – unders')}${th('vsT', 'Vs line', 'n', 'Points in the game minus the total line, per game: above 0 = over')}
+      ${th('own', 'Own', 'n sec0', 'Own points minus what the lines implied, per game: (total vs line + handicap vs line) / 2')}${th('opp', 'Opp', 'n', 'Opponents points minus what the lines implied, per game: (total vs line − handicap vs line) / 2')}<th class="tl rd sec0">Read</th></tr>`;
   const groups = [...new Set(rows.map(x => x.grp))].sort();
   const sections = groups.map(gr => {
     const list = rows.filter(x => x.grp === gr).sort((p, q) => {
       const a = val(p, k), b = val(q, k);
       return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || p.team.localeCompare(q.team);
     });
-    return `<h2>Group ${esc(gr)}</h2><div class="scroll"><table class="fx mkt">${MK_COLS}${head}` + list.map(x => {
+    return `<h2 class="mkh">Group ${esc(gr)}</h2><div class="scroll"><table class="mkt">${MK_COLS}${head}` + list.map(x => {
       const hs = `Line said ${one(x.exp / x.n)}, real margin ${one(x.real / x.n)}`;
       const ts = x.tn ? `Total line ${(x.texp / x.tn).toFixed(1)}, real total ${(x.treal / x.tn).toFixed(1)}` : '';
       const open = mkOpen.has(x.team);
       return `<tr class="click" data-club="${esc(x.team)}" title="Click for the club's games">
-        <td><span class="tag">${open ? '▾' : '▸'}</span> <b>${esc(x.team)}</b> <span class="tag">(${esc(code(teams[x.team]))})</span></td><td class="n">${x.n}</td>
-        <td class="n">${one(x.bh)}</td><td class="n">${one(x.rm)}</td>
-        <td class="n" title="${hs}"><span class="w">${x.w}</span>–<span class="l">${x.l}</span>${x.p ? `<span class="tag">–${x.p}</span>` : ''}</td>
-        <td class="n gap" title="${hs}; counts from ±${mkLim(MK_SD.hcp, x.n).toFixed(1)} after ${x.n} games"><b class="${col(x.vsS, mkLim(MK_SD.hcp, x.n))}">${one(x.vsS)}</b></td>
-        <td class="n">${x.bt === null ? '–' : x.bt.toFixed(1)}</td><td class="n">${x.rt === null ? '–' : x.rt.toFixed(1)}</td>
+        <td class="tl"><span class="caret">${open ? '▾' : '▸'}</span><b>${esc(x.team)}</b> <span class="tag">${esc(code(teams[x.team]))}</span></td><td class="n">${x.n}</td>
+        <td class="n sec0">${one(x.bh)}</td><td class="n">${one(x.rm)}</td>
+        <td class="n" title="${hs}">${x.w}–${x.l}${x.p ? `<span class="tag">–${x.p}</span>` : ''}</td>
+        <td class="n" title="${hs}; counts from ±${mkLim(MK_SD.hcp, x.n).toFixed(1)} after ${x.n} games"><b class="${col(x.vsS, mkLim(MK_SD.hcp, x.n))}">${one(x.vsS)}</b></td>
+        <td class="n sec0">${x.bt === null ? '–' : x.bt.toFixed(1)}</td><td class="n">${x.rt === null ? '–' : x.rt.toFixed(1)}</td>
         <td class="n" title="${ts}">${x.tn ? `${x.o}–${x.u}${x.tp ? `<span class="tag">–${x.tp}</span>` : ''}` : '–'}</td>
-        <td class="n gap" title="${ts}${x.tn ? `; counts from ±${mkLim(MK_SD.tot, x.tn).toFixed(1)} after ${x.tn} games` : ''}"><b class="${Math.abs(x.vsT ?? 0) >= mkLim(MK_SD.tot, x.tn) ? 'hcp' : 'tag'}">${one(x.vsT)}</b></td>
-        <td class="n"><span class="${col(x.own, mkLim(MK_SD.pts, x.tn))}">${one(x.own)}</span></td><td class="n gap"><span class="${col(x.opp === null ? null : -x.opp, mkLim(MK_SD.pts, x.tn))}">${one(x.opp)}</span></td>
-        <td style="font-size:13px">${mkRead(x)}</td></tr>` + (open ? mkGames(x) : '');
+        <td class="n" title="${ts}${x.tn ? `; counts from ±${mkLim(MK_SD.tot, x.tn).toFixed(1)} after ${x.tn} games` : ''}"><b class="${Math.abs(x.vsT ?? 0) >= mkLim(MK_SD.tot, x.tn) ? 'hcp' : 'tag'}">${one(x.vsT)}</b></td>
+        <td class="n sec0"><span class="${col(x.own, mkLim(MK_SD.pts, x.tn))}">${one(x.own)}</span></td><td class="n"><span class="${col(x.opp === null ? null : -x.opp, mkLim(MK_SD.pts, x.tn))}">${one(x.opp)}</span></td>
+        <td class="rd sec0">${mkRead(x)}</td></tr>` + (open ? mkGames(x) : '');
     }).join('') + `</table></div>`;
   }).join('');
   const all = games.slice().sort((x, y) => y.date.localeCompare(x.date) || x.h.localeCompare(y.h)).map(g => {
