@@ -125,6 +125,7 @@ select.peer:focus{outline:2px solid var(--gold)}
     <a href="#view=fixtures" data-view="fixtures" class="on">Fixtures</a>
     <a href="#view=projections" data-view="projections">Projections</a>
     <a href="#view=archive" data-view="archive">Archive</a>
+    <a href="#view=market" data-view="market">Vs Market</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
     <a href="#view=rosters" data-view="rosters">Rosters</a>
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
@@ -134,6 +135,7 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div id="rkView" hidden></div>
   <div id="pjView" hidden></div>
   <div id="arView" hidden></div>
+  <div id="mkView" hidden></div>
   <div id="roView" hidden></div>
 
   <div id="h2hView" hidden>
@@ -641,7 +643,7 @@ window.makeSnapshot = function(date){
     games.push({when: f[0].slice(11), h: f[2], a: f[3], nh, na, model: 'mix',
       mh: p ? p.hcp : null, adj: p ? p.adj : 0,
       out: p ? [...p.outH.map(x => [f[2], x.player, x.imp]), ...p.outA.map(x => [f[3], x.player, x.imp])] : [], pH: p ? Math.round(p.pHome * 1000) / 1000 : null, n: p ? p.n : 0,
-      bh: -o.sp, mlH: o.mlH, mlA: o.mlA});
+      bh: -o.sp, bt: o.tot, mlH: o.mlH, mlA: o.mlA});
   });
   return JSON.stringify({date, round: FX.find(f => f[0].slice(0, 10) === date)?.[1] || '', taken: new Date().toLocaleDateString('en-CA'),
     sample: sampleText(), games});
@@ -881,13 +883,73 @@ function renderRosters(){
   $('roSearch').oninput = e => { roQuery = e.target.value; draw(); };
   draw();
 }
+// ---------- Vs Market: every archived game's bookmaker line against what happened, by club
+let mkSort = {sp: {k: 'vs', dir: -1}, to: {k: 'vs', dir: -1}};
+function renderMarket(){
+  const box = $('mkView');
+  const games = [];
+  for (const sn of (window.ARCHIVE && ARCHIVE.list) || []) for (const g of sn.games){
+    const r = arResult(sn.date, g.h, g.a);
+    if (r && r[8] !== 'AWA.') games.push({date: r[3], h: g.h, a: g.a, hp: r[6], ap: r[7], ot: r[8] === 'AET', bh: g.bh, bt: g.bt ?? null});
+  }
+  if (!games.length){ box.innerHTML = '<div class="empty">No archived game has a result yet.</div>'; return; }
+  const sp = {}, to = {};
+  for (const g of games){
+    const m = g.hp - g.ap;
+    for (const [t, exp, real] of [[g.h, g.bh, m], [g.a, -g.bh, -m]]){
+      const x = (sp[t] ??= {team: t, n: 0, w: 0, l: 0, p: 0, exp: 0, real: 0});
+      x.n++; x.exp += exp; x.real += real; real > exp ? x.w++ : real < exp ? x.l++ : x.p++;
+    }
+    if (g.bt !== null) for (const t of [g.h, g.a]){
+      const x = (to[t] ??= {team: t, n: 0, w: 0, l: 0, p: 0, exp: 0, real: 0});
+      const tot = g.hp + g.ap;
+      x.n++; x.exp += g.bt; x.real += tot; tot > g.bt ? x.w++ : tot < g.bt ? x.l++ : x.p++;
+    }
+  }
+  const one = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+  const table = (key, rows, wl, expL, realL, signed) => {
+    const {k, dir} = mkSort[key];
+    const list = Object.values(rows).map(x => ({...x, exp: x.exp / x.n, real: x.real / x.n, vs: (x.real - x.exp) / x.n, wr: x.n ? x.w / x.n : 0}));
+    list.sort((p, q) => (k === 'team' ? p.team.localeCompare(q.team) : (p[k] - q[k])) * dir || p.team.localeCompare(q.team));
+    const th = (c, label, cls, title) => `<th class="${cls} sort${c === k ? ' on' : ''}" data-t="${key}" data-k="${c}"${title ? ` title="${title}"` : ''}>${label}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+    return `<div class="scroll"><table class="fx"><tr>${th('team', 'Team', '')}${th('n', 'GP', 'n')}${th('wr', wl, 'n')}${th('exp', expL, 'n')}${th('real', realL, 'n')}${th('vs', 'Vs line', 'n')}</tr>` +
+      list.map(x => `<tr><td><b>${esc(x.team)}</b> <span class="tag">(${esc(code(teams[x.team]))})</span></td><td class="n">${x.n}</td>
+        <td class="n"><span class="w">${x.w}</span>–<span class="l">${x.l}</span>${x.p ? `<span class="tag">–${x.p}</span>` : ''}</td>
+        <td class="n">${signed ? one(x.exp) : x.exp.toFixed(1)}</td><td class="n">${signed ? one(x.real) : x.real.toFixed(1)}</td>
+        <td class="n"><b class="${x.vs > 0 ? 'w' : x.vs < 0 ? 'l' : ''}">${one(x.vs)}</b></td></tr>`).join('') + `</table></div>`;
+  };
+  const rows = games.slice().sort((x, y) => y.date.localeCompare(x.date) || x.h.localeCompare(y.h)).map(g => {
+    const m = g.hp - g.ap, tot = g.hp + g.ap;
+    const cov = m > g.bh ? g.h : m < g.bh ? g.a : 'push';
+    const ou = g.bt === null ? '' : tot > g.bt ? 'Over' : tot < g.bt ? 'Under' : 'push';
+    return `<tr><td class="n">${fmtDate(g.date)}</td><td><b>${esc(g.h)}</b> – <b>${esc(g.a)}</b></td>
+      <td class="n"><b>${g.hp}–${g.ap}</b>${g.ot ? ' <span class="tag">OT</span>' : ''}</td>
+      <td class="n gap">${one(g.bh)}</td><td class="n">${one(m)}</td><td class="n gap">${esc(cov)}</td>
+      <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n">${ou}</td></tr>`;
+  }).join('');
+  box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's line for every archived game (frozen before tip-off) against what happened, ${games.length} games so far. Each club appears in every game it played, home or away.</div>
+    <h2>Spread</h2>
+    <div class="tag" style="margin-bottom:8px"><b>Vs line</b> = real margin − the margin the handicap expected, averaged over the club's games: above 0, the club did better than the market priced it (underrated); below 0, worse (overrated). <b>Covered</b> = games it beat the line–games it did not (pushes after).</div>
+    ${table('sp', sp, 'Covered', 'Line said', 'Real margin', true)}
+    <h2>Total</h2>
+    <div class="tag" style="margin-bottom:8px"><b>Vs line</b> = points scored in the game − the total line, averaged over the club's games: positive = over, negative = under. <b>O–U</b> = overs and unders.</div>
+    ${table('to', to, 'O–U', 'Total line', 'Real total', false)}
+    <details class="ros" style="margin-top:18px"><summary><b>Every game</b> <span class="tag">${games.length}</span></summary>
+      <div class="scroll"><table class="fx"><tr><th class="n">Date</th><th>Match</th><th class="n">Score</th><th class="n gap" title="Bookmaker handicap, home minus away">Hcp line</th><th class="n" title="Home minus away">Margin</th><th class="n gap">Covered</th><th class="n">Total line</th><th class="n">Total</th><th class="n">O/U</th></tr>${rows}</table></div></details>`;
+  box.querySelectorAll('th.sort').forEach(h => h.onclick = () => {
+    const t = h.dataset.t, k = h.dataset.k, cur = mkSort[t];
+    mkSort[t] = cur.k === k ? {k, dir: -cur.dir} : {k, dir: k === 'team' ? 1 : -1};
+    renderMarket();
+  });
+}
 function setView(v){
-  view = ['fixtures', 'projections', 'archive', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'fixtures';
+  view = ['fixtures', 'projections', 'archive', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'fixtures';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
-  document.body.classList.toggle('wide', view === 'projections' || view === 'archive');
+  document.body.classList.toggle('wide', view === 'projections' || view === 'archive' || view === 'market');
   $('fxView').hidden = view !== 'fixtures';
   $('rkView').hidden = view !== 'rankings';
   $('arView').hidden = view !== 'archive';
+  $('mkView').hidden = view !== 'market';
   $('pjView').hidden = view !== 'projections';
   $('h2hView').hidden = view !== 'h2h';
   $('roView').hidden = view !== 'rosters';
@@ -895,6 +957,7 @@ function setView(v){
   if (view === 'rankings') renderRankings();
   if (view === 'projections') renderProjections();
   if (view === 'archive') renderArchive();
+  if (view === 'market') renderMarket();
   if (view === 'rosters') renderRosters();
 }
 document.querySelectorAll('#tabs a').forEach(b => b.onclick = e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; e.preventDefault(); if (b.dataset.view === 'projections') pjDetail = null; setView(b.dataset.view); sync(); });
