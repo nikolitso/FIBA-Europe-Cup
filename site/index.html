@@ -74,6 +74,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
 td.big{color:var(--bg);background:var(--gold);font-weight:700}
+table.mkt{table-layout:fixed;width:100%;min-width:1400px}table.mkt td{overflow:hidden;text-overflow:ellipsis}table.mkt th{overflow:visible;padding-left:4px;padding-right:4px}table.mkt tr.mkgames td{white-space:normal}table.mkt tr.mkgames table{table-layout:auto;width:auto;min-width:0}
 td.better{color:var(--win)!important;font-weight:700}td.worse{color:var(--loss)!important}
 th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gold)}
 .rogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:16px}
@@ -891,7 +892,8 @@ const MK_FROM = '2026-10-06';                                  // Vs Market coun
 // the book misses the handicap by about 12.5 points and the total by about 17.5 (2025-27 lines), and the own / opponent
 // split (half the sum of the two) by about 10.75.
 const MK_SD = {hcp: 12.5, tot: 17.5, pts: 10.75};
-const mkLim = (sd, n) => n ? sd / Math.sqrt(n) : Infinity;
+const MK_MIN = 3;                                              // no comment before a club has this many games with a line
+const mkLim = (sd, n) => n >= MK_MIN ? sd / Math.sqrt(n) : Infinity;
 function mkRead(x){
   // each of the four numbers is judged on its own noise bar; every one that clears it is mentioned
   const one = v => (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
@@ -929,6 +931,8 @@ function mkGames(x){
       <th class="n gap" title="The club's handicap: + = favourite by that many">Book hcp</th><th class="n" title="The club's margin">Result</th><th class="n gap" title="Against the handicap, with the difference">Handicap</th>
       <th class="n">Book total</th><th class="n">Total</th><th class="n" title="Against the total line, with the difference">Over / under</th></tr>${rows}</table></td></tr>`;
 }
+// one set of column widths for every group table, so the columns line up down the page
+const MK_COLS = '<colgroup><col style="width:230px"><col style="width:46px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
 function renderMarket(){
   const box = $('mkView');
   // lines from the archive (frozen with a projection) plus market.js (games never archived)
@@ -975,7 +979,7 @@ function renderMarket(){
       const a = val(p, k), b = val(q, k);
       return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || p.team.localeCompare(q.team);
     });
-    return `<h2>Group ${esc(gr)}</h2><div class="scroll"><table class="fx">${head}` + list.map(x => {
+    return `<h2>Group ${esc(gr)}</h2><div class="scroll"><table class="fx mkt">${MK_COLS}${head}` + list.map(x => {
       const hs = `Line said ${one(x.exp / x.n)}, real margin ${one(x.real / x.n)}`;
       const ts = x.tn ? `Total line ${(x.texp / x.tn).toFixed(1)}, real total ${(x.treal / x.tn).toFixed(1)}` : '';
       const open = mkOpen.has(x.team);
@@ -1003,7 +1007,7 @@ function renderMarket(){
   box.innerHTML = `<div class="note" style="margin-bottom:14px">The bookmaker's pre-game line for every Regular Season game from Round 1 (${fmtDate(MK_FROM)}) against what happened: ${games.length} games so far, by group. Each club appears in every game it played, home or away.
       <b>Handicap vs line</b> above 0 = the club did better than priced (underrated); <b>Total vs line</b> above 0 = its games went over.
       <b>Points vs line</b> splits the two: <b>Own</b> = its own points against what the lines implied, <b>Opp</b> = its opponents' points.
-      Each of the four is judged on its own: the Read names every one that is off by more than its sample's noise (own points and defence included, even when the total alone is not off).
+      Each of the four is judged on its own, and only after ${MK_MIN} completed games: the Read names every one that is off by more than its sample's noise (own points and defence included, even when the total alone is not off).
       A club's average only counts once it is larger than the noise of its sample: the book's typical miss divided by √games, about ${MK_SD.hcp} ÷ √games on the handicap and ${MK_SD.tot} ÷ √games on the total (±${mkLim(MK_SD.hcp, 3).toFixed(1)} and ±${mkLim(MK_SD.tot, 3).toFixed(1)} after 3 games, ±${mkLim(MK_SD.hcp, 10).toFixed(1)} and ±${mkLim(MK_SD.tot, 10).toFixed(1)} after 10). Smaller differences are greyed out and left out of the Read; green = better for the club than priced, red = worse. Click a club for its games one by one.</div>
     ${sections}
     <details class="ros" style="margin-top:18px"><summary><b>Every game</b> <span class="tag">${games.length}</span></summary>
