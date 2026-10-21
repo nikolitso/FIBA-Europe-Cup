@@ -122,20 +122,20 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div class="sub" id="sub"></div>
 
   <div class="tabs" id="tabs">
-    <a href="#view=fixtures" data-view="fixtures" class="on">Fixtures</a>
+    <a href="#view=market" data-view="market" class="on">Vs Market</a>
+    <a href="#view=fixtures" data-view="fixtures">Fixtures</a>
     <a href="#view=projections" data-view="projections">Projections</a>
     <a href="#view=archive" data-view="archive">Archive</a>
-    <a href="#view=market" data-view="market">Vs Market</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
     <a href="#view=rosters" data-view="rosters">Rosters</a>
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
   </div>
 
-  <div id="fxView"></div>
+  <div id="fxView" hidden></div>
   <div id="rkView" hidden></div>
   <div id="pjView" hidden></div>
   <div id="arView" hidden></div>
-  <div id="mkView" hidden></div>
+  <div id="mkView"></div>
   <div id="roView" hidden></div>
 
   <div id="h2hView" hidden>
@@ -283,7 +283,7 @@ function render(){
 }
 
 // ---------- Fixtures
-let view = 'fixtures';
+let view = 'market';
 const FX = (window.FIXTURES && window.FIXTURES.list) || [];
 // head to head between two sides, from the first side's point of view; key: club or country name
 // FIBA / IOC three-letter country codes
@@ -991,7 +991,7 @@ function renderMarket(){
   });
 }
 function setView(v){
-  view = ['fixtures', 'projections', 'archive', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'fixtures';
+  view = ['fixtures', 'projections', 'archive', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'market';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   document.body.classList.toggle('wide', view === 'projections' || view === 'archive' || view === 'market');
   $('fxView').hidden = view !== 'fixtures';
@@ -1013,7 +1013,7 @@ document.querySelectorAll('#tabs a').forEach(b => b.onclick = e => { if (e.metaK
 document.querySelectorAll('[data-home]').forEach(a => a.onclick = e => {
   e.preventDefault();
   setMode('country'); setVenue('all'); $('a').value = $('b').value = '';
-  setView('fixtures'); render();
+  setView('market'); render();
   history.replaceState(null, '', location.pathname);
   window.scrollTo({top: 0, behavior: 'smooth'});
 });
