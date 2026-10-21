@@ -74,6 +74,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
 td.big{color:var(--bg);background:var(--gold);font-weight:700}
+td.better{color:var(--win)!important;font-weight:700}td.worse{color:var(--loss)!important}
 th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gold)}
 .rogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:16px}
 .rogrid .card{padding:16px;margin:0}.rogrid h3{font:600 18px var(--serif);margin:0 0 2px;cursor:pointer}.rogrid h3:hover{color:var(--gold)}
@@ -670,6 +671,7 @@ function renderArchive(){
       const mv = cmp ? (big ? `<td class="n gap big" title="More than ${gapMin} points apart">${sgn(g.mh - g.bh)}</td>` : `<td class="n gap tag">${sgn(g.mh - g.bh)}</td>`)
                      : `<td class="n tag gap">${g.mh === null ? 'No comparable games' : `Only ${g.n} game${g.n === 1 ? '' : 's'} (need ${MIN_GAMES}+)`}</td>`;
       let res = '<td class="n tag gap" colspan="2">pending</td><td class="n tag"></td>';
+      let col = ['', ''];                                       // projection / bookmaker cell: better or worse
       if (r){
         S.res++;
         const ah = r[6] - r[7], homeWon = r[6] > r[7];
@@ -687,14 +689,17 @@ function renderArchive(){
             if (ah !== g.bh){ S.sh[1]++; if ((g.mh > g.bh) === (ah > g.bh)) S.sh[0]++; }
           }
           const cls = c1 === 'Model' ? 'w' : c1 === 'Book' ? 'l' : 'tag';
-          if (big) cl = `<td class="n ${cls}" title="Model off by ${eh[0].toFixed(1)}, book off by ${eh[1].toFixed(1)}"><b>${c1}</b></td>`;
+          if (big){
+            cl = `<td class="n ${cls}" title="Model off by ${eh[0].toFixed(1)}, book off by ${eh[1].toFixed(1)}"><b>${c1}</b></td>`;
+            if (c1 !== 'Tie') col = c1 === 'Model' ? [' better', ' worse'] : [' worse', ' better'];
+          }
         }
         res = `<td class="n gap"><b>${r[6]}–${r[7]}</b>${r[8] === 'AET' ? ' <span class="tag">OT</span>' : ''}</td><td class="n gap">${sgn(ah)}</td>${cl}`;
       }
       const ch = teams[g.h] || '', ca = teams[g.a] || '';
       return `<tr><td class="n">${esc(g.when)}</td>
         <td><b>${esc(g.h)}</b> <span class="tag">(${esc(code(ch))})</span> – <b>${esc(g.a)}</b> <span class="tag">(${esc(code(ca))})</span></td>
-        <td class="n gap hcp">${g.mh === null ? '–' : sgn(g.mh)}</td><td class="n gap hcp">${sgn(g.bh)}</td>${mv}${res}</tr>`;
+        <td class="n gap hcp${col[0]}">${g.mh === null ? '–' : sgn(g.mh)}</td><td class="n gap hcp${col[1]}">${sgn(g.bh)}</td>${mv}${res}</tr>`;
     }).join('');
     return `<h2>${dayName(sn.date)} <span class="tag">${esc(sn.round)}</span></h2>
       <div class="tag" style="margin-bottom:8px">Frozen ${esc(sn.taken)} · sample: ${esc(sn.sample)}</div>
@@ -707,16 +712,21 @@ function renderArchive(){
   const avg = (v, n) => n ? (v / n).toFixed(1) : '–';
   const pc = (a, b) => b ? `${a} of ${b}` : '–';
   const card = (t, v, sub) => `<div class="metric"><div class="lbl">${t}</div><div class="big2">${v}</div><div class="tag">${sub}</div></div>`;
+  // model vs book: green for the better one, red for the worse (white when level)
+  const vs = (m, b, higherBetter, fmt = x => x) => {
+    const c = x => m === b ? '' : (x === (higherBetter ? Math.max(m, b) : Math.min(m, b)) ? 'w' : 'l');
+    return `<span class="${c(m)}">${fmt(m)}</span> <span class="tag">vs</span> <span class="${c(b)}">${fmt(b)}</span>`;
+  };
   const summary = `<div class="metrics">
     ${card('Results in', `${S.res} of ${S.total}`, `${S.big} of ${S.cmp} compared games more than ${gapMin} pts apart`)}
-    ${card('Winner picked', S.wn ? `${S.w[0]} <span class="tag">vs</span> ${S.w[1]}` : '–', S.wn ? `model vs book, out of ${S.wn} (${Math.round(S.w[0] / S.wn * 100)}% vs ${Math.round(S.w[1] / S.wn * 100)}%)` : 'model vs book')}
-    ${card('Handicap error (avg points)', S.big ? `${avg(S.eh[0], S.big)} <span class="tag">vs</span> ${avg(S.eh[1], S.big)}` : '–', 'model vs book, lower is better')}
-    ${card(`Closer when over ${gapMin} pts apart`, S.big ? `${S.ch[0]} <span class="tag">vs</span> ${S.ch[1]}` : '–', `model vs book, ${S.big} game${S.big === 1 ? '' : 's'}${S.ch[2] ? ', ' + S.ch[2] + ' tie' : ''}`)}
-    ${card("Model's side of the handicap", pc(S.sh[0], S.sh[1]), 'covered (pushes and equal lines left out)')}
+    ${card('Winner picked', S.wn ? vs(S.w[0], S.w[1], true) : '–', S.wn ? `model vs book, out of ${S.wn} (${Math.round(S.w[0] / S.wn * 100)}% vs ${Math.round(S.w[1] / S.wn * 100)}%)` : 'model vs book')}
+    ${card('Handicap error (avg points)', S.big ? vs(S.eh[0] / S.big, S.eh[1] / S.big, false, x => x.toFixed(1)) : '–', 'model vs book, lower is better')}
+    ${card(`Closer when over ${gapMin} pts apart`, S.big ? vs(S.ch[0], S.ch[1], true) : '–', `model vs book, ${S.big} game${S.big === 1 ? '' : 's'}${S.ch[2] ? ', ' + S.ch[2] + ' tie' : ''}`)}
+    ${card("Model's side of the handicap", S.sh[1] ? `<span class="${S.sh[0] * 2 > S.sh[1] ? 'w' : S.sh[0] * 2 < S.sh[1] ? 'l' : ''}">${S.sh[0]} of ${S.sh[1]}</span>` : '–', 'covered: green above half, red below (pushes and equal lines left out)')}
   </div>`;
   box.innerHTML = `<div class="pjbar">${gapSelect()}<span class="tag">Games further apart than this are highlighted, judged and counted in the cards below.</span></div>` + summary + sections +
     `<div class="tag" style="margin-top:14px">Each round is frozen from the Projections tab before the games, with the sample shown above, so later results never change it. Hcp is home minus away; Model vs book is the model's handicap minus the bookmaker's.
-     Differences of more than ${gapMin} points are highlighted; only those games are judged, and Closer says whose handicap was nearer the actual one. The result fills in by itself once the match is in the data.
+     Differences of more than ${gapMin} points are highlighted; only those games are judged: Closer says whose handicap was nearer the actual one, and the two handicaps turn green (nearer) and red (further). The result fills in by itself once the match is in the data.
      The model's side is the side of the bookmaker's line it leaned to (above the line = home covers). Only matches with ${MIN_GAMES} or more games in the sample are compared, and the cards above count only the games more than ${gapMin} points apart.</div>`;
   bindGap(box, renderArchive);
 }
