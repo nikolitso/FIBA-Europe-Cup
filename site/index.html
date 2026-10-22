@@ -574,23 +574,21 @@ function renderProjections(){
   if (!P || !P.list.length){ box.innerHTML = '<div class="empty">No games in the next days.</div>'; return; }
   const days = {};
   for (const g of P.list) (days[g.when.slice(0, 10)] ||= []).push(g);
-  const head = `<tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="3" class="grp gap">Model</th><th colspan="3" class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model minus bookmaker">Model − book</th><th colspan="4" class="grp gap" title="How each club has done against the bookmaker's lines this season (Vs Market tab), and whether that points the same way as the model">Vs market</th><th rowspan="2">Out</th></tr>
+  const head = `<tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="3" class="grp gap">Model</th><th colspan="3" class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model minus bookmaker">Model − book</th><th colspan="2" class="grp gap" title="How the two clubs have done against the bookmaker's lines this season (Vs Market tab), and whether that points the same way as the model">Vs market</th><th rowspan="2">Out</th></tr>
     <tr><th class="n" title="Handicap, home minus away">Hcp</th><th class="n">Total</th><th class="n gap" title="Home win chance">Home %</th>
       <th class="n" title="Handicap, home minus away">Hcp</th><th class="n">Total</th><th class="n gap" title="Home win chance from the money line, margin removed">Home %</th>
       <th class="n" title="Model handicap minus bookmaker handicap: above 0 = the model likes the home side more">Hcp</th><th class="n gap" title="Model total minus bookmaker total">Total</th>
-      <th class="n" title="Home club: average real margin minus the handicap, per game (above 0 = has beaten the market)">Home</th><th class="n" title="Away club: average real margin minus the handicap, per game">Away</th>
       <th class="n" title="Home vs line minus away vs line: above 0 = the home club has beaten the market by more. Green = same way as Model − book, red = the other way">Hcp</th><th class="n gap" title="Average of the two clubs' total vs line: above 0 = their games go over. Green = same way as the model's total gap, red = the other way">Total</th></tr>`;
   const MK = new Map(mkData().rows.map(x => [x.team, x]));
   // agreement: the clubs' record against the market points the same way as the model's gap to the book (both need MK_MIN games)
   // the clubs' market number (home − away on the handicap, average on the total), green when it points the way of the model's gap
-  const agree = (gap, trend, ok, what) => trend === null ? '<td class="n tag">–</td>'
-    : !ok || gap === null || !gap || !trend ? `<td class="n tag" title="${ok ? 'No bookmaker line yet' : 'Shown in colour once both clubs have ' + MK_MIN + ' games'}">${sgn(trend)}</td>`
-    : (gap > 0) === (trend > 0) ? `<td class="n w" title="Agrees with the model: ${what} points the same way as Model − book (${sgn(gap)})"><b>${sgn(trend)}</b></td>`
-                                : `<td class="n l" title="Disagrees with the model: ${what} points the other way from Model − book (${sgn(gap)})">${sgn(trend)}</td>`;
+  const agree = (gap, trend, ok, what, detail = '') => trend === null ? '<td class="n tag">–</td>'
+    : !ok || gap === null || !gap || !trend ? `<td class="n tag" title="${detail}${ok ? 'No bookmaker line yet' : 'Shown in colour once both clubs have ' + MK_MIN + ' games'}">${sgn(trend)}</td>`
+    : (gap > 0) === (trend > 0) ? `<td class="n w" title="${detail}Agrees with the model: ${what} points the same way as Model − book (${sgn(gap)})"><b>${sgn(trend)}</b></td>`
+                                : `<td class="n l" title="${detail}Disagrees with the model: ${what} points the other way from Model − book (${sgn(gap)})">${sgn(trend)}</td>`;
   const row = g => {
     const o = ODDS[g.h + '|' + g.a];
     const xh = MK.get(g.h), xa = MK.get(g.a), okS = xh && xa && xh.n >= MK_MIN && xa.n >= MK_MIN, okT = xh && xa && xh.tn >= MK_MIN && xa.tn >= MK_MIN;
-    const vs = x => !x ? '<td class="n tag">–</td>' : `<td class="n ${x.n >= MK_MIN ? (x.vsS > 0 ? 'w' : x.vsS < 0 ? 'l' : '') : 'tag'}" title="${x.n} games; covered ${x.w}–${x.l}">${sgn(x.vsS)}</td>`;
     const bh = o ? -o.sp : null, bt = o ? o.tot : null, pb = bookWin(o);
     const out = g.outH.length || g.outA.length
       ? [g.outH.length ? `${esc(g.h)}: ${outText(g.outH)}` : '', g.outA.length ? `${esc(g.a)}: ${outText(g.outA)}` : ''].filter(Boolean).join('; ') : '–';
@@ -600,7 +598,7 @@ function renderProjections(){
       ${o ? `<td class="n" title="${esc((o.src || [''])[0])}">${sgn(bh)}</td><td class="n">${bt === null || bt === undefined ? '–' : bt.toFixed(1)}</td><td class="n gap">${pb === null ? '–' : pct(pb)}</td>`
           : '<td class="n tag" colspan="3" title="Lines appear a few days before the game">no line yet</td>'}
       ${o ? gapCell(g.mh - bh) + gapCell(bt === null || bt === undefined ? null : g.mt - bt, ' gap') : '<td class="n tag">–</td><td class="n tag gap">–</td>'}
-      ${vs(xh)}${vs(xa)}${agree(o ? g.mh - bh : null, xh && xa ? xh.vsS - xa.vsS : null, okS, 'home − away vs line')}${agree(o && bt !== null && bt !== undefined ? g.mt - bt : null, xh && xa && xh.vsT !== null && xa.vsT !== null ? (xh.vsT + xa.vsT) / 2 : null, okT, 'the average of the two clubs vs the total').replace('class="n ', 'class="n gap ')}
+      ${agree(o ? g.mh - bh : null, xh && xa ? xh.vsS - xa.vsS : null, okS, 'home − away vs line', xh && xa ? `${g.h} ${sgn(xh.vsS)} (${xh.n} games), ${g.a} ${sgn(xa.vsS)} (${xa.n} games). ` : '')}${agree(o && bt !== null && bt !== undefined ? g.mt - bt : null, xh && xa && xh.vsT !== null && xa.vsT !== null ? (xh.vsT + xa.vsT) / 2 : null, okT, 'the average of the two clubs vs the total', xh && xa && xh.vsT !== null && xa.vsT !== null ? `${g.h} games ${sgn(xh.vsT)}, ${g.a} games ${sgn(xa.vsT)} vs the total. ` : '').replace('class="n ', 'class="n gap ')}
       <td class="tag">${out}</td></tr>`;
   };
   const ratings = P.ratings.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.c)}</b> <span class="tag">${esc(code(teams[x.c]))}</span></td>
