@@ -32,7 +32,7 @@ import update_site
 HERE = Path(__file__).parent
 SITE = update_site.SITE                                   # website repo folder: nikolitso.github.io/fibaeuropecup
 WEBSITE_REPO = SITE.parent
-FILES = ["data.js", "fixtures.js", "odds.js"]
+FILES = ["data.js", "fixtures.js", "odds.js", "projections.js", "archive.js"]
 COMP = update_site.COMP
 STRIP_W = False                                           # the women's site strips BetExplorer's trailing " W"
 H = {"User-Agent": "Mozilla/5.0"}
@@ -141,6 +141,9 @@ def main():
             step()
         except (SystemExit, requests.RequestException) as e:   # BetExplorer blocked or limiting: keep the old file
             print(f"{step.__name__}: skipped ({e})")
+    # club-rating projections and the Archive frozen from them; a separate process so it reads the new results
+    if subprocess.run([sys.executable, str(HERE / "predict.py")], cwd=HERE).returncode:
+        print("predict: failed, projections.js / archive.js left as they were")
     if push:
         mirror_and_publish("FIBA Europe Cup", "fibaeuropecup", f"FIBA Europe Cup: update results, odds and fixtures ({time.strftime('%Y-%m-%d %H:%M')})")
     print("done")
