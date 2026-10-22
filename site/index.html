@@ -579,12 +579,14 @@ function renderProjections(){
       <th class="n" title="Handicap, home minus away">Hcp</th><th class="n">Total</th><th class="n gap" title="Home win chance from the money line, margin removed">Home %</th>
       <th class="n" title="Model handicap minus bookmaker handicap: above 0 = the model likes the home side more">Hcp</th><th class="n gap" title="Model total minus bookmaker total">Total</th>
       <th class="n" title="Home club: average real margin minus the handicap, per game (above 0 = has beaten the market)">Home</th><th class="n" title="Away club: average real margin minus the handicap, per game">Away</th>
-      <th class="n" title="Does the clubs' record against the handicap point the same way as the model's gap? (home − away vs line, against model − book)">Hcp</th><th class="n gap" title="Do the clubs' games against the total line point the same way as the model's total gap?">Total</th></tr>`;
+      <th class="n" title="Home vs line minus away vs line: above 0 = the home club has beaten the market by more. Green = same way as Model − book, red = the other way">Hcp</th><th class="n gap" title="Average of the two clubs' total vs line: above 0 = their games go over. Green = same way as the model's total gap, red = the other way">Total</th></tr>`;
   const MK = new Map(mkData().rows.map(x => [x.team, x]));
   // agreement: the clubs' record against the market points the same way as the model's gap to the book (both need MK_MIN games)
-  const agree = (gap, trend, ok) => !ok || gap === null || !gap || !trend ? '<td class="n tag">–</td>'
-    : (gap > 0) === (trend > 0) ? `<td class="n w" title="Model and market record point the same way (${sgn(trend)})"><b>✓</b></td>`
-                                : `<td class="n l" title="Market record points the other way (${sgn(trend)})">✗</td>`;
+  // the clubs' market number (home − away on the handicap, average on the total), green when it points the way of the model's gap
+  const agree = (gap, trend, ok, what) => trend === null ? '<td class="n tag">–</td>'
+    : !ok || gap === null || !gap || !trend ? `<td class="n tag" title="${ok ? 'No bookmaker line yet' : 'Shown in colour once both clubs have ' + MK_MIN + ' games'}">${sgn(trend)}</td>`
+    : (gap > 0) === (trend > 0) ? `<td class="n w" title="Agrees with the model: ${what} points the same way as Model − book (${sgn(gap)})"><b>${sgn(trend)}</b></td>`
+                                : `<td class="n l" title="Disagrees with the model: ${what} points the other way from Model − book (${sgn(gap)})">${sgn(trend)}</td>`;
   const row = g => {
     const o = ODDS[g.h + '|' + g.a];
     const xh = MK.get(g.h), xa = MK.get(g.a), okS = xh && xa && xh.n >= MK_MIN && xa.n >= MK_MIN, okT = xh && xa && xh.tn >= MK_MIN && xa.tn >= MK_MIN;
@@ -598,13 +600,13 @@ function renderProjections(){
       ${o ? `<td class="n" title="${esc((o.src || [''])[0])}">${sgn(bh)}</td><td class="n">${bt === null || bt === undefined ? '–' : bt.toFixed(1)}</td><td class="n gap">${pb === null ? '–' : pct(pb)}</td>`
           : '<td class="n tag" colspan="3" title="Lines appear a few days before the game">no line yet</td>'}
       ${o ? gapCell(g.mh - bh) + gapCell(bt === null || bt === undefined ? null : g.mt - bt, ' gap') : '<td class="n tag">–</td><td class="n tag gap">–</td>'}
-      ${vs(xh)}${vs(xa)}${agree(o ? g.mh - bh : null, okS ? xh.vsS - xa.vsS : 0, okS)}${agree(o && bt !== null && bt !== undefined ? g.mt - bt : null, okT ? (xh.vsT + xa.vsT) / 2 : 0, okT).replace('class="n ', 'class="n gap ')}
+      ${vs(xh)}${vs(xa)}${agree(o ? g.mh - bh : null, xh && xa ? xh.vsS - xa.vsS : null, okS, 'home − away vs line')}${agree(o && bt !== null && bt !== undefined ? g.mt - bt : null, xh && xa && xh.vsT !== null && xa.vsT !== null ? (xh.vsT + xa.vsT) / 2 : null, okT, 'the average of the two clubs vs the total').replace('class="n ', 'class="n gap ')}
       <td class="tag">${out}</td></tr>`;
   };
   const ratings = P.ratings.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.c)}</b> <span class="tag">${esc(code(teams[x.c]))}</span></td>
     <td class="n hcp"><b>${sgn(x.r)}</b></td><td class="n">${x.g}</td><td class="n">${sgn(x.prior)}</td></tr>`).join('');
   box.innerHTML = `<div class="note" style="margin-bottom:14px"><b>The model rates every club from this season's results</b>, with older games counting less, starting from last season's club rating (85%) and its country's power-ranking rating (15%); clubs new to the competition start from the country rating. Tonight's absences come off the club (the <b>Out</b> column, from the injury list, impact as on the Rosters tab; a handicap marked * includes them). Home advantage ${sgn(P.hca)}.
-      It never looks at the bookmaker: <b>Model − book</b> is where the two disagree. <b>Vs market</b> shows how each club has done against the bookmaker's lines this season (as on the Vs Market tab): ✓ when that record points the same way as the model's gap (the model likes the home side more and the home side has been beating the market more than the away side; or, for the total, the model's total is higher and both clubs' games have gone over), ✗ when it points the other way; shown once both clubs have ${MK_MIN} games. It is the same model as on the EuroCup page, with settings tuned on 2023-24 and 2024-25; tested on 2025-26 and 2026-27 (184 games) it picked 69.0% of winners with an average miss of 13.1 points, level with the earlier country model (69.6%, 13.2). The <a class="back" href="#view=archive" data-go="archive">Archive</a> keeps every projection made before tip-off.</div>
+      It never looks at the bookmaker: <b>Model − book</b> is where the two disagree. <b>Vs market</b> shows how each club has done against the bookmaker's lines this season (as on the Vs Market tab): <b>Hcp</b> = home vs line − away vs line, <b>Total</b> = the two clubs' average vs the total line; green when it points the same way as Model − book (the market record backs the model), red when it points the other way; in colour once both clubs have ${MK_MIN} games. It is the same model as on the EuroCup page, with settings tuned on 2023-24 and 2024-25; tested on 2025-26 and 2026-27 (184 games) it picked 69.0% of winners with an average miss of 13.1 points, level with the earlier country model (69.6%, 13.2). The <a class="back" href="#view=archive" data-go="archive">Archive</a> keeps every projection made before tip-off.</div>
     <div class="pjbar">${gapSelect()}<span class="tag">Model − book gaps over this size are highlighted.</span></div>` +
     Object.entries(days).map(([d, list]) => `<h2>${dayName(d)} <span class="tag">${esc(list[0].round)}</span></h2>
       <div class="scroll"><table class="fx">${head}${list.map(row).join('')}</table></div>`).join('') +
