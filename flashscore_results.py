@@ -17,6 +17,7 @@ from playwright.sync_api import sync_playwright
 SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
 URL = "https://www.flashscore.com/basketball/europe/fiba-europe-cup/results/"
 SEASON = "2026-2027"
+ALIASES = {"BC Kalev": "BC Kalev/Cramo"}          # Flashscore renamed the club; keep the name its earlier games use
 
 # runs inside the page: one line per header / game, the same way it was read by hand in the browser
 EXTRACT = r"""async () => {
@@ -91,7 +92,7 @@ def update():
         if not m:
             continue
         day = date(int(m[3]) if m[3] else (start if int(m[2]) >= 7 else start + 1), int(m[2]), int(m[1]))
-        h, a = r["home"], r["away"]
+        h, a = ALIASES.get(r["home"], r["home"]), ALIASES.get(r["away"], r["away"])
         if (h, a) in have and abs((have[(h, a)] - day).days) <= 1:
             continue                                      # already in the data
         for t in (h, a):

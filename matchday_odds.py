@@ -18,6 +18,8 @@ from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
+from flashscore_results import ALIASES
+
 HERE = Path(__file__).parent
 SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
 FIXTURES_URL = "https://www.flashscore.com/basketball/europe/fiba-europe-cup/fixtures/"
@@ -94,7 +96,8 @@ def main():
             pg.wait_for_selector(".event__match", timeout=20000)
         except Exception:
             pass
-        links = {(h, a): (b, m) for h, a, b, m in pg.evaluate(LINKS) if b}
+        al = lambda t: ALIASES.get(t, t)
+        links = {(al(h), al(a)): (b, m) for h, a, b, m in pg.evaluate(LINKS) if b}
         for h, a in missing:
             if (h, a) not in links:
                 print(f"  {h} - {a}: not on the Flashscore fixtures page")
