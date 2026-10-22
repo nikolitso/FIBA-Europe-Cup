@@ -74,7 +74,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
 td.big{color:var(--bg);background:var(--gold);font-weight:700}
-table.pjt{table-layout:fixed;width:100%;min-width:1290px}table.pjt td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}table.pjt th{white-space:nowrap;overflow:visible}table.pjt td:last-child,table.pjt td:nth-child(2){white-space:normal}
+table.pjt{table-layout:fixed;width:1434px}table.pjt td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}table.pjt th{white-space:nowrap;overflow:visible}table.pjt td:last-child,table.pjt td:nth-child(2){white-space:normal}
 /* Vs Market group tables */
 h2.mkh{font:600 21px var(--serif);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 table.mkt{table-layout:fixed;width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
@@ -486,7 +486,7 @@ const outText = list => list.map(([p, imp, note]) => `${esc(p)} <span class="tag
 const gapCell = (v, cls = '') => v === null ? `<td class="n tag${cls}">–</td>` :
   Math.abs(v) > gapMin ? `<td class="n big${cls}">${sgn(v)}</td>` : `<td class="n tag${cls}">${sgn(v)}</td>`;
 // one set of column widths for every day's table, so the columns line up down the page
-const PJ_COLS = '<colgroup><col style="width:64px"><col style="width:290px">' + '<col style="width:84px">'.repeat(10) + '<col></colgroup>';
+const PJ_COLS = '<colgroup><col style="width:64px"><col style="width:290px">' + '<col style="width:84px">'.repeat(10) + '<col style="width:240px"></colgroup>';
 function renderProjections(){
   const box = $('pjView');
   const P = window.PROJ;
@@ -820,7 +820,7 @@ function mkGames(x){
       <th class="n" title="Points the two lines implied: own = (total + handicap) / 2, opponent = (total − handicap) / 2">Lines said</th><th class="n" title="Own points minus what the lines implied">Own</th><th class="n" title="Opponent points minus what the lines implied">Opp</th></tr>${rows}</table></td></tr>`;
 }
 // one set of column widths for every group table, so the columns line up down the page
-const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px"><col style="width:92px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
+const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px"><col style="width:92px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col style="width:240px"></colgroup>';
 // market rating: line = r[home] - r[away] + home advantage over every game with a line, ridge-shrunk toward 0
 // (lambda 1, home advantage not shrunk), centred on the average club; solved by Gaussian elimination
 function mkRatings(games){
