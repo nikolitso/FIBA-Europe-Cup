@@ -74,6 +74,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:rgba(212,175,55,.08)}
 .note{font:400 14px/1.5 var(--body);color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 14px;margin:0 0 6px}
 .note b{color:var(--text);font-weight:600}
 td.big{color:var(--bg);background:var(--gold);font-weight:700}
+table.pjt{table-layout:fixed;width:100%;min-width:1420px}table.pjt td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}table.pjt th{white-space:nowrap;overflow:visible}table.pjt td:last-child{white-space:normal}
 /* Vs Market group tables */
 h2.mkh{font:600 21px var(--serif);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 table.mkt{table-layout:fixed;width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
@@ -484,6 +485,8 @@ const peerSelect = (i, side, v) => `<select class="peer" data-i="${i}" data-side
 const outText = list => list.map(([p, imp, note]) => `${esc(p)} <span class="tag">${imp.toFixed(1)}${note ? ' · ' + esc(note) : ''}</span>`).join(', ');
 const gapCell = (v, cls = '') => v === null ? `<td class="n tag${cls}">–</td>` :
   Math.abs(v) > gapMin ? `<td class="n big${cls}">${sgn(v)}</td>` : `<td class="n tag${cls}">${sgn(v)}</td>`;
+// one set of column widths for every day's table, so the columns line up down the page
+const PJ_COLS = '<colgroup><col style="width:64px"><col style="width:400px">' + '<col style="width:84px">'.repeat(10) + '<col></colgroup>';
 function renderProjections(){
   const box = $('pjView');
   const P = window.PROJ;
@@ -523,7 +526,7 @@ function renderProjections(){
       It never looks at the bookmaker: <b>Model − book</b> is where the two disagree. <b>Vs market</b> shows how each club has done against the bookmaker's lines this season (as on the Vs Market tab): <b>Hcp</b> = home vs line − away vs line, <b>Total</b> = the two clubs' average vs the total line; green when it points the same way as Model − book (the market record backs the model), red when it points the other way; in colour once both clubs have ${MK_MIN} games. It is the same model as on the EuroCup page, with settings tuned on 2023-24 and 2024-25; tested on 2025-26 and 2026-27 (184 games) it picked 69.0% of winners with an average miss of 13.1 points, level with the earlier country model (69.6%, 13.2). The <a class="back" href="#view=archive" data-go="archive">Archive</a> keeps every projection made before tip-off.</div>
     <div class="pjbar">${gapSelect()}<span class="tag">Model − book gaps over this size are highlighted.</span></div>` +
     Object.entries(days).map(([d, list]) => `<h2>${dayName(d)} <span class="tag">${esc(list[0].round)}</span></h2>
-      <div class="scroll"><table class="fx">${head}${list.map(row).join('')}</table></div>`).join('') +
+      <div class="scroll"><table class="fx pjt">${PJ_COLS}${head}${list.map(row).join('')}</table></div>`).join('') +
     `<h2>Club ratings</h2><div class="tag" style="margin-bottom:8px">Points better (+) or worse (−) than an average club on a neutral court, after ${P.games} games this season. Prior = the starting point from last season and the country rating.</div>
     <div class="scroll"><table class="fx" style="width:auto;min-width:520px"><tr><th class="n">#</th><th>Club</th><th class="n">Rating</th><th class="n">Games</th><th class="n">Prior</th></tr>${ratings}</table></div>
     <div class="tag" style="margin-top:14px">Projections updated ${esc(P.updated)}; win chance = the handicap on a normal curve with the backtest's spread of misses (${P.spread} points).</div>`;
