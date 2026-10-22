@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FIBA Europe Cup</title>
-<meta name="description" content="FIBA Europe Cup by the numbers: head-to-heads by country and club, next-round fixtures with handicaps, projections and Elo power rankings, 2015-16 to today.">
+<meta name="description" content="FIBA Europe Cup by the numbers: the market against every club, projections against the bookmaker, head-to-heads by country and club, and Elo power rankings, 2015-16 to today.">
 <link rel="canonical" href="https://antonisnikolitsopoulos.com/fibaeuropecup/">
 <meta property="og:title" content="FIBA Europe Cup">
-<meta property="og:description" content="FIBA Europe Cup by the numbers: head-to-heads by country and club, next-round fixtures with handicaps, projections and Elo power rankings, 2015-16 to today.">
+<meta property="og:description" content="FIBA Europe Cup by the numbers: the market against every club, projections against the bookmaker, head-to-heads by country and club, and Elo power rankings, 2015-16 to today.">
 <meta property="og:url" content="https://antonisnikolitsopoulos.com/fibaeuropecup/">
 <meta property="og:image" content="https://antonisnikolitsopoulos.com/fibaeuropecup.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -158,7 +158,6 @@ select.peer:focus{outline:2px solid var(--gold)}
 
   <div class="tabs" id="tabs">
     <a href="#view=market" data-view="market" class="on">Vs Market</a>
-    <a href="#view=fixtures" data-view="fixtures">Fixtures</a>
     <a href="#view=projections" data-view="projections">Projections</a>
     <a href="#view=archive" data-view="archive">Archive</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
@@ -166,7 +165,6 @@ select.peer:focus{outline:2px solid var(--gold)}
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
   </div>
 
-  <div id="fxView" hidden></div>
   <div id="rkView" hidden></div>
   <div id="pjView" hidden></div>
   <div id="arView" hidden></div>
@@ -241,7 +239,7 @@ const gameRow = g => {
   return `<tr><td class="n">${fmtDate(date)}</td><td>${venue}</td><td class="n ${win?'w':'l'}">${score}</td><td class="tag">${esc(season)} · ${esc(stage)} · ${esc(round.replace(/ - /,' · '))}</td></tr>`;
 };
 
-// sample of the head to head pages and the fixtures (shared): stages and how many of the latest seasons (0 = all);
+// sample of the head to head pages: stages and how many of the latest seasons (0 = all);
 // same defaults as the rankings and projections
 let hStages = new Set(['Main']), hSeasons = 5;
 const hKeep = m => hStages.has(m[1]) && (!hSeasons || ALL_SEASONS.indexOf(m[0]) >= ALL_SEASONS.length - hSeasons);
@@ -329,90 +327,8 @@ const CODE = {'Austria':'AUT','Azerbaijan':'AZE','Belarus':'BLR','Belgium':'BEL'
   'Romania':'ROU','Russia':'RUS','Slovakia':'SVK','Spain':'ESP','Sweden':'SWE','Switzerland':'SUI','Turkey':'TUR','Ukraine':'UKR',
   'United Kingdom':'GBR','Slovenia':'SLO','Norway':'NOR','Ireland':'IRL','Kazakhstan':'KAZ'};
 const code = c => CODE[c] || (c || '').slice(0, 3).toUpperCase();
-// head to head from x's point of view; homeOnly: only games where x was at home.
-// pf/pa = points for x / against x, over pg games with a real score (awarded games excluded)
-function h2hRecord(x, y, byCountry, homeOnly){
-  let w = 0, l = 0, pf = 0, pa = 0, pg = 0;
-  for (const m of matches){
-    if (!hKeep(m)) continue;
-    const [, , , , h, a, hp, ap, status] = m;
-    const eh = byCountry ? teams[h] : h, ea = byCountry ? teams[a] : a;
-    let own, opp;
-    if (eh === x && ea === y) [own, opp] = [hp, ap];
-    else if (!homeOnly && eh === y && ea === x) [own, opp] = [ap, hp];
-    else continue;
-    own > opp ? w++ : l++;
-    if (status !== 'AWA.'){ pf += own; pa += opp; pg++; }
-  }
-  return {w, l, n: w + l, pf, pa, pg};
-}
-const fmt1 = v => v.toFixed(1);
 const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
-// four cells: W–L, home side avg, away side avg, handicap (home avg minus away avg)
-function recCells(r){
-  if (!r.n) return '<td class="n tag">–</td><td class="n tag">–</td><td class="n tag">–</td><td class="n tag gap">–</td>';
-  const avg = r.pg ? [r.pf / r.pg, r.pa / r.pg] : null;
-  return `<td class="n"><b>${r.w}–${r.l}</b></td>` +
-    (avg ? `<td class="n">${fmt1(avg[0])}</td><td class="n">${fmt1(avg[1])}</td><td class="n gap hcp">${sgn(avg[0] - avg[1])}</td>`
-         : '<td class="n tag">–</td><td class="n tag">–</td><td class="n tag gap">–</td>');
-}
-function h2hCells(home, away){
-  const ch = teams[home] || '', ca = teams[away] || '';
-  const same = ch && ch === ca;                       // same country: compare the clubs instead
-  const [x, y, byC] = same ? [home, away, false] : [ch, ca, true];
-  return recCells(h2hRecord(x, y, byC, false)) + recCells(h2hRecord(x, y, byC, true));
-}
-function fixtureRow(f, i){
-  const [when, round, home, away] = f;
-  const ch = teams[home] || '', ca = teams[away] || '';
-  return `<tr class="click" data-i="${i}"><td class="n">${when.slice(11)}</td>
-    <td><b>${esc(home)}</b> <span class="tag">(${esc(code(ch))})</span> – <b>${esc(away)}</b> <span class="tag">(${esc(code(ca))})</span></td>
-    ${h2hCells(home, away)}</tr>`;
-}
-// the next round: the round of the earliest game from today on, all of its games, as [fixture, index]
-function nextRoundGames(){
-  const today = new Date().toLocaleDateString('en-CA');      // YYYY-MM-DD in local time
-  const upcoming = FX.map((f, i) => [f, i]).filter(([f]) => f[0].slice(0, 10) >= today)
-                     .sort((x, y) => x[0][0].localeCompare(y[0][0]));
-  if (!upcoming.length) return [];
-  const nextRound = upcoming[0][0][1];
-  if (!nextRound) return upcoming.filter(([f]) => f[0].slice(0, 10) === upcoming[0][0][0].slice(0, 10));
-  const list = upcoming.filter(([f]) => f[1] === nextRound);
-  if (list.length >= 12) return list;
-  // only the tail of a round is left (late games): show the round after it as well
-  const after = upcoming.find(([f]) => f[1] && f[1] !== nextRound);
-  return after ? list.concat(upcoming.filter(([f]) => f[1] === after[0][1])) : list;
-}
 const dayName = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
-function byDay(list){
-  const days = {};
-  for (const [f, i] of list) (days[f[0].slice(0, 10)] ||= []).push([f, i]);
-  return days;
-}
-function renderFixtures(){
-  const box = $('fxView');
-  const list = nextRoundGames();
-  if (!list.length){ box.innerHTML = '<div class="empty">No upcoming fixtures.</div>'; return; }
-  const days = {};
-  for (const [f, i] of list) (days[f[0].slice(0, 10)] ||= []).push([f, i]);
-  const dayName = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
-  box.innerHTML = hChips() +
-    `<div class="note"><b>H2H is country against country.</b> Each fixture is compared by the countries of the two clubs, using every game in the sample between clubs of those countries, not only games between these two clubs. <b>H2H home</b> counts only games in which a club from the home side's country played at home. W–L is the home side's country; Home and Away are the average points of each country; Hcp is Home minus Away. Fixtures between two clubs of the same country compare the two clubs themselves.</div>` +
-    Object.entries(days).map(([d, rows]) => `<h2>${dayName(d)} <span class="tag">${esc(rows[0][0][1])}</span></h2>
-      <div class="scroll"><table class="fx"><tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="4" class="grp gap" title="All games between clubs of the two countries">H2H (countries)</th><th colspan="4" class="grp" title="Only games in which a club from the home side&#39;s country played at home">H2H home (countries)</th></tr><tr><th class="n">W–L</th><th class="n" title="Home side average points">Home</th><th class="n" title="Away side average points">Away</th><th class="n gap" title="Handicap: home average minus away average">Hcp</th><th class="n">W–L</th><th class="n" title="Home side average points">Home</th><th class="n" title="Away side average points">Away</th><th class="n" title="Handicap: home average minus away average">Hcp</th></tr>${rows.map(([f, i]) => fixtureRow(f, i)).join('')}</table></div>`).join('') +
-    `<div class="tag" style="margin-top:18px">Sample: ${hSeasons ? (hSeasons === 1 ? 'the last season' : 'the last ' + hSeasons + ' seasons') : 'all seasons'}; stages: ${esc(PJ_STAGES.filter(x => hStages.has(x)).map(x => PJ_STAGE_LABEL[x] || x).join(', '))}. The same sample is kept when a fixture is opened. Fixtures as of ${esc(window.FIXTURES.updated)}.</div>`;
-  box.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => openMatch(FX[+tr.dataset.i]));
-  hBind(box, renderFixtures);
-}
-function openMatch([, , home, away]){
-  const ch = teams[home], ca = teams[away];
-  if (ch && ca && ch !== ca){ setMode('country'); $('a').value = ch; $('b').value = ca; }
-  else { setMode('team'); $('a').value = home; $('b').value = away; }
-  setVenue('all');
-  setView('h2h');
-  sync(); render();
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
 // ---------- Projections: peer-group points model
 // The home side is replaced by the countries ranked within +/- N places of its own country in the power rankings,
 // the away side likewise (N = 1..5, default 3, set separately). Only past games in which a club of the home group
@@ -1016,17 +932,15 @@ function renderMarket(){
   });
 }
 function setView(v){
-  view = ['fixtures', 'projections', 'archive', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'market';
+  view = ['projections', 'archive', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'market';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   document.body.classList.toggle('wide', view === 'projections' || view === 'archive' || view === 'market');
-  $('fxView').hidden = view !== 'fixtures';
   $('rkView').hidden = view !== 'rankings';
   $('arView').hidden = view !== 'archive';
   $('mkView').hidden = view !== 'market';
   $('pjView').hidden = view !== 'projections';
   $('h2hView').hidden = view !== 'h2h';
   $('roView').hidden = view !== 'rosters';
-  if (view === 'fixtures') renderFixtures();
   if (view === 'rankings') renderRankings();
   if (view === 'projections') renderProjections();
   if (view === 'archive') renderArchive();
@@ -1052,7 +966,7 @@ function sync(){
     if ($('a').value) q.set('a', $('a').value);
     if ($('b').value) q.set('b', $('b').value);
   }
-  if (view === 'h2h' || view === 'fixtures'){
+  if (view === 'h2h'){
     if (hSeasons !== PJ_DEFAULT_SEASONS) q.set('seasons', hSeasons || 'all');
     if (!(hStages.size === 1 && hStages.has('Main'))) q.set('stages', PJ_STAGES.filter(x => hStages.has(x)).join(','));
   }
@@ -1085,7 +999,7 @@ $('a').addEventListener('change', render); $('b').addEventListener('change', ren
 const p = new URLSearchParams(location.hash.slice(1));
 setMode(p.get('mode') === 'team' ? 'team' : 'country');
 setVenue(p.get('venue'));
-if (['h2h', 'fixtures', null].includes(p.get('view'))){
+if (['h2h', null].includes(p.get('view'))){
   const st = (p.get('stages') || '').split(',').filter(x => PJ_STAGES.includes(x));
   if (st.length) hStages = new Set(st);
   const v = p.get('seasons'), n = +v;
