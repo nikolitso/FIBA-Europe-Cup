@@ -574,12 +574,21 @@ function renderProjections(){
   if (!P || !P.list.length){ box.innerHTML = '<div class="empty">No games in the next days.</div>'; return; }
   const days = {};
   for (const g of P.list) (days[g.when.slice(0, 10)] ||= []).push(g);
-  const head = `<tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="3" class="grp gap">Model</th><th colspan="3" class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model minus bookmaker">Model − book</th><th rowspan="2">Out</th></tr>
+  const head = `<tr><th rowspan="2" class="n">Time</th><th rowspan="2">Match</th><th colspan="3" class="grp gap">Model</th><th colspan="3" class="grp gap">Bookmaker</th><th colspan="2" class="grp gap" title="Model minus bookmaker">Model − book</th><th colspan="4" class="grp gap" title="How each club has done against the bookmaker's lines this season (Vs Market tab), and whether that points the same way as the model">Vs market</th><th rowspan="2">Out</th></tr>
     <tr><th class="n" title="Handicap, home minus away">Hcp</th><th class="n">Total</th><th class="n gap" title="Home win chance">Home %</th>
       <th class="n" title="Handicap, home minus away">Hcp</th><th class="n">Total</th><th class="n gap" title="Home win chance from the money line, margin removed">Home %</th>
-      <th class="n" title="Model handicap minus bookmaker handicap: above 0 = the model likes the home side more">Hcp</th><th class="n gap" title="Model total minus bookmaker total">Total</th></tr>`;
+      <th class="n" title="Model handicap minus bookmaker handicap: above 0 = the model likes the home side more">Hcp</th><th class="n gap" title="Model total minus bookmaker total">Total</th>
+      <th class="n" title="Home club: average real margin minus the handicap, per game (above 0 = has beaten the market)">Home</th><th class="n" title="Away club: average real margin minus the handicap, per game">Away</th>
+      <th class="n" title="Does the clubs' record against the handicap point the same way as the model's gap? (home − away vs line, against model − book)">Hcp</th><th class="n gap" title="Do the clubs' games against the total line point the same way as the model's total gap?">Total</th></tr>`;
+  const MK = new Map(mkData().rows.map(x => [x.team, x]));
+  // agreement: the clubs' record against the market points the same way as the model's gap to the book (both need MK_MIN games)
+  const agree = (gap, trend, ok) => !ok || gap === null || !gap || !trend ? '<td class="n tag">–</td>'
+    : (gap > 0) === (trend > 0) ? `<td class="n w" title="Model and market record point the same way (${sgn(trend)})"><b>✓</b></td>`
+                                : `<td class="n l" title="Market record points the other way (${sgn(trend)})">✗</td>`;
   const row = g => {
     const o = ODDS[g.h + '|' + g.a];
+    const xh = MK.get(g.h), xa = MK.get(g.a), okS = xh && xa && xh.n >= MK_MIN && xa.n >= MK_MIN, okT = xh && xa && xh.tn >= MK_MIN && xa.tn >= MK_MIN;
+    const vs = x => !x ? '<td class="n tag">–</td>' : `<td class="n ${x.n >= MK_MIN ? (x.vsS > 0 ? 'w' : x.vsS < 0 ? 'l' : '') : 'tag'}" title="${x.n} games; covered ${x.w}–${x.l}">${sgn(x.vsS)}</td>`;
     const bh = o ? -o.sp : null, bt = o ? o.tot : null, pb = bookWin(o);
     const out = g.outH.length || g.outA.length
       ? [g.outH.length ? `${esc(g.h)}: ${outText(g.outH)}` : '', g.outA.length ? `${esc(g.a)}: ${outText(g.outA)}` : ''].filter(Boolean).join('; ') : '–';
@@ -589,12 +598,13 @@ function renderProjections(){
       ${o ? `<td class="n" title="${esc((o.src || [''])[0])}">${sgn(bh)}</td><td class="n">${bt === null || bt === undefined ? '–' : bt.toFixed(1)}</td><td class="n gap">${pb === null ? '–' : pct(pb)}</td>`
           : '<td class="n tag" colspan="3" title="Lines appear a few days before the game">no line yet</td>'}
       ${o ? gapCell(g.mh - bh) + gapCell(bt === null || bt === undefined ? null : g.mt - bt, ' gap') : '<td class="n tag">–</td><td class="n tag gap">–</td>'}
+      ${vs(xh)}${vs(xa)}${agree(o ? g.mh - bh : null, okS ? xh.vsS - xa.vsS : 0, okS)}${agree(o && bt !== null && bt !== undefined ? g.mt - bt : null, okT ? (xh.vsT + xa.vsT) / 2 : 0, okT).replace('class="n ', 'class="n gap ')}
       <td class="tag">${out}</td></tr>`;
   };
   const ratings = P.ratings.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.c)}</b> <span class="tag">${esc(code(teams[x.c]))}</span></td>
     <td class="n hcp"><b>${sgn(x.r)}</b></td><td class="n">${x.g}</td><td class="n">${sgn(x.prior)}</td></tr>`).join('');
   box.innerHTML = `<div class="note" style="margin-bottom:14px"><b>The model rates every club from this season's results</b>, with older games counting less, starting from last season's club rating (85%) and its country's power-ranking rating (15%); clubs new to the competition start from the country rating. Tonight's absences come off the club (the <b>Out</b> column, from the injury list, impact as on the Rosters tab; a handicap marked * includes them). Home advantage ${sgn(P.hca)}.
-      It never looks at the bookmaker: <b>Model − book</b> is where the two disagree. It is the same model as on the EuroCup page, with settings tuned on 2023-24 and 2024-25; tested on 2025-26 and 2026-27 (184 games) it picked 69.0% of winners with an average miss of 13.1 points, level with the earlier country model (69.6%, 13.2). The <a class="back" href="#view=archive" data-go="archive">Archive</a> keeps every projection made before tip-off.</div>
+      It never looks at the bookmaker: <b>Model − book</b> is where the two disagree. <b>Vs market</b> shows how each club has done against the bookmaker's lines this season (as on the Vs Market tab): ✓ when that record points the same way as the model's gap (the model likes the home side more and the home side has been beating the market more than the away side; or, for the total, the model's total is higher and both clubs' games have gone over), ✗ when it points the other way; shown once both clubs have ${MK_MIN} games. It is the same model as on the EuroCup page, with settings tuned on 2023-24 and 2024-25; tested on 2025-26 and 2026-27 (184 games) it picked 69.0% of winners with an average miss of 13.1 points, level with the earlier country model (69.6%, 13.2). The <a class="back" href="#view=archive" data-go="archive">Archive</a> keeps every projection made before tip-off.</div>
     <div class="pjbar">${gapSelect()}<span class="tag">Model − book gaps over this size are highlighted.</span></div>` +
     Object.entries(days).map(([d, list]) => `<h2>${dayName(d)} <span class="tag">${esc(list[0].round)}</span></h2>
       <div class="scroll"><table class="fx">${head}${list.map(row).join('')}</table></div>`).join('') +
@@ -884,14 +894,14 @@ function mkGames(x){
       <td class="n">${g.bt === null ? '–' : g.bt.toFixed(1)}</td><td class="n">${tot}</td><td class="n gap">${ou} ${g.bt === null ? '' : `<span class="tag">${one(tot - g.bt)}</span>`}</td>
       <td class="n tag" title="Points the lines implied for the club and its opponent">${eo === null ? '–' : `${eo.toFixed(1)}–${ep.toFixed(1)}`}</td>${pv(eo === null ? null : own - eo, true)}${pv(ep === null ? null : them - ep, false)}</tr>`;
   }).join('');
-  return `<tr class="mkgames"><td colspan="14" style="padding:4px 0 14px 10px;background:var(--panel)">
+  return `<tr class="mkgames"><td colspan="13" style="padding:4px 0 14px 22px;background:var(--panel)">
     <table class="fx" style="margin:0"><tr><th class="n">Date</th><th>Round</th><th>Opponent</th><th class="n">Score</th>
       <th class="n gap" title="The club's handicap: + = favourite by that many">Book hcp</th><th class="n" title="The club's margin">Result</th><th class="n gap" title="Against the handicap, with the difference">Handicap</th>
       <th class="n">Book total</th><th class="n">Total</th><th class="n gap" title="Against the total line, with the difference">Over / under</th>
       <th class="n" title="Points the two lines implied: own = (total + handicap) / 2, opponent = (total − handicap) / 2">Lines said</th><th class="n" title="Own points minus what the lines implied">Own</th><th class="n" title="Opponent points minus what the lines implied">Opp</th></tr>${rows}</table></td></tr>`;
 }
 // one set of column widths for every group table, so the columns line up down the page
-const MK_COLS = '<colgroup><col style="width:218px"><col style="width:38px"><col style="width:68px">' + ['62', '60', '68', '80', '62', '60', '56', '80', '60', '58'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
+const MK_COLS = '<colgroup><col style="width:240px"><col style="width:52px"><col style="width:92px">' + ['88', '88', '88', '108', '88', '88', '80', '108', '80', '80'].map(w => `<col style="width:${w}px">`).join('') + '<col></colgroup>';
 // market rating: line = r[home] - r[away] + home advantage over every game with a line, ridge-shrunk toward 0
 // (lambda 1, home advantage not shrunk), centred on the average club; solved by Gaussian elimination
 function mkRatings(games){
@@ -910,8 +920,8 @@ function mkRatings(games){
   const x = b.map((v, i) => v / A[i][i]), mean = clubs.reduce((t, c, i) => t + x[i], 0) / clubs.length;
   return {r: new Map(clubs.map((c, i) => [c, x[i] - mean])), hca: x[k - 1]};
 }
-function renderMarket(){
-  const box = $('mkView');
+// every Regular Season game with a line and a result, and each club's record against those lines (shared by Vs Market and Projections)
+function mkData(){
   // lines from the archive (frozen with a projection) plus market.js (games never archived)
   const games = [], seen = new Set();
   const add = (date, g) => {
@@ -924,7 +934,6 @@ function renderMarket(){
   };
   for (const sn of (window.ARCHIVE && ARCHIVE.list) || []) for (const g of sn.games) add(sn.date, g);
   for (const g of (window.MARKET && MARKET.list) || []) add(g.date, g);
-  if (!games.length){ box.innerHTML = '<div class="empty">No game with a line and a result yet.</div>'; return; }
   const club = {};
   for (const g of games){
     const m = g.hp - g.ap, tot = g.hp + g.ap;
@@ -941,11 +950,17 @@ function renderMarket(){
     return {...x, mr: MR.r.get(x.team) ?? null, vsS, vsT, bh: x.exp / x.n, rm: x.real / x.n, bt: x.tn ? x.texp / x.tn : null, rt: x.tn ? x.treal / x.tn : null,
       own: vsT === null ? null : (vsT + vsS) / 2, opp: vsT === null ? null : (vsT - vsS) / 2};
   });
+  return {games, rows, MR};
+}
+function renderMarket(){
+  const box = $('mkView');
+  const {games, rows, MR} = mkData();
+  if (!games.length){ box.innerHTML = '<div class="empty">No game with a line and a result yet.</div>'; return; }
   const one = v => v === null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
   const col = (v, lim) => v === null ? '' : v >= lim ? 'w' : v <= -lim ? 'l' : 'tag';
   const {k, dir} = mkSort;
   const val = (x, c) => c === 'team' ? x.team : c === 'cov' ? (x.n ? x.w / x.n : 0) : c === 'ou' ? (x.tn ? x.o / x.tn : 0) : c === 'vs' ? x.vsS : (x[c] ?? -999);
-  const th = (c, label, cls, title, extra = '') => `<th class="${cls} sort${c === k ? ' on' : ''}" data-k="${c}"${extra}${title ? ` title="${title}"` : ''}>${label}${c === k ? `<i class="ar">${dir > 0 ? '▲' : '▼'}</i>` : ''}</th>`;
+  const th = (c, label, cls, title, extra = '') => `<th class="${cls} sort${c === k ? ' on' : ''}" data-k="${c}"${extra}${title ? ` title="${title}"` : ''}>${label}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
   const head = `<tr class="mkgrp"><th></th><th></th><th></th><th colspan="4" class="grp sec"><span>Handicap</span></th><th colspan="4" class="grp sec"><span>Total</span></th><th colspan="2" class="grp sec" title="How far the club's own points and its opponents' points were from what the two lines implied"><span>Points vs line</span></th><th></th></tr>
     <tr>${th('team', 'Team', 'tl')}${th('n', 'GP', 'n', 'Games with a line')}${th('mr', 'Market', 'n sec0', 'Market rating: points better (+) or worse (−) than an average club on a neutral court, as the bookmaker lines rate it')}
       ${th('bh', 'Book', 'n sec0', 'Average bookmaker handicap for the club, per game (+ = favourite)')}${th('rm', 'Result', 'n', 'Average real margin for the club, per game')}${th('cov', 'Covered', 'n', 'Beat the handicap – did not (pushes after)')}${th('vs', 'Vs line', 'n', 'Real margin minus the margin the handicap expected, per game: above 0 = underrated')}
