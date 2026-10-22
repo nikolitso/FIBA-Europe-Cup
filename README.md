@@ -63,3 +63,12 @@ Or double-click `Update FIBA Europe Cup.bat` on the Desktop. Results come from F
 kind, confidence and source. Tiers: **A** EUR 4m+, **B** EUR 1.5-4m, **C** under EUR 1.5m. `tier_basis` says whether a
 tier comes from a published figure or is an estimate still to be confirmed. Only 7 of 50 clubs have a published figure
 (searched October 2026); the rest are estimates. Not used by the model yet.
+
+## Projections and matchday odds (from 22 Oct 2026)
+
+- `club_model.py`: the club-rating model (same as the EuroCup page) and its backtest against the earlier country model.
+- `predict.py`: projections for the next 8 days -> `site/projections.js`, and the Archive: every upcoming game with a
+  line is re-frozen on each run until tip-off, never after. Run by `update.py` after results, odds and fixtures.
+- `matchday_odds.py`: lines from Flashscore for today's games that have none (Bwin.gr, else Stoiximan.gr ...), then
+  `predict.py` and publish. Windows task "FIBA Europe Cup odds" runs `scheduled_odds.bat` every hour 10:00-21:00;
+  each run stops at once when no game is left today or all of today's games have a line. Log: `data/odds.log`.
