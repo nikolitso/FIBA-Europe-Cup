@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
 URL = "https://www.flashscore.com/basketball/europe/fiba-europe-cup/results/"
 SEASON = "2026-2027"
-ALIASES = {"BC Kalev": "BC Kalev/Cramo"}          # Flashscore renamed the club; keep the name its earlier games use
+ALIASES = {"BC Kalev": "BC Kalev/Cramo", "Landau Lions": "Absheron Lions"}        # Flashscore renamed these clubs; keep the names their earlier games use
 
 # runs inside the page: one line per header / game, the same way it was read by hand in the browser
 EXTRACT = r"""async () => {
