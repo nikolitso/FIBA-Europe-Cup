@@ -126,6 +126,7 @@ th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gol
 .chip{background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:500 12px var(--mono);padding:5px 12px;cursor:pointer}
 .chip:hover{color:var(--text)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:#0c1424}
+.sct{width:auto;min-width:640px}.sct td,.sct th{padding-left:14px;padding-right:14px}.sct tr.sum td{border-top:1px solid var(--gold)}
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 8px}
 .metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .metric .lbl{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
@@ -547,6 +548,7 @@ function renderArchive(){
   if (!snaps.length){ box.innerHTML = '<div class="empty">Nothing archived yet.</div>'; return; }
   // [model, book(, tie)]; w = winner picked, n = games where both made a pick
   const S = {total: 0, res: 0, cmp: 0, big: 0, eh: [0, 0], ch: [0, 0, 0], sh: [0, 0], w: [0, 0], wn: 0};
+  const SC = [];                                            // scorecard rows, one per compared game with a result
   const closer = (m, b) => m < b ? 'Model' : m > b ? 'Book' : 'Tie';
   const isBig = g => Math.abs(g.mh - g.bh) > gapMin;      // model and bookmaker more than gapMin points apart
   const sections = snaps.map(sn => {
@@ -581,6 +583,13 @@ function renderArchive(){
             if (c1 !== 'Tie') col = c1 === 'Model' ? [' better', ' worse'] : [' worse', ' better'];
           }
         }
+        if (cmp){                                           // scorecard: every compared game, by fixed gap bands
+          const tot = r[6] + r[7], hasT = g.mt != null && g.bt != null;
+          SC.push({dh: g.mh - g.bh, hw: ah === g.bh ? null : (g.mh > g.bh) === (ah > g.bh),
+                   dt: hasT ? g.mt - g.bt : null, tw: !hasT || tot === g.bt || g.mt === g.bt ? null : (g.mt > g.bt) === (tot > g.bt),
+                   mvH: g.bh0 != null && g.bh !== g.bh0 && g.mh !== g.bh0 ? (g.bh - g.bh0 > 0) === (g.mh - g.bh0 > 0) : null,
+                   mvT: hasT && g.bt0 != null && g.bt !== g.bt0 && g.mt !== g.bt0 ? (g.bt - g.bt0 > 0) === (g.mt - g.bt0 > 0) : null});
+        }
         res = `<td class="n gap"><b>${r[6]}–${r[7]}</b>${r[8] === 'AET' ? ' <span class="tag">OT</span>' : ''}</td><td class="n gap">${sgn(ah)}</td>${cl}`;
       }
       const ch = teams[g.h] || '', ca = teams[g.a] || '';
@@ -611,7 +620,31 @@ function renderArchive(){
     ${card(`Closer when over ${gapMin} pts apart`, S.big ? vs(S.ch[0], S.ch[1], true) : '–', `model vs book, ${S.big} game${S.big === 1 ? '' : 's'}${S.ch[2] ? ', ' + S.ch[2] + ' tie' : ''}`)}
     ${card("Model's side of the handicap", S.sh[1] ? `<span class="${S.sh[0] * 2 > S.sh[1] ? 'w' : S.sh[0] * 2 < S.sh[1] ? 'l' : ''}">${S.sh[0]} of ${S.sh[1]}</span>` : '–', 'covered: green above half, red below (pushes and equal lines left out)')}
   </div>`;
-  box.innerHTML = `<div class="pjbar">${gapSelect()}<span class="tag">Games further apart than this are highlighted, judged and counted in the cards below.</span></div>` + summary + sections +
+  // Scorecard: fixed bands chosen before the season (not the selector above), so it cannot be tuned after the fact
+  const BE = 54;                                            // break-even at odds of about 1.85 / 1.80
+  const BANDS = [[0, 3, '0–3'], [3, 6, '3–6'], [6, 10, '6–10'], [10, 99, '10+'], [6, 99, '6+ (the rule)']];
+  const rate = list => {
+    const n = list.length, w = list.filter(Boolean).length;
+    if (!n) return '<td class="n tag">–</td><td class="n tag">–</td><td class="n tag gap">–</td>';
+    const p = w / n * 100, z = 1.96, q = w / n;                // Wilson 95% range: sensible for small samples too
+    const c = (q + z * z / (2 * n)) / (1 + z * z / n), hw = z * Math.sqrt(q * (1 - q) / n + z * z / (4 * n * n)) / (1 + z * z / n);
+    const lo = (c - hw) * 100, hi = (c + hw) * 100;
+    const cls = lo > BE ? 'w' : p >= BE ? '' : p < 50 ? 'l' : 'tag';
+    return `<td class="n">${n}</td><td class="n ${cls}"><b>${p.toFixed(0)}%</b></td><td class="n tag gap">${lo.toFixed(0)}–${hi.toFixed(0)}%</td>`;
+  };
+  const band = (key, lo, hi) => SC.filter(x => x[key] !== null && Math.abs(x[key]) >= lo && Math.abs(x[key]) < hi);
+  const mv = (vals) => { const v = vals.filter(x => x !== null); return v.length ? `${v.filter(Boolean).length} of ${v.length}` : '–'; };
+  const scRows = BANDS.map(([lo, hi, name]) => {
+    const H = band('dh', lo, hi), T = band('dt', lo, hi);
+    return `<tr${hi === 99 && lo === 6 ? ' class="sum"' : ''}><td><b>${name}</b></td>${rate(H.map(x => x.hw).filter(x => x !== null))}${rate(T.map(x => x.tw).filter(x => x !== null))}
+      <td class="n">${mv(H.map(x => x.mvH))}</td><td class="n">${mv(T.map(x => x.mvT))}</td></tr>`;
+  }).join('');
+  const scorecard = `<h2>Scorecard</h2>
+    <div class="tag" style="margin-bottom:8px">Every compared game with a result, by how far the model and the bookmaker were apart. <b>Won</b> = the result landed on the model's side of the bookmaker's line (pushes left out). Break-even is about ${BE}% at the usual odds: green only when the whole likely range is above it, red below 50%. Draw no conclusions under about 100 games in a band.</div>
+    <div class="scroll"><table class="fx sct"><tr><th rowspan="2">Gap (pts)</th><th colspan="3" class="grp gap">Handicap</th><th colspan="3" class="grp gap">Total</th><th colspan="2" class="grp" title="Between the first line seen and the last one before tip-off: did the line move toward the model? Counted from Round 4 (27 Oct 2026), when the first line started to be kept">Line moved toward the model</th></tr>
+      <tr><th class="n">Games</th><th class="n">Won</th><th class="n gap" title="95% likely range for the true rate">Range</th><th class="n">Games</th><th class="n">Won</th><th class="n gap" title="95% likely range for the true rate">Range</th><th class="n">Hcp</th><th class="n">Total</th></tr>${scRows}</table></div>
+    <div class="tag" style="margin:8px 0 18px">Backtest for reference: on 2025-26, with handicaps implied by the closing money lines (144 games), the model's side won 54% with gaps of 0–3 points, 49% at 3–6, 45% at 6–10 and 40% at 10+; 44% of 41 games at 6+. Large gaps have so far been a warning sign rather than value.</div>`;
+  box.innerHTML = `<div class="pjbar">${gapSelect()}<span class="tag">Games further apart than this are highlighted, judged and counted in the cards below.</span></div>` + summary + scorecard + sections +
     `<div class="tag" style="margin-top:14px">Each round is frozen from the Projections tab before the games, with the sample shown above, so later results never change it. Hcp is home minus away; Model vs book is the model's handicap minus the bookmaker's.
      Differences of more than ${gapMin} points are highlighted; only those games are judged: Closer says whose handicap was nearer the actual one, and the two handicaps turn green (nearer) and red (further). The result fills in by itself once the match is in the data.
      The model's side is the side of the bookmaker's line it leaned to (above the line = home covers). Only matches with ${MIN_GAMES} or more games in the sample are compared, and the cards above count only the games more than ${gapMin} points apart.</div>`;
