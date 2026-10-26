@@ -4,7 +4,7 @@
 
 Model: club_model.py (the EuroCup page's club-rating model) with the settings tuned in its backtest. Upcoming games
 come from fixtures.js; absences from injuries.js, each player worth his impact from rosters.js (or the entry's own
-"impact"). Games in the next DAYS_AHEAD days are projected.
+"impact"). Only the week (Monday to Sunday) of the next game is projected, as on the EuroCup page.
 
 Archive: every upcoming game with a bookmaker line (odds.js) is (re)written into archive.js on every run until its
 tip-off and never after, so the Archive keeps model and line as they stood before the game. Entries made by the
@@ -12,7 +12,7 @@ earlier model (model "mix", frozen from the Projections tab) are never touched.
 """
 import json
 import math
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -21,7 +21,6 @@ import club_model as cm
 SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
 PARAMS = {"half": 480, "k": 4.0, "keep": 0.85, "new": 1.0}   # club_model.py backtest, tuned on 2023-24 and 2024-25
 SPREAD = 14.9                       # RMSE of the model's misses in that backtest: win chance = phi(handicap / SPREAD)
-DAYS_AHEAD = 8
 SEASON = "2026-2027"
 ATHENS = ZoneInfo("Europe/Athens")
 
@@ -58,8 +57,11 @@ def main():
     totals = cm.ridge_total(played, S.pt, PARAMS["k"], PARAMS["half"], today, mu) if played else S.pt
     injuries = read_js(SITE / "injuries.js").get("out", [])
     rosters = read_js(SITE / "rosters.js")["teams"]
-    fx = [f for f in read_js(SITE / "fixtures.js")["list"]
-          if f[0] > stamp and (date.fromisoformat(f[0][:10]) - today).days <= DAYS_AHEAD]
+    fx = [f for f in read_js(SITE / "fixtures.js")["list"] if f[0] > stamp]
+    if fx:                                                # only the week (Monday to Sunday) of the next game
+        first = date.fromisoformat(fx[0][0][:10])
+        monday = first - timedelta(days=first.weekday())
+        fx = [f for f in fx if (date.fromisoformat(f[0][:10]) - monday).days <= 6]
     rate = lambda c: ratings.get(c, S.pr.get(c, 0.0))
     rows = []
     for when, rnd, h, a in fx:
