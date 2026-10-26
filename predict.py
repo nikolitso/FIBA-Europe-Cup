@@ -105,6 +105,8 @@ def freeze(rows, stamp, n_games):
                  "adj": r["adj"], "out": [[r["h"]] + x for x in r["outH"]] + [[r["a"]] + x for x in r["outA"]],
                  "pH": r["ph"], "n": n_games, "bh": -o["sp"], "bt": o.get("tot"), "mlH": o.get("mlH"), "mlA": o.get("mlA"),
                  "src": (o.get("src") or [""])[0], "taken": stamp}
+        first = old if old and "bh0" in old else (old or entry)       # the first line seen for this game, kept for line movement
+        entry.update(bh0=first.get("bh0", first["bh"]), bt0=first.get("bt0", first.get("bt")), taken0=first.get("taken0", first["taken"]))
         if old:
             sn["games"][sn["games"].index(old)] = entry
         else:

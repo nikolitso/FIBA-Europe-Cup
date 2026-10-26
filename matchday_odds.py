@@ -4,7 +4,8 @@
     python matchday_odds.py --all      # every upcoming game on the Flashscore fixtures page without a line
 
 Run every hour from 10:00 to 21:00 by the Windows task "FIBA Europe Cup odds" (scheduled_odds.bat): lines appear on
-the morning of the match day, so the 10:00 run usually finds them and later runs stop at once (nothing missing).
+the morning of the match day, so the 10:00 run usually finds them. The run in the last LATE minutes before a game reads
+its line again: the Archive keeps that late line and the first one, so line movement can be measured.
 Bookmaker: Bwin.gr, else Stoiximan.gr, PameStoixima, Novibet, Interwetten (bet365 left out: it quotes 1.83 / 1.83 on
 every line). Of that bookmaker's lines the main one is the one with the most even pair of odds.
 odds.js keeps the site format: sp = handicap on the home side (+ = home underdog), tot = total, ml = money line.
@@ -25,6 +26,7 @@ SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
 FIXTURES_URL = "https://www.flashscore.com/basketball/europe/fiba-europe-cup/fixtures/"
 BOOKS = ["Bwin.gr", "Stoiximan.gr", "PameStoixima", "Novibet", "Interwetten"]
 ATHENS = ZoneInfo("Europe/Athens")
+LATE = 90          # minutes: games starting this soon get their line read again (the Archive keeps the first one too)
 ROWS = r"""() => [...document.querySelectorAll('.ui-table__row')].map(r => [r.querySelector('img')?.alt || r.querySelector('a[title]')?.title || '', ...r.innerText.split('\n').map(x => x.trim()).filter(Boolean)])"""
 LINKS = r"""() => [...document.querySelectorAll('.event__match')].map(e => {
   const a = e.querySelector('a')?.href || '', m = a.match(/match\/basketball\/([^?]+)\/\?mid=(\w+)/);
@@ -79,14 +81,15 @@ def main():
     odds = read_js(odds_path)
     have = {(o["h"], o["a"]) for o in odds["list"]}
     fx = [f for f in read_js(SITE / "fixtures.js")["list"] if f[0] > stamp and ("--all" in sys.argv or f[0][:10] == today)]
-    missing = [(f[2], f[3]) for f in fx if (f[2], f[3]) not in have]
+    soon = lambda f: (datetime.strptime(f[0], "%Y-%m-%d %H:%M").replace(tzinfo=ATHENS) - now).total_seconds() <= LATE * 60
+    missing = [(f[2], f[3]) for f in fx if (f[2], f[3]) not in have or soon(f)]    # no line yet, or the late re-read
     if not fx:
         print(f"{stamp}: no FIBA Europe Cup game left today; nothing to do")
         return 0
     if not missing:
         print(f"{stamp}: all {len(fx)} games of today already have a line; nothing to do")
         return 0
-    print(f"{stamp}: {len(missing)} games without a line, reading Flashscore")
+    print(f"{stamp}: {len(missing)} games without a line or close to tip-off, reading Flashscore")
     found = []
     with sync_playwright() as p:
         br = p.chromium.launch()
@@ -113,7 +116,7 @@ def main():
             found.append({"h": h, "a": a, "sp": hc[1], "spH": hc[2], "spA": hc[3],
                           "tot": ou[1] if ou else None, "ov": ou[2] if ou else None, "un": ou[3] if ou else None,
                           "mlH": ml[1] if ml else None, "mlA": ml[2] if ml else None,
-                          "src": [f"{hc[0]} (Flashscore)", f"{ou[0]} (Flashscore)" if ou else None, f"{ml[0]} (Flashscore)" if ml else None]})
+                          "src": [hc[0], ou[0] if ou else None, ml[0] if ml else None]})
             print(f"  {h} - {a}: hcp {hc[1]:+} ({hc[0]}), total {ou[1] if ou else '-'}")
         br.close()
     if not found:
@@ -121,7 +124,7 @@ def main():
         return 0
     keep = [o for o in odds["list"] if (o["h"], o["a"]) not in {(x["h"], x["a"]) for x in found}]
     odds["list"] = keep + found
-    odds["updated"], odds["source"] = today, "Flashscore pre-game lines (Bwin.gr, else Stoiximan.gr), earlier ones kept"
+    odds["updated"], odds["source"] = today, "pre-game lines (Bwin.gr, else Stoiximan.gr), earlier ones kept"
     head = odds_path.read_text(encoding="utf-8").split("window.ODDS")[0]
     odds_path.write_text(head + 'window.ODDS = {' + json.dumps({k: v for k, v in odds.items() if k != "list"}, ensure_ascii=False)[1:-1]
                          + ', "list": [\n  ' + ",\n  ".join(json.dumps(o, ensure_ascii=False) for o in odds["list"]) + "\n]};\n", encoding="utf-8")
@@ -130,7 +133,7 @@ def main():
         print("predict.py failed; odds.js written but not published")
         return 1
     import update                                         # publish site files and mirror them to this repo
-    update.mirror_and_publish("FIBA Europe Cup", "fibaeuropecup", f"FIBA Europe Cup: matchday lines from Flashscore ({stamp})")
+    update.mirror_and_publish("FIBA Europe Cup", "fibaeuropecup", f"FIBA Europe Cup: matchday lines ({stamp})")
     return 0
 
 
