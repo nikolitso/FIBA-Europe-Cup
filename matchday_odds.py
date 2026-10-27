@@ -79,7 +79,7 @@ def main():
     stamp, today = now.strftime("%Y-%m-%d %H:%M"), now.strftime("%Y-%m-%d")
     odds_path = SITE / "odds.js"
     odds = read_js(odds_path)
-    have = {(o["h"], o["a"]) for o in odds["list"]}
+    have = {(o["h"], o["a"]) for o in odds["list"] if not o.get("implied")}   # a handicap implied from a money line is replaced
     fx = [f for f in read_js(SITE / "fixtures.js")["list"] if f[0] > stamp and ("--all" in sys.argv or f[0][:10] == today)]
     soon = lambda f: (datetime.strptime(f[0], "%Y-%m-%d %H:%M").replace(tzinfo=ATHENS) - now).total_seconds() <= LATE * 60
     missing = [(f[2], f[3]) for f in fx if (f[2], f[3]) not in have or soon(f)]    # no line yet, or the late re-read

@@ -93,7 +93,7 @@ def freeze(rows, stamp, n_games):
     n = 0
     for r in rows:
         o = odds.get((r["h"], r["a"]))
-        if not o or r["when"] <= stamp:                     # no line yet, or already started: leave as it is
+        if not o or o.get("implied") or r["when"] <= stamp:  # no real line yet (implied from the money line only), or started
             continue
         day = r["when"][:10]
         sn = snaps.setdefault(day, {"date": day, "round": r["round"], "taken": stamp[:10],
