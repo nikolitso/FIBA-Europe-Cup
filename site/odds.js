@@ -24,6 +24,6 @@ window.ODDS = {"updated": "2026-10-27", "source": "pre-game lines (Bwin.gr, else
   {"h": "BC Prievidza", "a": "Bakken Bears", "sp": -4.5, "spH": 1.78, "spA": 1.9, "tot": 172.5, "ov": 1.83, "un": 1.83, "mlH": 1.45, "mlA": 2.5, "src": ["Bwin.gr", "Bwin.gr", "Bwin.gr"]},
   {"h": "MZT Skopje", "a": "AEK Larnaca", "sp": 3.5, "spH": 1.85, "spA": 1.83, "tot": 162.5, "ov": 1.83, "un": 1.85, "mlH": 2.25, "mlA": 1.55, "src": ["Bwin.gr", "Bwin.gr", "Bwin.gr"]},
   {"h": "Vienna Basket", "a": "Keravnos", "sp": -6.5, "spH": 1.83, "spA": 1.83, "tot": 161.5, "ov": 1.78, "un": 1.9, "mlH": 1.36, "mlA": 2.8, "src": ["Bwin.gr", "Bwin.gr", "Bwin.gr"]},
-  {"h": "Neftchi IK", "a": "CSM Oradea", "sp": 10.5, "spH": null, "spA": null, "tot": null, "ov": null, "un": null, "mlH": 4.35, "mlA": 1.14, "implied": true, "src": ["money line only (screenshot, Antonis); handicap implied", null, "screenshot (Antonis)"]},
-  {"h": "Manchester Basketball", "a": "BC Kalev/Cramo", "sp": 0.0, "spH": null, "spA": null, "tot": null, "ov": null, "un": null, "mlH": 1.85, "mlA": 1.82, "implied": true, "src": ["money line only (screenshot, Antonis); handicap implied", null, "screenshot (Antonis)"]}
+  {"h": "Manchester Basketball", "a": "BC Kalev/Cramo", "sp": 0.0, "spH": null, "spA": null, "tot": null, "ov": null, "un": null, "mlH": 1.85, "mlA": 1.82, "implied": true, "src": ["money line only (screenshot, Antonis); handicap implied", null, "screenshot (Antonis)"]},
+  {"h": "Neftchi IK", "a": "CSM Oradea", "sp": 10.5, "spH": 1.82, "spA": 1.84, "tot": 167.5, "ov": 1.85, "un": 1.81, "mlH": 4.55, "mlA": 1.16, "src": ["screenshot (Antonis)", "screenshot (Antonis)", "screenshot (Antonis)"]}
 ]};
