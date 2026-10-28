@@ -1,17 +1,17 @@
 """One-step updater for the FIBA Europe Cup site.
 
-    python update.py             # results (Flashscore) + odds and fixtures (BetExplorer), then publish
+    python update.py             # results, fixtures and odds (all from Flashscore), then publish
     python update.py --no-push   # update the files only, do not commit or push
 
 Steps
   1. results  - new 2026-27 games from Flashscore (headless browser) -> fibaeuropecup/data.js  (flashscore_results.py)
-  2. odds     - handicap / total / money line, next round     -> fibaeuropecup/odds.js          (update_site.py;
-                Stake.com, else bwin, else Betsson)
-  3. fixtures - upcoming games and kick-off times (Athens)    -> fibaeuropecup/fixtures.js
-  4. publish  - commit and push the three files in the website repo, mirror them into this repo's site/ and push
+  2. fixtures - upcoming games and kick-off times (Athens), Flashscore fixtures page -> fibaeuropecup/fixtures.js
+  3. odds     - handicap / total / money line for every upcoming game without one -> fibaeuropecup/odds.js
+                (matchday_odds.py: Bwin.gr, else Stoiximan.gr, PameStoixima, Novibet, Interwetten)
+  4. publish  - commit and push the files in the website repo, mirror them into this repo's site/ and push
 
-Results never depend on BetExplorer. If BetExplorer blocks or limits the odds / fixtures requests (it is unavailable
-in some countries), those two files are left as they were and the new results are still published. The Archive tab (frozen projections) is not touched here; its results fill in by themselves.
+If the fixtures or odds step fails, that file is left as it was and the new results are still published. The Archive
+tab (frozen projections) is not touched here; its results fill in by themselves.
 """
 import json
 import os
@@ -20,84 +20,75 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import requests
-from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 import flashscore_results
+import matchday_odds
 import update_site
 
 HERE = Path(__file__).parent
 SITE = update_site.SITE                                   # website repo folder: nikolitso.github.io/fibaeuropecup
 WEBSITE_REPO = SITE.parent
 FILES = ["data.js", "fixtures.js", "odds.js", "projections.js", "archive.js"]
-COMP = update_site.COMP
-STRIP_W = False                                           # the women's site strips BetExplorer's trailing " W"
-H = {"User-Agent": "Mozilla/5.0"}
-BE_TZ = timezone(timedelta(hours=1))                      # BetExplorer shows UTC+1; checked against Flashscore times
 ATHENS = ZoneInfo("Europe/Athens")
+FIXTURES = r"""() => [...document.querySelectorAll('.event__round, .event__match')].map(e => e.classList.contains('event__round')
+  ? [e.innerText.trim()]
+  : [(e.querySelector('.event__time, .event__stageTime') || {}).innerText?.trim() || '',
+     e.querySelector('.event__homeParticipant, .event__participant--home')?.innerText.trim(),
+     e.querySelector('.event__awayParticipant, .event__participant--away')?.innerText.trim()])"""
 
-# BetExplorer limits fast clients (HTTP 429): keep at least 2 s between requests and back off when it says slow down
-_real_get, _last = requests.get, [0.0]
-
-
-def _polite_get(url, **kw):
-    for wait in (0, 30, 60, 120):
-        time.sleep(wait)
-        time.sleep(max(0.0, 2.0 - (time.time() - _last[0])))
-        r = _real_get(url, **kw)
-        _last[0] = time.time()
-        if r.status_code != 429:
-            return r
-        print("  BetExplorer says slow down (429): waiting before retrying ...")
-    return r
-
-
-requests.get = _polite_get
+SHOW_MORE = r"""() => { const b = [...document.querySelectorAll('button')].find(e => /^show more matches$/i.test(e.innerText?.trim() || ''));
+  if (b) b.click(); return !!b; }"""         # clicked in the page: the cookie banner can cover it for a real click
 
 
 def update_fixtures():
-    r = requests.get(update_site.BASE + COMP + "fixtures/", headers=H, timeout=30)
-    r.raise_for_status()
-    if "unavailable in" in r.text[:2000] or r.url.endswith(".html"):
-        raise SystemExit(f"BetExplorer blocked the request ({r.url}); nothing written.")
-    soup = BeautifulSoup(r.text, "html.parser")
-    today = datetime.now(BE_TZ).date()          # "Today" / "Tomorrow" are BetExplorer's own (UTC+1) dates, not Athens'
-    rows, hdr = [], ""
-    for tr in soup.select("table.table-main tr"):
-        th = tr.find("th")
-        if th:
-            hdr = th.get_text(" ", strip=True)
+    with sync_playwright() as p:
+        br = p.chromium.launch()
+        pg = br.new_page(locale="en-GB", timezone_id="Europe/Athens")   # Flashscore then shows Athens times
+        pg.goto(matchday_odds.FIXTURES_URL, wait_until="domcontentloaded", timeout=60000)
+        pg.wait_for_selector(".event__match", timeout=20000)
+        for _ in range(10):                               # the page lists a few rounds; "Show more games" loads the rest
+            n = pg.locator(".event__match").count()
+            if not pg.evaluate(SHOW_MORE):
+                break
+            try:
+                pg.wait_for_function(f"document.querySelectorAll('.event__match').length > {n}", timeout=10000)
+            except Exception:
+                break
+        items = pg.evaluate(FIXTURES)
+        br.close()
+    now = datetime.now(ATHENS)
+    al = lambda t: flashscore_results.ALIASES.get(t, t)
+    rows, rnd = [], ""
+    for it in items:
+        if len(it) == 1:                                  # "ROUND 5", or a stage name
+            n = re.search(r"ROUND (\d+)", it[0].upper())
+            rnd = f"Round {n[1]}" if n else it[0].title()
             continue
-        a = tr.select_one("a.in-match")
-        t = tr.select_one("td.table-main__datetime")
-        m = re.match(r"(?:(Today|Tomorrow)|(\d\d)\.(\d\d)\.)\s+(\d\d):(\d\d)", t.get_text(strip=True)) if t else None
-        if not (a and m):                                 # no kick-off time yet
+        m = re.match(r"(\d\d)\.(\d\d)\.\s+(\d\d):(\d\d)", it[0])
+        if not (m and it[1] and it[2]):                   # no kick-off time yet
             continue
-        if m[1]:
-            d = today + timedelta(days=1 if m[1] == "Tomorrow" else 0)
-        else:
-            d = datetime(today.year, int(m[3]), int(m[2])).date()
-            if d < today - timedelta(days=30):
-                d = d.replace(year=d.year + 1)
-        when = datetime(d.year, d.month, d.day, int(m[4]), int(m[5]), tzinfo=BE_TZ).astimezone(ATHENS)
-        sp = [s.get_text(strip=True) for s in a.find_all("span")]
-        if STRIP_W:
-            sp = [re.sub(r" W$", "", x) for x in sp]
-        n = re.search(r"(\d+)\. Round", hdr)
-        rows.append([when.strftime("%Y-%m-%d %H:%M"), f"Round {n[1]}" if n else hdr.title(), sp[0], sp[1]])
+        year = now.year + (1 if int(m[2]) < now.month - 6 else 0)   # the season runs into next year
+        when = datetime(year, int(m[2]), int(m[1]), int(m[3]), int(m[4]))
+        if when >= now.replace(tzinfo=None) - timedelta(hours=3):   # fixtures only, never a played game
+            rows.append([when.strftime("%Y-%m-%d %H:%M"), rnd, al(it[1]), al(it[2])])
     if not rows:
         raise SystemExit("No fixtures with a kick-off time found; fixtures.js left untouched.")
     rows.sort()
     path = SITE / "fixtures.js"
     old = len(update_site.read_js(path)[1]["list"]) if path.exists() else 0
-    path.write_text("// Upcoming fixtures (Athens time): [when, round, home, away]. Source: BetExplorer.\n"
-                    "window.FIXTURES = " + json.dumps({"updated": today.isoformat(), "source": "BetExplorer", "list": rows},
+    path.write_text("// Upcoming fixtures (Athens time): [when, round, home, away]. Source: Flashscore.\n"
+                    "window.FIXTURES = " + json.dumps({"updated": now.date().isoformat(), "source": "Flashscore", "list": rows},
                                                      ensure_ascii=False) + ";\n", encoding="utf-8")
     print(f"fixtures: {len(rows)} upcoming games (was {old}), next: {rows[0][0]} {rows[0][2]} - {rows[0][3]}")
+
+
+def update_odds():
+    matchday_odds.main(all_games=True, publish=False)
 
 
 def git(repo, *args):
@@ -139,10 +130,10 @@ def main():
         print(e)
         print("Nothing was published.")
         sys.exit(1)
-    for step in (update_site.update_odds, update_fixtures):
+    for step in (update_fixtures, update_odds):            # odds read the new fixtures
         try:
             step()
-        except (SystemExit, requests.RequestException) as e:   # BetExplorer blocked or limiting: keep the old file
+        except Exception as e:                            # Flashscore slow or changed: keep the old file
             print(f"{step.__name__}: skipped ({e})")
     # club-rating projections and the Archive frozen from them; a separate process so it reads the new results
     if subprocess.run([sys.executable, str(HERE / "predict.py")], cwd=HERE).returncode:

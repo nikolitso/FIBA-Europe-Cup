@@ -3,7 +3,7 @@
     python matchday_odds.py            # only games of today (Athens) without a line, not yet started
     python matchday_odds.py --all      # every upcoming game on the Flashscore fixtures page without a line
 
-Run every hour from 10:00 to 21:00 by the Windows task "FIBA Europe Cup odds" (scheduled_odds.bat): lines appear on
+Run every hour from 10:00 to 21:00 by the GitHub job "FIBA Europe Cup" (website repo): lines appear on
 the morning of the match day, so the 10:00 run usually finds them. The run in the last LATE minutes before a game reads
 its line again: the Archive keeps that late line and the first one, so line movement can be measured.
 Bookmaker: Bwin.gr, else Stoiximan.gr, PameStoixima, Novibet, Interwetten (bet365 left out: it quotes 1.83 / 1.83 on
@@ -75,13 +75,15 @@ def rows(page, url):
     return []
 
 
-def main():
+def main(all_games=None, publish=True):
+    """publish=False (update.py): write odds.js only; update.py runs the projections and publishes."""
+    all_games = "--all" in sys.argv if all_games is None else all_games
     now = datetime.now(ATHENS)
     stamp, today = now.strftime("%Y-%m-%d %H:%M"), now.strftime("%Y-%m-%d")
     odds_path = SITE / "odds.js"
     odds = read_js(odds_path)
     have = {(o["h"], o["a"]) for o in odds["list"] if not o.get("implied")}   # a handicap implied from a money line is replaced
-    fx = [f for f in read_js(SITE / "fixtures.js")["list"] if f[0] > stamp and ("--all" in sys.argv or f[0][:10] == today)]
+    fx = [f for f in read_js(SITE / "fixtures.js")["list"] if f[0] > stamp and (all_games or f[0][:10] == today)]
     soon = lambda f: (datetime.strptime(f[0], "%Y-%m-%d %H:%M").replace(tzinfo=ATHENS) - now).total_seconds() <= LATE * 60
     missing = [(f[2], f[3]) for f in fx if (f[2], f[3]) not in have or soon(f)]    # no line yet, or the late re-read
     if not fx:
@@ -132,6 +134,8 @@ def main():
     odds_path.write_text(head + 'window.ODDS = {' + json.dumps({k: v for k, v in odds.items() if k != "list"}, ensure_ascii=False)[1:-1]
                          + ', "list": [\n  ' + ",\n  ".join(json.dumps(o, ensure_ascii=False) for o in odds["list"]) + "\n]};\n", encoding="utf-8")
     print(f"odds.js: {len(found)} lines added")
+    if not publish:
+        return 0
     if subprocess.run([sys.executable, str(HERE / "predict.py")], cwd=HERE).returncode:
         print("predict.py failed; odds.js written but not published")
         return 1
