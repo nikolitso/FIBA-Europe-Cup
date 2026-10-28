@@ -14,6 +14,7 @@ Results never depend on BetExplorer. If BetExplorer blocks or limits the odds / 
 in some countries), those two files are left as they were and the new results are still published. The Archive tab (frozen projections) is not touched here; its results fill in by themselves.
 """
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -123,6 +124,8 @@ def publish(repo, paths, message):
 def mirror_and_publish(label, subfolder, message):
     print("publishing:")
     publish(WEBSITE_REPO, [f"{subfolder}/{f}" for f in FILES], message)
+    if os.environ.get("FIBA_NO_MIRROR"):                  # the GitHub job publishes the site only
+        return
     for f in FILES:
         shutil.copy2(SITE / f, HERE / "site" / f)
     publish(HERE, [f"site/{f}" for f in FILES], f"Mirror live site data ({label})")

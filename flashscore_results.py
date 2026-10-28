@@ -8,13 +8,14 @@ the site's convention: regular-season games become "Group X - N. Round" (the gro
 club); other stages keep Flashscore's round name. Stops without writing anything if a club has no country yet.
 """
 import json
+import os
 import re
 from datetime import date
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
+SITE = Path(os.environ.get("FIBA_SITE", r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup"))   # FIBA_SITE: set by the GitHub job
 URL = "https://www.flashscore.com/basketball/europe/fiba-europe-cup/results/"
 SEASON = "2026-2027"
 ALIASES = {"BC Kalev": "BC Kalev/Cramo", "Landau Lions": "Absheron Lions"}        # Flashscore renamed these clubs; keep the names their earlier games use

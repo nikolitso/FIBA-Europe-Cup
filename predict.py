@@ -11,6 +11,7 @@ tip-off and never after, so the Archive keeps model and line as they stood befor
 earlier model (model "mix", frozen from the Projections tab) are never touched.
 """
 import json
+import os
 import math
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -18,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 import club_model as cm
 
-SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
+SITE = Path(os.environ.get("FIBA_SITE", r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup"))   # FIBA_SITE: set by the GitHub job
 PARAMS = {"half": 480, "k": 4.0, "keep": 0.85, "new": 1.0}   # club_model.py backtest, tuned on 2023-24 and 2024-25
 SPREAD = 14.9                       # RMSE of the model's misses in that backtest: win chance = phi(handicap / SPREAD)
 SEASON = "2026-2027"
@@ -104,7 +105,7 @@ def freeze(rows, stamp, n_games):
         entry = {"when": r["when"][11:], "h": r["h"], "a": r["a"], "model": "club", "mh": r["mh"], "mt": r["mt"],
                  "adj": r["adj"], "out": [[r["h"]] + x for x in r["outH"]] + [[r["a"]] + x for x in r["outA"]],
                  "pH": r["ph"], "n": n_games, "bh": -o["sp"], "bt": o.get("tot"), "mlH": o.get("mlH"), "mlA": o.get("mlA"),
-                 "src": (o.get("src") or [""])[0], "taken": stamp}
+                 "taken": stamp}                               # no bookmaker names on the site
         first = old if old and "bh0" in old else (old or entry)       # the first line seen for this game, kept for line movement
         entry.update(bh0=first.get("bh0", first["bh"]), bt0=first.get("bt0", first.get("bt")), taken0=first.get("taken0", first["taken"]))
         if old:

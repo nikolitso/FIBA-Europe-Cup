@@ -13,6 +13,7 @@ The script stops without writing anything if BetExplorer blocks the request (it 
 After running, copy the files to the site repo's folder as usual and push (the default SITE path is the local checkout).
 """
 import json
+import os
 import re
 import sys
 import time
@@ -24,7 +25,7 @@ from bs4 import BeautifulSoup
 
 import scrape
 
-SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
+SITE = Path(os.environ.get("FIBA_SITE", r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup"))   # FIBA_SITE: set by the GitHub job
 BASE = "https://www.betexplorer.com"
 COMP = "/basketball/europe/fiba-europe-cup/"
 BOOKS = ["Stake.com", "bwin", "Betsson"]          # bookmaker preference, in this order (per market, per match)
@@ -120,17 +121,15 @@ def update_odds():
             print("  no handicap / total line yet:", h, "-", a)
             continue
         out.append({"h": h, "a": a, "sp": ah[0], "spH": ah[1], "spA": ah[2], "tot": ou[0], "ov": ou[1], "un": ou[2],
-                    "mlH": ha[1] if ha else None, "mlA": ha[2] if ha else None,
-                    "src": [ah[3], ou[3], ha[3] if ha else None]})
+                    "mlH": ha[1] if ha else None, "mlA": ha[2] if ha else None})   # no bookmaker names on the site
     if not out:
         raise SystemExit("No odds found; odds.js left untouched.")
-    head = ("// Bookmaker lines for upcoming fixtures from BetExplorer (Stake.com, else bwin, else Betsson), keyed by the fixture's home and away club.\n"
-            "// src = bookmaker used for [handicap, total, money line].\n"
+    head = ("// Bookmaker lines for upcoming fixtures, keyed by the fixture's home and away club.\n"
             "// sp = handicap on the home side (+ means the home side is the underdog), spH / spA = its odds home / away,\n"
             "// tot = points total, ov / un = odds over / under, mlH / mlA = money line odds (null when not offered).\n")
     body = ",\n".join("  " + json.dumps(o, ensure_ascii=False) for o in out)
     (SITE / "odds.js").write_text(
-        head + 'window.ODDS = {"updated": "' + time.strftime("%Y-%m-%d") + '", "source": "BetExplorer (Stake.com / bwin / Betsson)", "list": [\n' + body + "\n]};\n",
+        head + 'window.ODDS = {"updated": "' + time.strftime("%Y-%m-%d") + '", "source": "pre-game lines", "list": [\n' + body + "\n]};\n",
         encoding="utf-8")
     print(f"odds: round {nxt}, {len(out)} matches")
 

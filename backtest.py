@@ -18,13 +18,14 @@ Variants
 """
 import json
 import math
+import os
 import sys
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
 PATHS = {
-    "men": Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup\data.js"),
+    "men": Path(os.environ.get("FIBA_SITE", r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")) / "data.js",
     "women": Path(r"C:\Users\antonis\Desktop\eurocup-women\site\data.js"),
 }
 GROUP_STAGES = {"Main", "First stage", "Preliminary"}   # the group stage has had three names over the years

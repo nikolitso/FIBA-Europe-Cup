@@ -11,6 +11,7 @@ every line). Of that bookmaker's lines the main one is the one with the most eve
 odds.js keeps the site format: sp = handicap on the home side (+ = home underdog), tot = total, ml = money line.
 """
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -22,7 +23,7 @@ from playwright.sync_api import sync_playwright
 from flashscore_results import ALIASES
 
 HERE = Path(__file__).parent
-SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
+SITE = Path(os.environ.get("FIBA_SITE", r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup"))   # FIBA_SITE: set by the GitHub job
 FIXTURES_URL = "https://www.flashscore.com/basketball/europe/fiba-europe-cup/fixtures/"
 BOOKS = ["Bwin.gr", "Stoiximan.gr", "PameStoixima", "Novibet", "Interwetten"]
 ATHENS = ZoneInfo("Europe/Athens")
@@ -115,8 +116,7 @@ def main():
             ml = pick(rows(pg, root + f"home-away/ft-including-ot/?mid={mid}"), False)
             found.append({"h": h, "a": a, "sp": hc[1], "spH": hc[2], "spA": hc[3],
                           "tot": ou[1] if ou else None, "ov": ou[2] if ou else None, "un": ou[3] if ou else None,
-                          "mlH": ml[1] if ml else None, "mlA": ml[2] if ml else None,
-                          "src": [hc[0], ou[0] if ou else None, ml[0] if ml else None]})
+                          "mlH": ml[1] if ml else None, "mlA": ml[2] if ml else None})   # no bookmaker names on the site
             print(f"  {h} - {a}: hcp {hc[1]:+} ({hc[0]}), total {ou[1] if ou else '-'}")
         br.close()
     if not found:
@@ -124,8 +124,11 @@ def main():
         return 0
     keep = [o for o in odds["list"] if (o["h"], o["a"]) not in {(x["h"], x["a"]) for x in found}]
     odds["list"] = keep + found
-    odds["updated"], odds["source"] = today, "pre-game lines (Bwin.gr, else Stoiximan.gr), earlier ones kept"
+    for o in odds["list"]:
+        o.pop("src", None)
+    odds["updated"], odds["source"] = today, "pre-game lines, earlier ones kept"
     head = odds_path.read_text(encoding="utf-8").split("window.ODDS")[0]
+    head = "".join(l for l in head.splitlines(True) if not l.startswith("// src ")).replace(" from BetExplorer (Stake.com, else bwin, else Betsson)", "")
     odds_path.write_text(head + 'window.ODDS = {' + json.dumps({k: v for k, v in odds.items() if k != "list"}, ensure_ascii=False)[1:-1]
                          + ', "list": [\n  ' + ",\n  ".join(json.dumps(o, ensure_ascii=False) for o in odds["list"]) + "\n]};\n", encoding="utf-8")
     print(f"odds.js: {len(found)} lines added")

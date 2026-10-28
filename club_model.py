@@ -17,6 +17,7 @@ lines exist).
 import itertools
 import json
 import math
+import os
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -26,7 +27,7 @@ import numpy as np
 import backtest
 
 HERE = Path(__file__).parent
-SITE = Path(r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup")
+SITE = Path(os.environ.get("FIBA_SITE", r"C:\Users\antonis\Desktop\nikolitso.github.io\fibaeuropecup"))   # FIBA_SITE: set by the GitHub job
 ELO_POINTS = 0.060                       # points per country-Elo point, as in the site's mix
 TUNE = ["2023-2024", "2024-2025"]
 TEST = ["2025-2026", "2026-2027"]
