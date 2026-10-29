@@ -977,13 +977,16 @@ function crComment(x){
   const d = x.d, a = Math.abs(d).toFixed(1), lim = mkLim(MK_SD.hcp, x.n);
   const noise = `results against the handicap are within the noise (${sgn(x.vsS)} a game)`;
   const up = x.vsS >= lim, down = x.vsS <= -lim;
+  // a gap the results do not back yet, from a rating still close to last season's starting point
+  const start = Math.abs(d) >= CR_MILD && !(d > 0 ? up : down) && Math.abs(x.r - x.prior) < CR_MILD
+    ? ` The model is still close to its starting point from last season (${sgn(x.prior)}), and this season's results have not confirmed it yet.` : '';
   if (d >= CR_MILD){
     const why = up ? `results back the model: ${sgn(x.vsS)} a game against the handicap` : down ? `but results side with the market: ${sgn(x.vsS)} a game against the handicap` : noise;
-    return d >= CR_STRONG ? `<b class="w">Underrated by the market</b>: the model rates it ${a} pts higher; ${why}.` : `Slightly underrated: the model rates it ${a} pts higher; ${why}.`;
+    return (d >= CR_STRONG ? `<b class="w">Underrated by the market</b>: the model rates it ${a} pts higher; ${why}.` : `Slightly underrated: the model rates it ${a} pts higher; ${why}.`) + start;
   }
   if (d <= -CR_MILD){
     const why = down ? `results back the model: ${sgn(x.vsS)} a game against the handicap` : up ? `but results side with the market: ${sgn(x.vsS)} a game against the handicap` : noise;
-    return d <= -CR_STRONG ? `<b class="l">Overrated by the market</b>: the model rates it ${a} pts lower; ${why}.` : `Slightly overrated: the model rates it ${a} pts lower; ${why}.`;
+    return (d <= -CR_STRONG ? `<b class="l">Overrated by the market</b>: the model rates it ${a} pts lower; ${why}.` : `Slightly overrated: the model rates it ${a} pts lower; ${why}.`) + start;
   }
   if (up || down) return `Model and market agree (${a} pts apart), but the club has ${up ? 'beaten' : 'fallen short of'} its lines by ${Math.abs(x.vsS).toFixed(1)} a game.`;
   return `Model and market agree (${a} pts apart).`;
@@ -1012,11 +1015,11 @@ function renderRatings(){
   for (const x of list) if (x.mr !== null){ x.mr *= wide; x.d = x.rg - x.mr; }
   const vsAvg = l => l.length ? l.reduce((t, x) => t + x.vsS, 0) / l.length : 0;
   const top = pr.filter(x => x.mr > 0), low = pr.filter(x => x.mr < 0), split = vsAvg(top) - vsAvg(low);
-  const pattern = !pr.length ? '' : `<div class="note" style="margin-bottom:14px"><b>One general difference first:</b> within the groups the model spreads the clubs ${wide.toFixed(1)} times as wide as the market does.
+  const pattern = !pr.length ? '' : `<div class="note" style="margin-bottom:14px"><b>One general difference first:</b> within the groups the model ${wide >= 1 ? `spreads the clubs ${wide.toFixed(1)} times as wide as the market does` : `spreads the clubs narrower than the market does (${wide.toFixed(1)} times as wide)`}.
       ${split >= 4 ? `The results so far side with the model on this: clubs the market rates above their group's average have beaten their handicaps by ${sgn(vsAvg(top))} a game, those below it by ${sgn(vsAvg(low))}.`
         : split <= -4 ? `The results so far side with the market: clubs it rates above their group's average have beaten their handicaps by ${sgn(vsAvg(top))} a game, those below it by ${sgn(vsAvg(low))}.`
         : `The results do not settle it yet: clubs the market rates above their group's average have beaten their handicaps by ${sgn(vsAvg(top))} a game, those below it by ${sgn(vsAvg(low))}.`}
-      So that this general difference does not mark every strong club underrated and every weak one overrated, the Market column is shown on the model's scale (×${wide.toFixed(1)}); <b>Model − market</b> is what is left: where the two really disagree about a club (${pr.length} clubs with ${MK_MIN}+ games).</div>`;
+      So that this general difference does not mark clubs underrated or overrated just for being strong or weak, the Market column is shown on the model's scale (×${wide.toFixed(1)}); <b>Model − market</b> is what is left: where the two really disagree about a club (${pr.length} clubs with ${MK_MIN}+ games).</div>`;
   const {k, dir} = crSort;
   const val = x => k === 'c' || k === 'grp' ? x[k] : (x[k] ?? -999);
   list.sort((p, q) => { const a = val(p), b = val(q); return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || p.c.localeCompare(q.c); });
@@ -1030,14 +1033,14 @@ function renderRatings(){
   };
   const body = list.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.c)}</b> <span class="tag">${esc(code(teams[x.c]))}</span></td><td class="n tag">${esc(x.grp)}</td>
     <td class="n hcp"><b>${sgn(x.r)}</b></td><td class="n gl">${x.rg === null ? '–' : sgn(x.rg)}</td><td class="n">${x.mr === null ? '–' : sgn(x.mr)}</td>${dcell(x.d)}${vcell(x)}
-    <td class="n">${x.n}</td><td class="n tag">${sgn(x.prior)}</td><td class="crc">${crComment(x)}</td></tr>`).join('');
+    <td class="n">${x.n}</td><td class="crc">${crComment(x)}</td></tr>`).join('');
   box.innerHTML = `<div class="note" style="margin-bottom:14px"><b>Model</b> = the club's rating in the projection model, from this season's results (older games count less), starting from last season and the country rating.
       <b>Market</b> = the club's rating in the bookmaker's eyes, fitted from every handicap line so far (as on the <a class="back" href="#view=market" data-go="market">Vs Market</a> tab).
       In the Regular Season a club only meets the clubs of its own group, so the lines compare clubs within a group but cannot say how strong one group is against another. The comparison is therefore made <b>within the group</b>: both ratings in points better (+) or worse (−) than the group's average club, on a neutral court. The first Model column is the rating against the whole competition.
       <b>Model − market</b> above 0 = the model rates the club higher in its group than the market does (underrated by the market); below 0 = lower (overrated). Green from +${CR_STRONG}, red from −${CR_STRONG}.
       <b>Vs line</b> = the club's real margin minus the handicap, per game: whether results so far back the model or the market (coloured once larger than its sample's noise).
       A caution from the <a class="back" href="#view=archive" data-go="archive">Archive</a> scorecard and the 2025-26 backtest: so far, large model–market gaps have more often gone the bookmaker's way, so a gap is a reason to look closer, not a verdict. Click a column to sort.</div>
-    ${pattern}<div class="scroll"><table class="fx crt"><tr><th colspan="4"></th><th class="grp gl" colspan="3">Within the group</th><th colspan="4"></th></tr><tr><th class="n">#</th>${th('c', 'Club', '', '')}${th('grp', 'Grp', 'n', 'Group')}${th('r', 'Model', 'n', 'Model rating: points vs an average club of the competition on a neutral court')}${th('rg', 'Model', 'n gl', 'Model rating against the group average')}${th('mr', 'Market', 'n', 'Market rating against the group average, from the bookmaker lines, on the model scale')}${th('d', 'Model − market', 'n', 'Above 0 = underrated by the market, below 0 = overrated')}${th('vsS', 'Vs line', 'n', 'Real margin minus the handicap, per game')}${th('n', 'Games', 'n', 'Games with a line and a result')}${th('prior', 'Prior', 'n', 'Starting point from last season and the country rating')}<th>Comment</th></tr>${body}</table></div>
+    ${pattern}<div class="scroll"><table class="fx crt"><tr><th colspan="4"></th><th class="grp gl" colspan="3">Within the group</th><th colspan="3"></th></tr><tr><th class="n">#</th>${th('c', 'Club', '', '')}${th('grp', 'Grp', 'n', 'Group')}${th('r', 'Model', 'n', 'Model rating: points vs an average club of the competition on a neutral court')}${th('rg', 'Model', 'n gl', 'Model rating against the group average')}${th('mr', 'Market', 'n', 'Market rating against the group average, from the bookmaker lines, on the model scale')}${th('d', 'Model − market', 'n', 'Above 0 = underrated by the market, below 0 = overrated')}${th('vsS', 'Vs line', 'n', 'Real margin minus the handicap, per game')}${th('n', 'Games', 'n', 'Games with a line and a result')}<th>Comment</th></tr>${body}</table></div>
     <div class="tag" style="margin-top:14px">Model updated ${esc(P.updated)}, after ${P.games} games. Home advantage: ${sgn(P.hca)} in the model, ${sgn(MR.hca)} in the lines.</div>`;
   box.querySelectorAll('th.sort').forEach(h => h.onclick = () => {
     const c = h.dataset.k;
