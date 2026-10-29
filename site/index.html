@@ -980,9 +980,7 @@ function crComment(x){
   const tag = d > 0 ? (d >= CR_STRONG ? '<b class="w">Underrated</b>' : 'Slightly underrated')
                     : (d <= -CR_STRONG ? '<b class="l">Overrated</b>' : 'Slightly overrated');
   const res = backed ? 'results agree' : against ? 'results disagree' : 'results unclear';
-  // the gap may still be last season's view: rating close to its starting point and results not backing it
-  const start = !backed && Math.abs(x.r - x.prior) < CR_MILD ? ", last season's view" : '';
-  return `${tag}: ${res}${start}.`;
+  return `${tag}: ${res}.`;
 }
 function renderRatings(){
   const box = $('crView');
