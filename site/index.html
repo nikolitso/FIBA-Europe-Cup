@@ -972,24 +972,17 @@ function renderMarket(){
 let crSort = {k: 'd', dir: -1};
 const CR_STRONG = 4, CR_MILD = 2;                              // model − market, points
 function crComment(x){
-  if (x.mr === null) return `No game with a line and a result yet: only the model's view (${sgn(x.r)}).`;
-  if (x.n < MK_MIN) return `Only ${x.n} game${x.n === 1 ? '' : 's'} with a line: too early to compare.`;
-  const d = x.d, a = Math.abs(d).toFixed(1), lim = mkLim(MK_SD.hcp, x.n);
-  const noise = `results against the handicap are within the noise (${sgn(x.vsS)} a game)`;
-  const up = x.vsS >= lim, down = x.vsS <= -lim;
-  // a gap the results do not back yet, from a rating still close to last season's starting point
-  const start = Math.abs(d) >= CR_MILD && !(d > 0 ? up : down) && Math.abs(x.r - x.prior) < CR_MILD
-    ? ` The model is still close to its starting point from last season (${sgn(x.prior)}), and this season's results have not confirmed it yet.` : '';
-  if (d >= CR_MILD){
-    const why = up ? `results back the model: ${sgn(x.vsS)} a game against the handicap` : down ? `but results side with the market: ${sgn(x.vsS)} a game against the handicap` : noise;
-    return (d >= CR_STRONG ? `<b class="w">Underrated by the market</b>: the model rates it ${a} pts higher; ${why}.` : `Slightly underrated: the model rates it ${a} pts higher; ${why}.`) + start;
-  }
-  if (d <= -CR_MILD){
-    const why = down ? `results back the model: ${sgn(x.vsS)} a game against the handicap` : up ? `but results side with the market: ${sgn(x.vsS)} a game against the handicap` : noise;
-    return (d <= -CR_STRONG ? `<b class="l">Overrated by the market</b>: the model rates it ${a} pts lower; ${why}.` : `Slightly overrated: the model rates it ${a} pts lower; ${why}.`) + start;
-  }
-  if (up || down) return `Model and market agree (${a} pts apart), but the club has ${up ? 'beaten' : 'fallen short of'} its lines by ${Math.abs(x.vsS).toFixed(1)} a game.`;
-  return `Model and market agree (${a} pts apart).`;
+  if (x.mr === null) return 'No line yet.';
+  if (x.n < MK_MIN) return 'Too early.';
+  const d = x.d, lim = mkLim(MK_SD.hcp, x.n);
+  if (Math.abs(d) < CR_MILD) return '';   // model and market agree: nothing to say
+  const up = x.vsS >= lim, down = x.vsS <= -lim, backed = d > 0 ? up : down, against = d > 0 ? down : up;
+  const tag = d > 0 ? (d >= CR_STRONG ? '<b class="w">Underrated</b>' : 'Slightly underrated')
+                    : (d <= -CR_STRONG ? '<b class="l">Overrated</b>' : 'Slightly overrated');
+  const res = backed ? 'results agree' : against ? 'results disagree' : 'results unclear';
+  // the gap may still be last season's view: rating close to its starting point and results not backing it
+  const start = !backed && Math.abs(x.r - x.prior) < CR_MILD ? ", last season's view" : '';
+  return `${tag}: ${res}${start}.`;
 }
 function renderRatings(){
   const box = $('crView');
