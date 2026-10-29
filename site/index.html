@@ -127,6 +127,7 @@ th.sort{cursor:pointer;user-select:none}th.sort:hover,th.sort.on{color:var(--gol
 .chip:hover{color:var(--text)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:#0c1424}
 .sct{width:auto;min-width:640px}.sct td,.sct th{padding-left:14px;padding-right:14px}.sct tr.sum td{border-top:1px solid var(--gold)}
+table.crt{width:auto;min-width:1180px}table.crt .gl{border-left:1px solid var(--line)}table.crt td.crc{min-width:440px;white-space:normal;line-height:1.45;padding-top:7px;padding-bottom:7px}table.crt th.sort{cursor:pointer}
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 8px}
 .metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .metric .lbl{font:400 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
@@ -162,6 +163,7 @@ select.peer:focus{outline:2px solid var(--gold)}
     <a href="#view=market" data-view="market" class="on">Vs Market</a>
     <a href="#view=projections" data-view="projections">Projections</a>
     <a href="#view=archive" data-view="archive">Archive</a>
+    <a href="#view=ratings" data-view="ratings">Club Ratings</a>
     <a href="#view=h2h" data-view="h2h">Head to Head</a>
     <a href="#view=rosters" data-view="rosters">Rosters</a>
     <a href="#view=rankings" data-view="rankings">Country Power Rankings</a>
@@ -170,6 +172,7 @@ select.peer:focus{outline:2px solid var(--gold)}
   <div id="rkView" hidden></div>
   <div id="pjView" hidden></div>
   <div id="arView" hidden></div>
+  <div id="crView" hidden></div>
   <div id="mkView"></div>
   <div id="roView" hidden></div>
 
@@ -515,22 +518,18 @@ function renderProjections(){
     return `<tr><td class="n">${g.when.slice(11)}</td>
       <td><b>${esc(g.h)}</b> <span class="tag">${esc(code(teams[g.h]))}</span> – <b>${esc(g.a)}</b> <span class="tag">${esc(code(teams[g.a]))}</span></td>
       <td class="n hcp"${g.adj ? ` title="Absences ${sgn(g.adj)}"` : ''}><b>${sgn(g.mh)}</b>${g.adj ? '*' : ''}</td><td class="n">${g.mt.toFixed(1)}</td><td class="n gap">${pct(g.ph)}</td>
-      ${o ? `<td class="n" title="${esc((o.src || [''])[0])}">${sgn(bh)}</td><td class="n">${bt === null || bt === undefined ? '–' : bt.toFixed(1)}</td><td class="n gap">${pb === null ? '–' : pct(pb)}</td>`
+      ${o ? `<td class="n">${sgn(bh)}</td><td class="n">${bt === null || bt === undefined ? '–' : bt.toFixed(1)}</td><td class="n gap">${pb === null ? '–' : pct(pb)}</td>`
           : '<td class="n tag" colspan="3" title="Lines appear a few days before the game">no line yet</td>'}
       ${o ? gapCell(g.mh - bh) + gapCell(bt === null || bt === undefined ? null : g.mt - bt, ' gap') : '<td class="n tag">–</td><td class="n tag gap">–</td>'}
       ${agree(o ? g.mh - bh : null, xh && xa ? xh.vsS - xa.vsS : null, okS, 'home − away vs line', xh && xa ? `${g.h} ${sgn(xh.vsS)} (${xh.n} games), ${g.a} ${sgn(xa.vsS)} (${xa.n} games). ` : '')}${agree(o && bt !== null && bt !== undefined ? g.mt - bt : null, xh && xa && xh.vsT !== null && xa.vsT !== null ? (xh.vsT + xa.vsT) / 2 : null, okT, 'the average of the two clubs vs the total', xh && xa && xh.vsT !== null && xa.vsT !== null ? `${g.h} games ${sgn(xh.vsT)}, ${g.a} games ${sgn(xa.vsT)} vs the total. ` : '').replace('class="n ', 'class="n gap ')}
       <td class="tag">${out}</td></tr>`;
   };
-  const ratings = P.ratings.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.c)}</b> <span class="tag">${esc(code(teams[x.c]))}</span></td>
-    <td class="n hcp"><b>${sgn(x.r)}</b></td><td class="n">${x.g}</td><td class="n">${sgn(x.prior)}</td></tr>`).join('');
   box.innerHTML = `<div class="note" style="margin-bottom:14px"><b>The model rates every club from this season's results</b>, with older games counting less, starting from last season's club rating (85%) and its country's power-ranking rating (15%); clubs new to the competition start from the country rating. Tonight's absences come off the club (the <b>Out</b> column, from the injury list, impact as on the Rosters tab; a handicap marked * includes them). Home advantage ${sgn(P.hca)}.
       It never looks at the bookmaker: <b>Model − book</b> is where the two disagree. <b>Vs market</b> shows how each club has done against the bookmaker's lines this season (as on the Vs Market tab): <b>Hcp</b> = home vs line − away vs line, <b>Total</b> = the two clubs' average vs the total line; green when it points the same way as Model − book (the market record backs the model), red when it points the other way; in colour once both clubs have ${MK_MIN} games. It is the same model as on the EuroCup page, with settings tuned on 2023-24 and 2024-25; tested on 2025-26 and 2026-27 (184 games) it picked 69.0% of winners with an average miss of 13.1 points, level with the earlier country model (69.6%, 13.2). The <a class="back" href="#view=archive" data-go="archive">Archive</a> keeps every projection made before tip-off.</div>
     <div class="pjbar">${gapSelect()}<span class="tag">Model − book gaps over this size are highlighted.</span></div>` +
     Object.entries(days).map(([d, list]) => `<h2>${dayName(d)} <span class="tag">${esc(list[0].round)}</span></h2>
       <div class="scroll"><table class="fx pjt">${PJ_COLS}${head}${list.map(row).join('')}</table></div>`).join('') +
-    `<h2>Club ratings</h2><div class="tag" style="margin-bottom:8px">Points better (+) or worse (−) than an average club on a neutral court, after ${P.games} games this season. Prior = the starting point from last season and the country rating.</div>
-    <div class="scroll"><table class="fx" style="width:auto;min-width:520px"><tr><th class="n">#</th><th>Club</th><th class="n">Rating</th><th class="n">Games</th><th class="n">Prior</th></tr>${ratings}</table></div>
-    <div class="tag" style="margin-top:14px">Projections updated ${esc(P.updated)}; win chance = the handicap on a normal curve with the backtest's spread of misses (${P.spread} points).</div>`;
+    `<div class="tag" style="margin-top:14px">Every club's rating, next to the market's: <a class="back" href="#view=ratings" data-go="ratings">Club Ratings</a>. Projections updated ${esc(P.updated)}; win chance = the handicap on a normal curve with the backtest's spread of misses (${P.spread} points).</div>`;
   bindGap(box, renderProjections);
   box.querySelectorAll('[data-go]').forEach(a => a.onclick = e => { e.preventDefault(); setView(a.dataset.go); sync(); window.scrollTo({top: 0}); });
 }
@@ -967,12 +966,93 @@ function renderMarket(){
     renderMarket();
   });
 }
+// ---------- Club ratings: the model's rating next to the market's (fitted from the bookmaker lines, as on Vs Market)
+// Regular Season lines only compare clubs of the same group, so the market cannot say how strong a group is: both
+// ratings are compared on each group's own average (model in group vs market in group).
+let crSort = {k: 'd', dir: -1};
+const CR_STRONG = 4, CR_MILD = 2;                              // model − market, points
+function crComment(x){
+  if (x.mr === null) return `No game with a line and a result yet: only the model's view (${sgn(x.r)}).`;
+  if (x.n < MK_MIN) return `Only ${x.n} game${x.n === 1 ? '' : 's'} with a line: too early to compare.`;
+  const d = x.d, a = Math.abs(d).toFixed(1), lim = mkLim(MK_SD.hcp, x.n);
+  const noise = `results against the handicap are within the noise (${sgn(x.vsS)} a game)`;
+  const up = x.vsS >= lim, down = x.vsS <= -lim;
+  if (d >= CR_MILD){
+    const why = up ? `results back the model: ${sgn(x.vsS)} a game against the handicap` : down ? `but results side with the market: ${sgn(x.vsS)} a game against the handicap` : noise;
+    return d >= CR_STRONG ? `<b class="w">Underrated by the market</b>: the model rates it ${a} pts higher; ${why}.` : `Slightly underrated: the model rates it ${a} pts higher; ${why}.`;
+  }
+  if (d <= -CR_MILD){
+    const why = down ? `results back the model: ${sgn(x.vsS)} a game against the handicap` : up ? `but results side with the market: ${sgn(x.vsS)} a game against the handicap` : noise;
+    return d <= -CR_STRONG ? `<b class="l">Overrated by the market</b>: the model rates it ${a} pts lower; ${why}.` : `Slightly overrated: the model rates it ${a} pts lower; ${why}.`;
+  }
+  if (up || down) return `Model and market agree (${a} pts apart), but the club has ${up ? 'beaten' : 'fallen short of'} its lines by ${Math.abs(x.vsS).toFixed(1)} a game.`;
+  return `Model and market agree (${a} pts apart).`;
+}
+function renderRatings(){
+  const box = $('crView');
+  const P = window.PROJ;
+  if (!P || !P.ratings.length){ box.innerHTML = '<div class="empty">No ratings yet.</div>'; return; }
+  const {rows, MR} = mkData();
+  const mk = new Map(rows.map(x => [x.team, x]));
+  const avg = {};                                               // per group: average model and market rating of its clubs
+  for (const x of P.ratings){
+    const m = mk.get(x.c);
+    if (m?.mr == null) continue;
+    const a = (avg[m.grp] ??= {r: 0, mr: 0, n: 0}); a.r += x.r; a.mr += m.mr; a.n++;
+  }
+  const list = P.ratings.map(x => {
+    const m = mk.get(x.c), a = m ? avg[m.grp] : null;
+    const rg = a ? x.r - a.r / a.n : null, mg = m?.mr != null && a ? m.mr - a.mr / a.n : null;
+    return {c: x.c, grp: m?.grp || '', r: x.r, rg, mr: mg, d: mg === null ? null : rg - mg, prior: x.prior, n: m?.n || 0, vsS: m?.vsS ?? 0};
+  });
+  // the model spreads clubs wider than the market: put the market on the model's scale (least squares, through the
+  // group average) so that Model − market shows where the two disagree about a club, not the general width
+  const pr = list.filter(x => x.mr !== null && x.n >= MK_MIN);
+  const sxx = pr.reduce((t, x) => t + x.mr * x.mr, 0), wide = sxx ? pr.reduce((t, x) => t + x.mr * x.rg, 0) / sxx : 1;
+  for (const x of list) if (x.mr !== null){ x.mr *= wide; x.d = x.rg - x.mr; }
+  const vsAvg = l => l.length ? l.reduce((t, x) => t + x.vsS, 0) / l.length : 0;
+  const top = pr.filter(x => x.mr > 0), low = pr.filter(x => x.mr < 0), split = vsAvg(top) - vsAvg(low);
+  const pattern = !pr.length ? '' : `<div class="note" style="margin-bottom:14px"><b>One general difference first:</b> within the groups the model spreads the clubs ${wide.toFixed(1)} times as wide as the market does.
+      ${split >= 4 ? `The results so far side with the model on this: clubs the market rates above their group's average have beaten their handicaps by ${sgn(vsAvg(top))} a game, those below it by ${sgn(vsAvg(low))}.`
+        : split <= -4 ? `The results so far side with the market: clubs it rates above their group's average have beaten their handicaps by ${sgn(vsAvg(top))} a game, those below it by ${sgn(vsAvg(low))}.`
+        : `The results do not settle it yet: clubs the market rates above their group's average have beaten their handicaps by ${sgn(vsAvg(top))} a game, those below it by ${sgn(vsAvg(low))}.`}
+      So that this general difference does not mark every strong club underrated and every weak one overrated, the Market column is shown on the model's scale (×${wide.toFixed(1)}); <b>Model − market</b> is what is left: where the two really disagree about a club (${pr.length} clubs with ${MK_MIN}+ games).</div>`;
+  const {k, dir} = crSort;
+  const val = x => k === 'c' || k === 'grp' ? x[k] : (x[k] ?? -999);
+  list.sort((p, q) => { const a = val(p), b = val(q); return (typeof a === 'string' ? a.localeCompare(b) : a - b) * dir || p.c.localeCompare(q.c); });
+  const th = (c, label, cls, title) => `<th class="${cls} sort${c === k ? ' on' : ''}" data-k="${c}"${title ? ` title="${title}"` : ''}>${label}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+  const dcell = d => d === null ? '<td class="n tag">–</td>'
+    : `<td class="n"><b class="${d >= CR_STRONG ? 'w' : d <= -CR_STRONG ? 'l' : Math.abs(d) >= CR_MILD ? '' : 'tag'}">${sgn(d)}</b></td>`;
+  const vcell = x => {
+    if (!x.n) return '<td class="n tag">–</td>';
+    const lim = mkLim(MK_SD.hcp, x.n);
+    return `<td class="n"><span class="${x.vsS >= lim ? 'w' : x.vsS <= -lim ? 'l' : 'tag'}">${sgn(x.vsS)}</span></td>`;
+  };
+  const body = list.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.c)}</b> <span class="tag">${esc(code(teams[x.c]))}</span></td><td class="n tag">${esc(x.grp)}</td>
+    <td class="n hcp"><b>${sgn(x.r)}</b></td><td class="n gl">${x.rg === null ? '–' : sgn(x.rg)}</td><td class="n">${x.mr === null ? '–' : sgn(x.mr)}</td>${dcell(x.d)}${vcell(x)}
+    <td class="n">${x.n}</td><td class="n tag">${sgn(x.prior)}</td><td class="crc">${crComment(x)}</td></tr>`).join('');
+  box.innerHTML = `<div class="note" style="margin-bottom:14px"><b>Model</b> = the club's rating in the projection model, from this season's results (older games count less), starting from last season and the country rating.
+      <b>Market</b> = the club's rating in the bookmaker's eyes, fitted from every handicap line so far (as on the <a class="back" href="#view=market" data-go="market">Vs Market</a> tab).
+      In the Regular Season a club only meets the clubs of its own group, so the lines compare clubs within a group but cannot say how strong one group is against another. The comparison is therefore made <b>within the group</b>: both ratings in points better (+) or worse (−) than the group's average club, on a neutral court. The first Model column is the rating against the whole competition.
+      <b>Model − market</b> above 0 = the model rates the club higher in its group than the market does (underrated by the market); below 0 = lower (overrated). Green from +${CR_STRONG}, red from −${CR_STRONG}.
+      <b>Vs line</b> = the club's real margin minus the handicap, per game: whether results so far back the model or the market (coloured once larger than its sample's noise).
+      A caution from the <a class="back" href="#view=archive" data-go="archive">Archive</a> scorecard and the 2025-26 backtest: so far, large model–market gaps have more often gone the bookmaker's way, so a gap is a reason to look closer, not a verdict. Click a column to sort.</div>
+    ${pattern}<div class="scroll"><table class="fx crt"><tr><th colspan="4"></th><th class="grp gl" colspan="3">Within the group</th><th colspan="4"></th></tr><tr><th class="n">#</th>${th('c', 'Club', '', '')}${th('grp', 'Grp', 'n', 'Group')}${th('r', 'Model', 'n', 'Model rating: points vs an average club of the competition on a neutral court')}${th('rg', 'Model', 'n gl', 'Model rating against the group average')}${th('mr', 'Market', 'n', 'Market rating against the group average, from the bookmaker lines, on the model scale')}${th('d', 'Model − market', 'n', 'Above 0 = underrated by the market, below 0 = overrated')}${th('vsS', 'Vs line', 'n', 'Real margin minus the handicap, per game')}${th('n', 'Games', 'n', 'Games with a line and a result')}${th('prior', 'Prior', 'n', 'Starting point from last season and the country rating')}<th>Comment</th></tr>${body}</table></div>
+    <div class="tag" style="margin-top:14px">Model updated ${esc(P.updated)}, after ${P.games} games. Home advantage: ${sgn(P.hca)} in the model, ${sgn(MR.hca)} in the lines.</div>`;
+  box.querySelectorAll('th.sort').forEach(h => h.onclick = () => {
+    const c = h.dataset.k;
+    crSort = crSort.k === c ? {k: c, dir: -crSort.dir} : {k: c, dir: c === 'c' || c === 'grp' ? 1 : -1};
+    renderRatings();
+  });
+  box.querySelectorAll('[data-go]').forEach(a => a.onclick = e => { e.preventDefault(); setView(a.dataset.go); sync(); window.scrollTo({top: 0}); });
+}
 function setView(v){
-  view = ['projections', 'archive', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'market';
+  view = ['projections', 'archive', 'ratings', 'market', 'h2h', 'rosters', 'rankings'].includes(v) ? v : 'market';
   document.querySelectorAll('#tabs a').forEach(b => b.classList.toggle('on', b.dataset.view === view));
-  document.body.classList.toggle('wide', view === 'projections' || view === 'archive' || view === 'market');
+  document.body.classList.toggle('wide', view === 'projections' || view === 'archive' || view === 'market' || view === 'ratings');
   $('rkView').hidden = view !== 'rankings';
   $('arView').hidden = view !== 'archive';
+  $('crView').hidden = view !== 'ratings';
   $('mkView').hidden = view !== 'market';
   $('pjView').hidden = view !== 'projections';
   $('h2hView').hidden = view !== 'h2h';
@@ -980,6 +1060,7 @@ function setView(v){
   if (view === 'rankings') renderRankings();
   if (view === 'projections') renderProjections();
   if (view === 'archive') renderArchive();
+  if (view === 'ratings') renderRatings();
   if (view === 'market') renderMarket();
   if (view === 'rosters') renderRosters();
 }
